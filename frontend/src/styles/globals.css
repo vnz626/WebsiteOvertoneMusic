@@ -1,0 +1,105 @@
+@import "./theme.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ts-canvas text-ts-ink antialiased dark:bg-surface dark:text-slate-100;
+    font-family: Inter, system-ui, Arial, sans-serif;
+    margin: 0;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  .skeleton {
+    @apply animate-pulse rounded-2xl bg-slate-200 dark:bg-surface-high;
+  }
+
+  /* Kartu efek "kaca" ala mockup — dipakai di kartu event & panel dashboard mode gelap */
+  .glass-card {
+    @apply rounded-2xl border border-ts-subtle bg-white shadow-sm transition-all duration-300;
+  }
+  .glass-card:hover {
+    @apply shadow-xl shadow-ts-primary/10;
+  }
+
+  /* Input seragam dengan gaya homepage */
+  .ts-field {
+    @apply w-full rounded-xl border border-ts-subtle bg-white px-4 py-2.5 text-sm text-ts-ink outline-none transition-colors focus:border-ts-primary dark:border-white/10 dark:bg-surface-container dark:text-white;
+  }
+  .dark .glass-card {
+    background: rgba(23, 27, 38, 0.7);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  .dark .neon-glow {
+    box-shadow: 0 0 30px rgba(160, 120, 255, 0.25);
+  }
+}
+
+/* Blob cahaya ambient di background (dekorasi, hanya tampak di mode gelap) */
+.ambient-blob {
+  position: fixed;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: -10;
+  filter: blur(140px);
+  opacity: 0;
+}
+.dark .ambient-blob {
+  opacity: 0.18;
+}
+
+/* ===== Homepage redesign (Ticksy) ===== */
+.home-surface { --page-bg: #F8FAFC; background: var(--page-bg); }
+.dark .home-surface { --page-bg: #0f131d; background: var(--page-bg); }
+
+/* Lubang tiket di sisi divider perforasi */
+.ticket-notch-left, .ticket-notch-right {
+  position: absolute; width: 16px; height: 16px; border-radius: 9999px;
+  background: var(--page-bg, #F8FAFC); border: 1px solid #E2E8F0;
+}
+.dark .ticket-notch-left, .dark .ticket-notch-right { border-color: rgba(255,255,255,0.08); }
+.ticket-notch-left { left: -9px; border-left-color: transparent; }
+.ticket-notch-right { right: -9px; border-right-color: transparent; }
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.reveal { animation: fade-up .7s cubic-bezier(.2,.7,.2,1) both; }
+.reveal-on-scroll { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+.reveal-on-scroll.is-visible { opacity: 1; transform: none; }
+
+@keyframes slide-in-hero { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
+.hero-slide-in { animation: slide-in-hero .8s ease both; }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+.kenburns { animation: kenburns 9s ease-out both; }
+@keyframes progress-bar { from { width: 0; } to { width: 100%; } }
+.hero-progress { animation: progress-bar 6s linear both; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Infinite Logo Marquee */
+@keyframes marquee-left {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 35s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: running;
+}
+
