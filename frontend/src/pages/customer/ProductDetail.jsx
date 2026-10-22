@@ -134,7 +134,12 @@ export default function ProductDetail() {
     );
   }
 
-  const activePrice = selectedVariant?.price || instrument.price;
+  const isClearance = Boolean(selectedVariant?.is_clearance_active);
+  const normalPrice = selectedVariant?.price || instrument.price || 0;
+  const activePrice = (isClearance && selectedVariant?.clearance_price)
+    ? Number(selectedVariant.clearance_price)
+    : normalPrice;
+
   const activeStock = selectedVariant
     ? (selectedVariant.stock !== undefined ? selectedVariant.stock : selectedVariant.remaining_quota)
     : instrument.remaining_quota;
@@ -305,10 +310,31 @@ export default function ProductDetail() {
 
               {/* Price display */}
               <div className="border-y border-gray-100 py-4 my-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                    {formatRupiah(activePrice)}
-                  </span>
+                {isClearance && (
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
+                      CLEARANCE -{selectedVariant.discount_percent}%
+                    </span>
+                    {selectedVariant.clearance_note && (
+                      <span className="text-xs text-red-700 font-semibold">{selectedVariant.clearance_note}</span>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-baseline gap-2.5">
+                  {isClearance ? (
+                    <>
+                      <span className="text-2xl sm:text-3xl font-black text-red-600">
+                        {formatRupiah(activePrice)}
+                      </span>
+                      <span className="text-sm font-bold text-gray-400 line-through">
+                        {formatRupiah(normalPrice)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                      {formatRupiah(activePrice)}
+                    </span>
+                  )}
                   <span className="text-xs text-gray-500 font-normal">/ unit (Inc. PPN)</span>
                 </div>
                 {selectedVariant?.sku_code && (
@@ -351,14 +377,26 @@ export default function ProductDetail() {
                               <span className={`text-sm font-semibold ${isSelected ? "text-gray-900" : "text-gray-700"}`}>
                                 {v.color_finish || v.variant_name || v.tier_name}
                               </span>
+                              {v.is_clearance_active ? (
+                                <span className="text-[9px] font-black uppercase text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
+                                  CLEARANCE -{v.discount_percent}%
+                                </span>
+                              ) : null}
                               {v.sku_code && (
                                 <span className="text-[10px] font-mono text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
                                   {v.sku_code}
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
-                              <span className="font-medium text-gray-700">{formatRupiah(v.price)}</span>
+                            <div className="mt-1 flex items-center gap-2.5 text-xs text-gray-500">
+                              {v.is_clearance_active && v.clearance_price ? (
+                                <>
+                                  <span className="font-bold text-red-600">{formatRupiah(v.clearance_price)}</span>
+                                  <span className="line-through text-gray-400 font-medium">{formatRupiah(v.price)}</span>
+                                </>
+                              ) : (
+                                <span className="font-medium text-gray-700">{formatRupiah(v.price)}</span>
+                              )}
                               {v.weight_kg && <span>• {v.weight_kg} kg</span>}
                             </div>
                           </div>

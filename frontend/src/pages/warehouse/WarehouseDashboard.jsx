@@ -8,6 +8,7 @@ import api from "../../api";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Button from "../../components/ui/Button";
 import { SkeletonGrid } from "../../components/ui/Skeleton";
+import QuickSopWidget from "../../components/kms/QuickSopWidget";
 
 export default function WarehouseDashboard() {
   const [stats, setStats] = useState({
@@ -145,6 +146,9 @@ export default function WarehouseDashboard() {
             </div>
           </div>
         )}
+
+        {/* SOP & Prosedur Operasional Warehouse */}
+        <QuickSopWidget role="warehouse_staff" linkTo="/warehouse/sop" />
 
         {/* Shortcut Navigasi Cepat Modul Warehouse */}
         <div className="grid gap-5 md:grid-cols-2">

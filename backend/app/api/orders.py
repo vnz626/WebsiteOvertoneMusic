@@ -90,8 +90,14 @@ def create_order():
         shipping_courier = (data.get("shipping_courier") or "JNE Trucking").strip()
         shipping_cost = int(data.get("shipping_cost") or 45000)
 
-    # Unit price
-    item_price = variant.price if variant else product.price
+    # Unit price (Gunakan clearance_price jika promo clearance aktif)
+    if variant and getattr(variant, "is_clearance_active", False) and getattr(variant, "clearance_price", None) is not None:
+        item_price = int(variant.clearance_price)
+    elif variant:
+        item_price = variant.price
+    else:
+        item_price = product.price
+
     subtotal = item_price * quantity
     total_price = subtotal + (shipping_cost if fulfillment_method == "delivery" else 0)
 

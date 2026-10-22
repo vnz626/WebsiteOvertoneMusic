@@ -3,16 +3,21 @@ from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(BASE_DIR, ".env"))
+except ImportError:
+    pass
+
 # ---------------------------------------------------------------------------
 # Konfigurasi koneksi ke MySQL (XAMPP)
 # Default XAMPP: host=localhost, port=3306, user=root, password=kosong ("")
-# Mau coba cepat tanpa MySQL? set: DATABASE_URL=sqlite:///ticksy.db
 # ---------------------------------------------------------------------------
 DB_USER = os.environ.get("DB_USER", "root")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
 DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = os.environ.get("DB_PORT", "3306")
-DB_NAME = os.environ.get("DB_NAME", "ticketing_event")
+DB_NAME = os.environ.get("DB_NAME", "overtone_store")
 
 
 class Config:
@@ -22,14 +27,22 @@ class Config:
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
 
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "ticksy-jwt-secret-key-production-32-chars-long!")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=12)
 
-    # Origin frontend Vite (dev server). Tambah lewat env kalau port-nya beda.
-    CORS_ORIGINS = os.environ.get(
-        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
-    ).split(",")
+    CORS_ORIGINS = [
+        o.strip()
+        for o in os.environ.get(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5175,http://127.0.0.1:5175",
+        ).split(",")
+        if o.strip()
+    ]
 
     # --- Upload dokumen (fitur #4): bukti bayar, poster event ---
     UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))

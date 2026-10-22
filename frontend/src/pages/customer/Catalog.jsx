@@ -584,13 +584,26 @@ export default function Catalog() {
                   const stock = p.remaining_quota || p.stock || 0;
                   const isAvailable = stock > 0;
                   const brandName = p.brand?.name || p.brand || p.organizer || "Overtone";
+                  const hasClearance = Boolean(p.has_clearance || p.is_clearance_active);
+                  const clearanceDiscount = p.max_discount_percent || p.discount_percent || 0;
+                  const originalPrice = p.min_price || p.price || 0;
+                  const activeDisplayPrice = hasClearance && p.effective_min_price ? p.effective_min_price : originalPrice;
 
                   return (
                     <Link
                       key={p.id}
                       to={`/products/${p.id}`}
-                      className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:border-gray-900 hover:shadow-md transition-all flex flex-col"
+                      className="group relative rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:border-gray-900 hover:shadow-md transition-all flex flex-col"
                     >
+                      {/* Badge Clearance Promo */}
+                      {hasClearance && (
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-xs">
+                            CLEARANCE -{clearanceDiscount}%
+                          </span>
+                        </div>
+                      )}
+
                       {/* Gambar Bersih di Atas Putih (aspect-square, object-contain) */}
                       <div className="aspect-square w-full rounded-xl bg-white border border-gray-100 p-4 flex items-center justify-center overflow-hidden">
                         {p.image_url ? (
@@ -614,9 +627,22 @@ export default function Catalog() {
                         </h3>
 
                         <div className="mt-auto pt-3">
-                          <p className="text-sm font-extrabold text-gray-900">
-                            {formatRupiah(p.price || p.min_price || 0)}
-                          </p>
+                          {hasClearance ? (
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-gray-400 font-semibold line-through">
+                                  {formatRupiah(originalPrice)}
+                                </span>
+                              </div>
+                              <p className="text-sm font-black text-red-600">
+                                {formatRupiah(activeDisplayPrice)}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm font-extrabold text-gray-900">
+                              {formatRupiah(originalPrice)}
+                            </p>
+                          )}
                           <p className="mt-1 text-[11px] font-semibold">
                             {isAvailable ? (
                               <span className="text-[#16A34A]">Tersedia</span>
@@ -637,13 +663,24 @@ export default function Catalog() {
                   const stock = p.remaining_quota || p.stock || 0;
                   const isAvailable = stock > 0;
                   const brandName = p.brand?.name || p.brand || p.organizer || "Overtone";
+                  const hasClearance = Boolean(p.has_clearance || p.is_clearance_active);
+                  const clearanceDiscount = p.max_discount_percent || p.discount_percent || 0;
+                  const originalPrice = p.min_price || p.price || 0;
+                  const activeDisplayPrice = hasClearance && p.effective_min_price ? p.effective_min_price : originalPrice;
 
                   return (
                     <Link
                       key={p.id}
                       to={`/products/${p.id}`}
-                      className="group rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm hover:border-gray-900 transition-all flex flex-col sm:flex-row gap-5 items-center"
+                      className="group relative rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm hover:border-gray-900 transition-all flex flex-col sm:flex-row gap-5 items-center"
                     >
+                      {hasClearance && (
+                        <div className="absolute top-3 left-3 sm:hidden z-10">
+                          <span className="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                            CLEARANCE -{clearanceDiscount}%
+                          </span>
+                        </div>
+                      )}
                       <div className="h-28 w-28 shrink-0 rounded-xl bg-white border border-gray-100 p-2 flex items-center justify-center overflow-hidden">
                         {p.image_url ? (
                           <img
@@ -657,9 +694,16 @@ export default function Catalog() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A5B]">
-                          {brandName}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A5B]">
+                            {brandName}
+                          </p>
+                          {hasClearance && (
+                            <span className="hidden sm:inline-flex rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                              CLEARANCE -{clearanceDiscount}%
+                            </span>
+                          )}
+                        </div>
                         <h3 className="text-sm font-bold text-gray-900 mt-0.5 truncate">
                           {p.name}
                         </h3>
@@ -673,9 +717,20 @@ export default function Catalog() {
                       </div>
 
                       <div className="sm:text-right shrink-0">
-                        <p className="text-base font-extrabold text-gray-900">
-                          {formatRupiah(p.price || p.min_price || 0)}
-                        </p>
+                        {hasClearance ? (
+                          <div>
+                            <span className="text-xs text-gray-400 font-semibold line-through">
+                              {formatRupiah(originalPrice)}
+                            </span>
+                            <p className="text-base font-black text-red-600">
+                              {formatRupiah(activeDisplayPrice)}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-base font-extrabold text-gray-900">
+                            {formatRupiah(originalPrice)}
+                          </p>
+                        )}
                         <p className="mt-1 text-xs font-semibold">
                           {isAvailable ? (
                             <span className="text-[#16A34A]">Tersedia</span>

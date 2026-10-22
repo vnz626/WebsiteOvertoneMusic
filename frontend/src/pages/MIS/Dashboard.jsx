@@ -22,6 +22,7 @@ import MisRevenueChart  from "./components/MisRevenueChart";
 import MisTicketChart   from "./components/MisTicketChart";
 import MisEventTable    from "./components/MisEventTable";
 import MisFilterPanel   from "./components/MisFilterPanel";
+import QuickSopWidget   from "../../components/kms/QuickSopWidget";
 
 import {
   misDashboardSummary,
@@ -232,6 +233,11 @@ export default function MisDashboard() {
             <MisTicketChart data={ticketTrend} loading={loadTickets} />
           </div>
         </div>
+      </div>
+
+      {/* SOP & Prosedur Manajerial & Kurasi */}
+      <div className="mb-6">
+        <QuickSopWidget role="manager" linkTo="/manager/sop" />
       </div>
 
     </DashboardLayout>

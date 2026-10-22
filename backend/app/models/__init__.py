@@ -17,6 +17,14 @@ from .models import (  # noqa: F401
     KMSArticle,
     KMSArticleFeedback,
     KMSFAQ,
+    KMSFaq,
+    KMSBrandSupplier,
+    # DSS Subsystem
+    DSSCriterion,
+    DSSSubcriterionRange,
+    DSSAHPMatrix,
+    DSSSession,
+    DSSTopsisResult,
     # Aliases
     User,
     Customer,

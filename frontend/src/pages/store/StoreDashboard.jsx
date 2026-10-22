@@ -8,6 +8,7 @@ import api from "../../api";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import QuickSopWidget from "../../components/kms/QuickSopWidget";
 
 export default function StoreDashboard() {
   const [stats, setStats] = useState({
@@ -123,6 +124,9 @@ export default function StoreDashboard() {
           </Link>
 
         </div>
+
+        {/* SOP & Prosedur Store Staff */}
+        <QuickSopWidget role="store_staff" linkTo="/store/sop" />
 
       </div>
     </DashboardLayout>

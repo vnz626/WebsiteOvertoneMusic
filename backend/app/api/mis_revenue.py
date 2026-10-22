@@ -135,8 +135,13 @@ def revenue_kpi():
     prev_month = (today.replace(day=1) - timedelta(days=1))
     prev_label = prev_month.strftime("%Y-%m")
 
-    cur  = MisRevenueSummary.query.filter_by(period_type="monthly", period_label=cur_label).first()
-    prev = MisRevenueSummary.query.filter_by(period_type="monthly", period_label=prev_label).first()
+    first_of_month = today.replace(day=1)
+    first_of_prev = prev_month.replace(day=1)
+
+    cur = MisRevenueSummary.query.filter_by(period_type="monthly", period_date=first_of_month).first()
+    if not cur:
+        cur = MisRevenueSummary.query.filter_by(period_type="monthly").order_by(MisRevenueSummary.period_date.desc()).first()
+    prev = MisRevenueSummary.query.filter_by(period_type="monthly", period_date=first_of_prev).first()
 
     def _safe(row):
         if not row:

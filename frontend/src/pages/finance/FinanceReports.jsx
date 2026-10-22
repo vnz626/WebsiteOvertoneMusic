@@ -16,6 +16,7 @@ import {
 import api from "../../api";
 import Sidebar from "../../components/layout/Sidebar";
 import { formatRupiah } from "../../utils/format";
+import QuickSopWidget from "../../components/kms/QuickSopWidget";
 
 export default function FinanceReports() {
   const [loading, setLoading] = useState(true);
@@ -264,6 +265,11 @@ export default function FinanceReports() {
                   )}
                 </table>
               </div>
+            </div>
+
+            {/* SOP & Prosedur Divisi Finance */}
+            <div className="mt-8 print:hidden">
+              <QuickSopWidget role="finance" linkTo="/finance/sop" />
             </div>
 
             {/* Signature Area (Tampak saat di-print ke PDF) */}

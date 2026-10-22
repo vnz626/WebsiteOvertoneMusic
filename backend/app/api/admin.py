@@ -242,3 +242,14 @@ def reject_product(id):
     product.status = "archived"
     db.session.commit()
     return jsonify({"message": "Produk diarsipkan", "data": product_to_dict(product)})
+
+
+# ===========================================================================
+# 4. Alias Route KMS Articles under /api/admin/kms/articles
+# ===========================================================================
+from .kms import admin_articles, admin_create_article, admin_update_article, admin_delete_article
+
+admin_bp.add_url_rule("/kms/articles", view_func=admin_articles, methods=["GET"])
+admin_bp.add_url_rule("/kms/articles", view_func=admin_create_article, methods=["POST"])
+admin_bp.add_url_rule("/kms/articles/<int:id>", view_func=admin_update_article, methods=["PUT"])
+admin_bp.add_url_rule("/kms/articles/<int:id>", view_func=admin_delete_article, methods=["DELETE"])

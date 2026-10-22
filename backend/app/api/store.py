@@ -118,7 +118,7 @@ def handover_pickup(order_id):
 # ===========================================================================
 
 @store_bp.get("/tickets")
-@roles_required(ROLE_STORE_STAFF, ROLE_SUPER_ADMIN)
+@roles_required(ROLE_STORE_STAFF, ROLE_SUPER_ADMIN, "manager", "admin")
 def get_support_tickets():
     """Daftar tiket pertanyaan / kendala dari pelanggan."""
     status = request.args.get("status")
@@ -126,26 +126,65 @@ def get_support_tickets():
     if status:
         query = query.filter_by(status=status)
 
-    tickets = query.order_by(OASSupportTicket.created_at.desc()).all()
+    tickets = query.order_by(OASSupportTicket.updated_at.desc(), OASSupportTicket.created_at.desc()).all()
     res = []
     for t in tickets:
+        all_msgs = t.messages.order_by(OASSupportMessage.created_at.asc()).all()
+        first_msg = all_msgs[0].message if all_msgs else ""
+        last_msg = all_msgs[-1].message if all_msgs else ""
+        last_sender = all_msgs[-1].sender_type if all_msgs else ""
+
         res.append({
             "id": t.id,
             "ticket_number": t.ticket_number,
             "subject": t.subject,
+            "description": first_msg or t.subject,
             "category": t.category,
             "priority": t.priority,
             "status": t.status,
-            "customer_name": t.customer.name if t.customer else "Pelanggan",
+            "customer_name": t.customer.name if t.customer else "Pelanggan Overtone",
             "customer_email": t.customer.email if t.customer else "",
+            "messages_count": len(all_msgs),
+            "latest_message": last_msg,
+            "latest_sender_type": last_sender,
             "created_at": t.created_at.isoformat() if t.created_at else None,
             "updated_at": t.updated_at.isoformat() if t.updated_at else None,
         })
     return jsonify({"data": res, "total": len(res)})
 
 
+@store_bp.get("/tickets/<int:ticket_id>/messages")
+@roles_required(ROLE_STORE_STAFF, ROLE_SUPER_ADMIN, "manager", "admin")
+def get_ticket_messages(ticket_id):
+    """Mengambil seluruh riwayat pesan percakapan dalam satu tiket."""
+    ticket = OASSupportTicket.query.get(ticket_id)
+    if not ticket:
+        return jsonify({"message": "Tiket tidak ditemukan"}), 404
+
+    messages = (
+        OASSupportMessage.query.filter_by(ticket_id=ticket.id)
+        .order_by(OASSupportMessage.created_at.asc())
+        .all()
+    )
+
+    return jsonify({
+        "data": [
+            {
+                "id": m.id,
+                "ticket_id": m.ticket_id,
+                "sender_type": m.sender_type,
+                "sender_name": m.sender_name,
+                "message": m.message,
+                "attachment_url": m.attachment_url,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in messages
+        ]
+    })
+
+
 @store_bp.post("/tickets/<int:ticket_id>/reply")
-@roles_required(ROLE_STORE_STAFF, ROLE_SUPER_ADMIN)
+@roles_required(ROLE_STORE_STAFF, ROLE_SUPER_ADMIN, "manager", "admin")
 def reply_support_ticket(ticket_id):
     """Staff toko membalas pesan tiket bantuan pelanggan."""
     ticket = OASSupportTicket.query.get(ticket_id)
@@ -154,22 +193,50 @@ def reply_support_ticket(ticket_id):
 
     data = request.get_json(silent=True) or {}
     message_text = (data.get("message") or "").strip()
-    new_status = data.get("status") or "in_progress"
+    raw_status = (data.get("status") or "in_progress").lower()
+    attachment_url = data.get("attachment_url")
 
-    if not message_text:
+    # Mapping status yang valid dengan DB enum ('open', 'in_progress', 'resolved', 'closed')
+    status_map = {
+        "answered": "in_progress",
+        "in_progress": "in_progress",
+        "open": "open",
+        "resolved": "resolved",
+        "closed": "closed",
+    }
+    new_status = status_map.get(raw_status, "in_progress")
+
+    if not message_text and not attachment_url:
         return jsonify({"message": "Pesan balasan tidak boleh kosong"}), 400
 
     user = current_user()
+    sender_name = getattr(user, "name", None) or getattr(user, "username", "Store Specialist")
     msg = OASSupportMessage(
         ticket_id=ticket.id,
         sender_type="staff",
-        sender_id=user.id,
-        sender_name=user.name,
+        sender_id=user.id if user else 1,
+        sender_name=f"{sender_name} (Store Specialist)",
         message=message_text,
+        attachment_url=attachment_url,
     )
     ticket.status = new_status
-    ticket.assigned_staff_id = user.id
+    ticket.updated_at = datetime.utcnow()
+    if user:
+        ticket.assigned_staff_id = user.id
+
     db.session.add(msg)
     db.session.commit()
 
-    return jsonify({"message": "Balasan berhasil dikirim ke pelanggan", "ticket_status": ticket.status})
+    return jsonify({
+        "message": "Balasan berhasil dikirim ke pelanggan",
+        "ticket_status": ticket.status,
+        "data": {
+            "id": msg.id,
+            "ticket_id": msg.ticket_id,
+            "sender_type": msg.sender_type,
+            "sender_name": msg.sender_name,
+            "message": msg.message,
+            "attachment_url": msg.attachment_url,
+            "created_at": msg.created_at.isoformat() if msg.created_at else None,
+        },
+    })

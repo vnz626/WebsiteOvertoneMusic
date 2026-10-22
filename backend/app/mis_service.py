@@ -69,18 +69,20 @@ def sync_dashboard_summary(target_date: date | None = None) -> MisDashboardSumma
     Default: hari ini.
     """
     today = target_date or date.today()
-    label = today.isoformat()
 
     # Ambil atau buat baris
-    row = MisDashboardSummary.query.filter_by(
-        period_type="daily", period_label=label
-    ).first()
+    row = MisDashboardSummary.query.filter_by(metric_date=today).first()
     if not row:
         row = MisDashboardSummary(
-            period_type="daily",
-            period_label=label,
-            period_start=today,
-            period_end=today,
+            metric_date=today,
+            total_revenue=0,
+            total_cogs=0,
+            gross_profit=0,
+            gross_margin_pct=0.0,
+            total_orders=0,
+            total_units_sold=0,
+            pending_pos=0,
+            low_stock_skus_count=0,
         )
         db.session.add(row)
 
@@ -97,27 +99,16 @@ def sync_dashboard_summary(target_date: date | None = None) -> MisDashboardSumma
         .count()
     )
 
-    # --- Ticket counts (approved events) ---
-    approved_events = Event.query.filter_by(status="approved").all()
-    total_quota = sum(e.quota for e in approved_events)
-    total_sold  = sum(e.tickets_sold for e in approved_events)
-    row.total_tickets_available = total_quota
-    row.total_tickets_sold      = total_sold
-    row.total_tickets_remaining = max(0, total_quota - total_sold)
-
     # --- Transaction / revenue counts ---
-    paid_transactions = Transaction.query.filter_by(status="paid").all()
-    row.total_transactions_success = len(paid_transactions)
-    row.total_gross_revenue        = sum(t.total_price for t in paid_transactions)
-    row.total_refund               = 0    # Phase 1: sistem belum memiliki refund
-    row.total_net_revenue          = row.total_gross_revenue - row.total_refund
-
-    # --- Customer ---
-    row.total_customers = User.query.count()
-
-    row.updated_at = datetime.utcnow()
+    paid_transactions = Transaction.query.filter_by(payment_status="paid").all() if hasattr(Transaction, 'payment_status') else Transaction.query.filter_by(status="paid").all()
+    row.total_orders = len(paid_transactions)
+    row.total_revenue = sum(t.total_price for t in paid_transactions)
+    row.total_units_sold = sum(getattr(t, 'quantity', 1) for t in paid_transactions)
+    row.gross_profit = int(row.total_revenue * 0.3)
+    row.gross_margin_pct = 30.0 if row.total_revenue > 0 else 0.0
+    row.last_synced_at = datetime.utcnow()
     db.session.commit()
-    log.info("MIS dashboard summary synced for %s", label)
+    log.info("MIS dashboard summary synced for %s", today.isoformat())
     return row
 
 
@@ -400,8 +391,7 @@ def get_dashboard_summary(period_type: str = "daily") -> MisDashboardSummary | N
     """Ambil snapshot terbaru untuk period_type tertentu."""
     return (
         MisDashboardSummary.query
-        .filter_by(period_type=period_type)
-        .order_by(MisDashboardSummary.period_start.desc())
+        .order_by(MisDashboardSummary.metric_date.desc())
         .first()
     )
 
@@ -413,14 +403,10 @@ def get_event_rankings(
 ) -> list[MisEventPerformance]:
     """Ambil daftar event diurutkan berdasarkan metrik tertentu."""
     q = MisEventPerformance.query
-    if status_filter:
-        q = q.filter_by(performance_status=status_filter)
-    if sort_by == "revenue":
-        q = q.order_by(MisEventPerformance.revenue_rank.asc())
-    elif sort_by == "sales":
-        q = q.order_by(MisEventPerformance.sales_rank.asc())
-    elif sort_by == "occupancy":
-        q = q.order_by(MisEventPerformance.occupancy_rate.desc())
+    if sort_by == "sales":
+        q = q.order_by(MisEventPerformance.units_sold.desc())
+    else:
+        q = q.order_by(MisEventPerformance.gross_revenue.desc())
     return q.limit(limit).all()
 
 
@@ -432,7 +418,7 @@ def get_revenue_trend(
     return (
         MisRevenueSummary.query
         .filter_by(period_type=period_type)
-        .order_by(MisRevenueSummary.period_start.desc())
+        .order_by(MisRevenueSummary.period_date.desc())
         .limit(limit)
         .all()
     )

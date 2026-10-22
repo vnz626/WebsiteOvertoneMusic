@@ -37,6 +37,15 @@ def variant_to_dict(v):
     if not v:
         return None
     stock = getattr(v, "stock", getattr(v, "remaining_quota", 0))
+    price = getattr(v, "price", 0)
+    clearance_price = getattr(v, "clearance_price", None)
+    is_clearance_active = bool(getattr(v, "is_clearance_active", False))
+    discount_percent = float(getattr(v, "discount_percent", 0.0) or 0.0)
+    stock_in_date = getattr(v, "stock_in_date", None)
+    cost_price = getattr(v, "cost_price", 0)
+
+    effective_price = float(clearance_price) if (is_clearance_active and clearance_price is not None) else float(price)
+
     return {
         "id": v.id,
         "product_id": getattr(v, "product_id", getattr(v, "event_id", None)),
@@ -44,14 +53,22 @@ def variant_to_dict(v):
         "variant_name": getattr(v, "variant_name", getattr(v, "tier_name", "Standard")),
         "tier_name": getattr(v, "variant_name", getattr(v, "tier_name", "Standard")),
         "color_finish": getattr(v, "color_finish", getattr(v, "variant_name", "Standard")),
-        "cost_price": getattr(v, "cost_price", 0),
-        "price": v.price,
+        "cost_price": cost_price,
+        "price": price,
         "stock": stock,
         "quota": stock,
         "remaining_quota": stock,
         "tickets_sold": 0,
         "weight_kg": float(getattr(v, "weight_kg", 1.0) or 1.0),
         "is_active": getattr(v, "is_active", True),
+        "stock_in_date": stock_in_date.isoformat() if stock_in_date else None,
+        "discount_percent": discount_percent,
+        "clearance_price": float(clearance_price) if clearance_price is not None else None,
+        "is_clearance_active": is_clearance_active,
+        "clearance_note": getattr(v, "clearance_note", None),
+        "effective_price": effective_price,
+        "aging_days": getattr(v, "aging_days", 0),
+        "aging_bucket": getattr(v, "aging_bucket", "fresh"),
     }
 
 
@@ -66,6 +83,11 @@ def product_to_dict(p, detail=False):
     variants_list = [variant_to_dict(v) for v in (raw_variants or [])]
 
     min_price = min([v["price"] for v in variants_list] or [p.price]) if variants_list else p.price
+    has_clearance = any(v.get("is_clearance_active") for v in variants_list)
+    clearance_variants = [v for v in variants_list if v.get("is_clearance_active")]
+    min_clearance_price = min([v["clearance_price"] for v in clearance_variants] or [min_price]) if clearance_variants else None
+    max_discount_percent = max([v.get("discount_percent", 0) for v in clearance_variants] or [0]) if clearance_variants else 0
+    effective_min_price = min_clearance_price if (has_clearance and min_clearance_price is not None) else min_price
     total_stock = sum(v["stock"] for v in variants_list) if variants_list else getattr(p, "remaining_quota", 0)
 
     brand_obj = getattr(p, "brand", getattr(p, "brand_supplier", None))
@@ -93,6 +115,11 @@ def product_to_dict(p, detail=False):
         "image_url": p.image_url,
         "price": p.price,
         "min_price": min_price,
+        "has_clearance": has_clearance,
+        "is_clearance_active": has_clearance,
+        "clearance_price": min_clearance_price,
+        "effective_min_price": effective_min_price,
+        "max_discount_percent": max_discount_percent,
         "quota": total_stock,
         "stock": total_stock,
         "remaining_quota": total_stock,

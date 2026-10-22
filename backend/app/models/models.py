@@ -18,7 +18,7 @@ from ..extensions import db
 
 class OASStaff(db.Model):
     """Akun pegawai internal toko alat musik (super_admin, manager, finance, warehouse_staff, store_staff)."""
-    __tablename__ = "oas_staff"
+    __tablename__ = "oas__staff"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -30,7 +30,7 @@ class OASStaff(db.Model):
         nullable=False,
     )
     phone = db.Column(db.String(30), nullable=True)
-    branch_id = db.Column(db.Integer, db.ForeignKey("tps_store_branches.id", ondelete="SET NULL"), nullable=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -60,13 +60,13 @@ class OASStaff(db.Model):
 
 class OASAnnouncement(db.Model):
     """Pengumuman internal kantor toko alat musik & memo staf."""
-    __tablename__ = "oas_announcements"
+    __tablename__ = "oas__announcements"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     audience_role = db.Column(db.String(50), default="all", nullable=False)
-    created_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="CASCADE"), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="CASCADE"), nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -75,7 +75,7 @@ class OASAnnouncement(db.Model):
 
 class OASNotification(db.Model):
     """Notifikasi in-dashboard untuk staf dan customer."""
-    __tablename__ = "oas_notifications"
+    __tablename__ = "oas__notifications"
 
     id = db.Column(db.Integer, primary_key=True)
     recipient_kind = db.Column(db.String(20), default="user", nullable=False)
@@ -90,7 +90,7 @@ class OASNotification(db.Model):
 
 class OASSystemSetting(db.Model):
     """Konfigurasi global toko alat musik."""
-    __tablename__ = "oas_system_settings"
+    __tablename__ = "oas__system_settings"
 
     id = db.Column(db.Integer, primary_key=True)
     setting_key = db.Column(db.String(100), unique=True, nullable=False)
@@ -105,7 +105,7 @@ class OASSystemSetting(db.Model):
 
 class TPSCustomer(db.Model):
     """Akun musisi / pelanggan ritel alat musik."""
-    __tablename__ = "tps_customers"
+    __tablename__ = "tps__customers"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -142,7 +142,7 @@ class TPSCustomer(db.Model):
 
 class TPSBrandSupplier(db.Model):
     """Merek & Supplier resmi alat musik (Fender, Gibson, Roland, Yamaha, dll.)."""
-    __tablename__ = "tps_brands_suppliers"
+    __tablename__ = "kms__brands_suppliers"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -161,7 +161,7 @@ class TPSBrandSupplier(db.Model):
 
 class TPSStoreBranch(db.Model):
     """Lokasi Showroom Cabang Fisik & Pusat Distribusi/Gudang Swee Lee."""
-    __tablename__ = "tps_store_branches"
+    __tablename__ = "tps__store_branches"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -175,17 +175,22 @@ class TPSStoreBranch(db.Model):
 
 
 class OASSupportTicket(db.Model):
-    """Layanan bantuan pelanggan, konsultasi instrumen, dan klaim garansi."""
-    __tablename__ = "oas_support_tickets"
+    """Layanan bantuan pelanggan, konsultasi instrumen, live concierge, dan klaim garansi."""
+    __tablename__ = "oas__support_tickets"
 
     id = db.Column(db.Integer, primary_key=True)
     ticket_number = db.Column(db.String(50), unique=True, nullable=False)
-    customer_id = db.Column(db.Integer, db.ForeignKey("tps_customers.id", ondelete="SET NULL"), nullable=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("tps__customers.id", ondelete="SET NULL"), nullable=True)
+    session_token = db.Column(db.String(100), index=True, nullable=True)
     subject = db.Column(db.String(200), nullable=False)
-    category = db.Column(db.String(50), default="product_inquiry", nullable=False)
-    status = db.Column(db.Enum("open", "in_progress", "resolved", "closed", name="support_status_enum"), default="open", nullable=False)
+    category = db.Column(db.String(50), default="concierge", nullable=False)
+    status = db.Column(
+        db.Enum("bot_active", "waiting_agent", "live_chat", "resolved", "closed", "open", "in_progress", name="support_status_enum"),
+        default="bot_active",
+        nullable=False,
+    )
     priority = db.Column(db.Enum("low", "medium", "high", "urgent", name="support_priority_enum"), default="medium", nullable=False)
-    assigned_staff_id = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
+    assigned_staff_id = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -195,13 +200,13 @@ class OASSupportTicket(db.Model):
 
 
 class OASSupportMessage(db.Model):
-    """Pesan percakapan dalam tiket dukungan."""
-    __tablename__ = "oas_support_messages"
+    """Pesan percakapan dalam tiket dukungan (customer, staff, bot, atau system)."""
+    __tablename__ = "oas__support_messages"
 
     id = db.Column(db.Integer, primary_key=True)
-    ticket_id = db.Column(db.Integer, db.ForeignKey("oas_support_tickets.id", ondelete="CASCADE"), nullable=False)
-    sender_type = db.Column(db.Enum("staff", "customer", name="sender_type_enum"), nullable=False)
-    sender_id = db.Column(db.Integer, nullable=False)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("oas__support_tickets.id", ondelete="CASCADE"), nullable=False)
+    sender_type = db.Column(db.Enum("staff", "customer", "bot", "system", name="sender_type_enum"), default="customer", nullable=False)
+    sender_id = db.Column(db.Integer, default=0, nullable=False)
     sender_name = db.Column(db.String(100), nullable=False)
     message = db.Column(db.Text, nullable=False)
     attachment_url = db.Column(db.String(255), nullable=True)
@@ -210,11 +215,11 @@ class OASSupportMessage(db.Model):
 
 class TPSProduct(db.Model):
     """Master katalog instrumen musik dan peralatan audio pro."""
-    __tablename__ = "tps_products"
+    __tablename__ = "tps__products"
 
     id = db.Column(db.Integer, primary_key=True)
-    brand_id = db.Column(db.Integer, db.ForeignKey("tps_brands_suppliers.id", ondelete="RESTRICT"), nullable=False)
-    branch_id = db.Column(db.Integer, db.ForeignKey("tps_store_branches.id", ondelete="SET NULL"), nullable=True)
+    brand_id = db.Column(db.Integer, db.ForeignKey("kms__brands_suppliers.id", ondelete="RESTRICT"), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     sku_prefix = db.Column(db.String(50), nullable=False)
     instrument_type = db.Column(db.String(100), nullable=False)
@@ -224,7 +229,7 @@ class TPSProduct(db.Model):
     warranty_months = db.Column(db.Integer, default=12, nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
     status = db.Column(db.Enum("draft", "published", "archived", name="product_status_enum"), default="published", nullable=False)
-    created_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -251,10 +256,10 @@ class TPSProduct(db.Model):
 
 class TPSProductVariant(db.Model):
     """Varian SKU warna/finishing instrumen musik, harga modal, harga jual, dan stok fisik."""
-    __tablename__ = "tps_product_variants"
+    __tablename__ = "tps__product_variants"
 
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("tps_products.id", ondelete="CASCADE"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="CASCADE"), nullable=False)
     sku_code = db.Column(db.String(100), unique=True, nullable=False, index=True)
     variant_name = db.Column(db.String(100), nullable=False)
     color_finish = db.Column(db.String(100), nullable=False)
@@ -265,6 +270,13 @@ class TPSProductVariant(db.Model):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Deadstock Aging & Clearance Promo Simulator fields
+    stock_in_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
+    discount_percent = db.Column(db.Float, default=0.0, nullable=False)
+    clearance_price = db.Column(db.Numeric(15, 2), nullable=True)
+    is_clearance_active = db.Column(db.Boolean, default=False, nullable=False)
+    clearance_note = db.Column(db.String(255), nullable=True)
 
     @property
     def quota(self):
@@ -278,16 +290,39 @@ class TPSProductVariant(db.Model):
     def tier_name(self):
         return self.variant_name
 
+    @property
+    def effective_price(self):
+        if self.is_clearance_active and self.clearance_price is not None:
+            return float(self.clearance_price)
+        return float(self.price)
+
+    @property
+    def aging_days(self):
+        ref_date = self.stock_in_date or self.created_at or datetime.utcnow()
+        delta = datetime.utcnow() - ref_date
+        return max(0, delta.days)
+
+    @property
+    def aging_bucket(self):
+        days = self.aging_days
+        if days <= 30:
+            return "fresh"
+        elif days <= 60:
+            return "moderate"
+        elif days <= 90:
+            return "slow"
+        return "deadstock"
+
 
 class TPSOrder(db.Model):
     """Order transaksi pembelian instrumen musik (Delivery via ekspedisi atau Click & Collect di showroom)."""
-    __tablename__ = "tps_orders"
+    __tablename__ = "tps__orders"
 
     id = db.Column(db.Integer, primary_key=True)
     invoice_code = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey("tps_customers.id", ondelete="SET NULL"), nullable=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("tps_products.id", ondelete="RESTRICT"), nullable=False)
-    variant_id = db.Column(db.Integer, db.ForeignKey("tps_product_variants.id", ondelete="SET NULL"), nullable=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("tps__customers.id", ondelete="SET NULL"), nullable=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="RESTRICT"), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="SET NULL"), nullable=True)
     quantity = db.Column(db.Integer, default=1, nullable=False)
     unit_price = db.Column(db.BigInteger, default=0, nullable=False)
     total_price = db.Column(db.BigInteger, default=0, nullable=False)
@@ -296,7 +331,7 @@ class TPSOrder(db.Model):
         default="delivery",
         nullable=False
     )
-    pickup_branch_id = db.Column(db.Integer, db.ForeignKey("tps_store_branches.id", ondelete="SET NULL"), nullable=True)
+    pickup_branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
     pickup_code = db.Column(db.String(50), nullable=True)
     pickup_status = db.Column(
         db.Enum("pending", "ready", "collected", name="pickup_status_enum"),
@@ -321,7 +356,7 @@ class TPSOrder(db.Model):
     buyer_name = db.Column(db.String(100), nullable=False)
     buyer_email = db.Column(db.String(120), nullable=False)
     buyer_phone = db.Column(db.String(50), nullable=False)
-    handled_by_staff_id = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
+    handled_by_staff_id = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
     paid_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -346,11 +381,11 @@ class TPSOrder(db.Model):
 
 class TPSWishlist(db.Model):
     """Daftar instrumen musik favorit / wishlist pembeli."""
-    __tablename__ = "tps_wishlists"
+    __tablename__ = "tps__wishlists"
 
     id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey("tps_customers.id", ondelete="CASCADE"), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey("tps_products.id", ondelete="CASCADE"), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey("tps__customers.id", ondelete="CASCADE"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="CASCADE"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     customer = db.relationship("TPSCustomer", foreign_keys=[customer_id], lazy=True)
@@ -359,13 +394,13 @@ class TPSWishlist(db.Model):
 
 class TPSPurchaseOrder(db.Model):
     """Alur restock pengadaan barang supplier (Warehouse Staff -> Manager -> Finance -> Supplier)."""
-    __tablename__ = "tps_purchase_orders"
+    __tablename__ = "tps__purchase_orders"
 
     id = db.Column(db.Integer, primary_key=True)
     po_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey("tps_brands_suppliers.id", ondelete="RESTRICT"), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey("tps_products.id", ondelete="RESTRICT"), nullable=False)
-    variant_id = db.Column(db.Integer, db.ForeignKey("tps_product_variants.id", ondelete="SET NULL"), nullable=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey("kms__brands_suppliers.id", ondelete="RESTRICT"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="RESTRICT"), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="SET NULL"), nullable=True)
     quantity = db.Column(db.Integer, default=1, nullable=False)
     unit_cost = db.Column(db.BigInteger, default=0, nullable=False)
     total_cost = db.Column(db.BigInteger, default=0, nullable=False)
@@ -374,11 +409,11 @@ class TPSPurchaseOrder(db.Model):
         default="submitted",
         nullable=False
     )
-    destination_branch_id = db.Column(db.Integer, db.ForeignKey("tps_store_branches.id", ondelete="SET NULL"), nullable=True)
-    requested_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="RESTRICT"), nullable=False)
-    approved_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
-    paid_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
-    received_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
+    destination_branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
+    requested_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="RESTRICT"), nullable=False)
+    approved_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    paid_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    received_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -395,11 +430,11 @@ class TPSPurchaseOrder(db.Model):
 
 class TPSInventoryLog(db.Model):
     """Pencatatan mutasi stok fisik & nomor seri (serial number) instrumen."""
-    __tablename__ = "tps_inventory_logs"
+    __tablename__ = "tps__inventory_logs"
 
     id = db.Column(db.Integer, primary_key=True)
-    variant_id = db.Column(db.Integer, db.ForeignKey("tps_product_variants.id", ondelete="CASCADE"), nullable=False)
-    branch_id = db.Column(db.Integer, db.ForeignKey("tps_store_branches.id", ondelete="SET NULL"), nullable=True)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="CASCADE"), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
     change_type = db.Column(
         db.Enum("po_received", "sale_delivery", "sale_click_and_collect", "manual_adjustment", "return_refund", name="inventory_change_type_enum"),
         nullable=False
@@ -410,7 +445,7 @@ class TPSInventoryLog(db.Model):
     serial_number = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     reference_id = db.Column(db.String(100), nullable=True)
-    logged_by = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
+    logged_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
@@ -424,7 +459,7 @@ class TPSInventoryLog(db.Model):
 
 class KMSCategory(db.Model):
     """Kategori artikel pengetahuan dan FAQ."""
-    __tablename__ = "kms_categories"
+    __tablename__ = "kms__categories"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -439,16 +474,28 @@ class KMSCategory(db.Model):
 
 
 class KMSArticle(db.Model):
-    """Artikel panduan gear, tips pemeliharaan instrumen, dan SOP internal."""
-    __tablename__ = "kms_articles"
+    """Artikel panduan gear publik (customer) dan SOP internal divisi (internal)."""
+    __tablename__ = "kms__articles"
 
     id = db.Column(db.Integer, primary_key=True)
-    category_id = db.Column(db.Integer, db.ForeignKey("kms_categories.id", ondelete="RESTRICT"), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey("kms__categories.id", ondelete="RESTRICT"), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     slug = db.Column(db.String(255), unique=True, nullable=False)
+    audience_type = db.Column(
+        db.Enum("customer", "internal", name="kms_audience_enum"),
+        default="customer",
+        nullable=False,
+    )
+    target_role = db.Column(db.String(50), default="public", nullable=False)
+    sop_code = db.Column(db.String(30), nullable=True)
+    priority_level = db.Column(
+        db.Enum("standard", "mandatory", "critical", name="kms_priority_enum"),
+        default="standard",
+        nullable=False,
+    )
     content = db.Column(db.Text, nullable=False)
     excerpt = db.Column(db.Text, nullable=True)
-    author_staff_id = db.Column(db.Integer, db.ForeignKey("oas_staff.id", ondelete="SET NULL"), nullable=True)
+    author_staff_id = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
     is_published = db.Column(db.Boolean, default=True, nullable=False)
     view_count = db.Column(db.Integer, default=0, nullable=False)
     helpful_count = db.Column(db.Integer, default=0, nullable=False)
@@ -462,10 +509,10 @@ class KMSArticle(db.Model):
 
 class KMSArticleFeedback(db.Model):
     """Umpan balik pengunjung terhadap artikel KMS."""
-    __tablename__ = "kms_article_feedback"
+    __tablename__ = "kms__article_feedback"
 
     id = db.Column(db.Integer, primary_key=True)
-    article_id = db.Column(db.Integer, db.ForeignKey("kms_articles.id", ondelete="CASCADE"), nullable=False)
+    article_id = db.Column(db.Integer, db.ForeignKey("kms__articles.id", ondelete="CASCADE"), nullable=False)
     user_id = db.Column(db.Integer, nullable=True)
     is_helpful = db.Column(db.Boolean, nullable=False)
     comment = db.Column(db.Text, nullable=True)
@@ -474,16 +521,225 @@ class KMSArticleFeedback(db.Model):
 
 class KMSFAQ(db.Model):
     """Tanya jawab resmi seputar garansi, pengiriman kayu, dan Click & Collect."""
-    __tablename__ = "kms_faqs"
+    __tablename__ = "kms__faqs"
 
     id = db.Column(db.Integer, primary_key=True)
-    category_id = db.Column(db.Integer, db.ForeignKey("kms_categories.id", ondelete="SET NULL"), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey("kms__categories.id", ondelete="SET NULL"), nullable=True)
     question = db.Column(db.String(255), nullable=False)
     answer = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     sort_order = db.Column(db.Integer, default=0, nullable=False)
     view_count = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ============================================================================
+# 5. DSS (DECISION SUPPORT SYSTEM) - Smart PO Restock Prioritization (AHP-TOPSIS)
+# ============================================================================
+
+class DSSCriterion(db.Model):
+    """Master kriteria penilaian AHP-TOPSIS untuk prioritas restock pengadaan instrumen."""
+    __tablename__ = "dss__criteria"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(10), unique=True, nullable=False, index=True)  # C1..C5
+    name = db.Column(db.String(100), nullable=False)
+    attribute_type = db.Column(
+        db.Enum("benefit", "cost", name="dss_attribute_type_enum"),
+        nullable=False
+    )
+    weight = db.Column(db.Float, default=0.0, nullable=False)  # Bobot eigenvector hasil AHP
+    description = db.Column(db.Text, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    subcriteria_ranges = db.relationship("DSSSubcriterionRange", backref="criterion_rel", lazy="dynamic", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "code": self.code,
+            "name": self.name,
+            "attribute_type": self.attribute_type,
+            "weight": round(float(self.weight), 4) if self.weight is not None else 0.0,
+            "description": self.description,
+            "ranges": [r.to_dict() for r in self.subcriteria_ranges.order_by(DSSSubcriterionRange.score_value.desc()).all()],
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class DSSSubcriterionRange(db.Model):
+    """Skala parameter & ambang batas kriteria penilaian sebagai acuan interpretasi manajerial."""
+    __tablename__ = "dss__subcriteria_ranges"
+
+    id = db.Column(db.Integer, primary_key=True)
+    criterion_id = db.Column(db.Integer, db.ForeignKey("dss__criteria.id", ondelete="CASCADE"), nullable=False)
+    range_label = db.Column(db.String(200), nullable=False)
+    min_val = db.Column(db.Float, nullable=True)
+    max_val = db.Column(db.Float, nullable=True)
+    score_value = db.Column(db.Integer, nullable=False)  # 1 - 5
+    notes = db.Column(db.String(255), nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "criterion_id": self.criterion_id,
+            "range_label": self.range_label,
+            "min_val": self.min_val,
+            "max_val": self.max_val,
+            "score_value": self.score_value,
+            "notes": self.notes,
+        }
+
+
+class DSSAHPMatrix(db.Model):
+    """Matriks perbandingan berpasangan AHP 5x5 antar kriteria."""
+    __tablename__ = "dss__ahp_matrices"
+
+    id = db.Column(db.Integer, primary_key=True)
+    row_criterion_id = db.Column(db.Integer, db.ForeignKey("dss__criteria.id", ondelete="CASCADE"), nullable=False)
+    col_criterion_id = db.Column(db.Integer, db.ForeignKey("dss__criteria.id", ondelete="CASCADE"), nullable=False)
+    comparison_value = db.Column(db.Float, nullable=False, default=1.0)
+    updated_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    row_criterion = db.relationship("DSSCriterion", foreign_keys=[row_criterion_id], lazy=True)
+    col_criterion = db.relationship("DSSCriterion", foreign_keys=[col_criterion_id], lazy=True)
+    staff = db.relationship("OASStaff", foreign_keys=[updated_by], lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "row_criterion_id": self.row_criterion_id,
+            "col_criterion_id": self.col_criterion_id,
+            "row_code": self.row_criterion.code if self.row_criterion else None,
+            "col_code": self.col_criterion.code if self.col_criterion else None,
+            "comparison_value": float(self.comparison_value),
+            "updated_by": self.updated_by,
+            "updated_by_name": self.staff.name if self.staff else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class DSSSession(db.Model):
+    """Header sesi perhitungan simulasi anggaran restock PO berbasis TOPSIS."""
+    __tablename__ = "dss__sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_code = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    executed_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    title = db.Column(db.String(200), nullable=False)
+    budget_limit = db.Column(db.Numeric(15, 2), nullable=False)
+    total_allocated_cost = db.Column(db.Numeric(15, 2), default=0, nullable=False)
+    lambda_max = db.Column(db.Float, nullable=True)
+    consistency_index = db.Column(db.Float, nullable=True)
+    consistency_ratio = db.Column(db.Float, nullable=True)
+    status = db.Column(
+        db.Enum("simulated", "po_generated", "archived", name="dss_session_status_enum"),
+        default="simulated",
+        nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    executor = db.relationship("OASStaff", foreign_keys=[executed_by], lazy=True)
+    topsis_results = db.relationship("DSSTopsisResult", backref="session_rel", lazy="dynamic", cascade="all, delete-orphan")
+
+    def to_dict(self, include_results=False):
+        data = {
+            "id": self.id,
+            "session_code": self.session_code,
+            "executed_by": self.executed_by,
+            "executed_by_name": self.executor.name if self.executor else "System / Manager",
+            "title": self.title,
+            "budget_limit": float(self.budget_limit or 0),
+            "total_allocated_cost": float(self.total_allocated_cost or 0),
+            "lambda_max": round(float(self.lambda_max), 4) if self.lambda_max is not None else None,
+            "consistency_index": round(float(self.consistency_index), 5) if self.consistency_index is not None else None,
+            "consistency_ratio": round(float(self.consistency_ratio), 5) if self.consistency_ratio is not None else None,
+            "is_consistent": (self.consistency_ratio is not None and self.consistency_ratio <= 0.10),
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "total_skus": self.topsis_results.count(),
+            "within_budget_skus": self.topsis_results.filter_by(is_within_budget=True).count(),
+        }
+        if include_results:
+            data["results"] = [r.to_dict() for r in self.topsis_results.order_by(DSSTopsisResult.rank_number.asc()).all()]
+        return data
+
+
+class DSSTopsisResult(db.Model):
+    """Detail perangkingan TOPSIS per varian SKU instrumen musik."""
+    __tablename__ = "dss__topsis_results"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey("dss__sessions.id", ondelete="CASCADE"), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="CASCADE"), nullable=False)
+    raw_c1_stock = db.Column(db.Float, nullable=False)
+    raw_c2_sales = db.Column(db.Float, nullable=False)
+    raw_c3_margin = db.Column(db.Float, nullable=False)
+    raw_c4_demand = db.Column(db.Float, nullable=False)
+    raw_c5_cogs = db.Column(db.Float, nullable=False)
+    norm_c1 = db.Column(db.Float, nullable=False)
+    norm_c2 = db.Column(db.Float, nullable=False)
+    norm_c3 = db.Column(db.Float, nullable=False)
+    norm_c4 = db.Column(db.Float, nullable=False)
+    norm_c5 = db.Column(db.Float, nullable=False)
+    d_plus = db.Column(db.Float, nullable=False)
+    d_minus = db.Column(db.Float, nullable=False)
+    preference_score = db.Column(db.Float, nullable=False)
+    rank_number = db.Column(db.Integer, nullable=False)
+    priority_tier = db.Column(
+        db.Enum("high_priority", "medium_priority", "low_priority", name="dss_priority_tier_enum"),
+        nullable=False
+    )
+    recommended_restock_qty = db.Column(db.Integer, default=0, nullable=False)
+    estimated_po_cost = db.Column(db.Numeric(15, 2), default=0, nullable=False)
+    is_within_budget = db.Column(db.Boolean, default=False, nullable=False)
+
+    variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
+
+    def to_dict(self):
+        v = self.variant
+        p = v.product_rel if (v and hasattr(v, "product_rel")) else None
+        b = p.brand if (p and hasattr(p, "brand")) else None
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "variant_id": self.variant_id,
+            "sku_code": v.sku_code if v else f"SKU-{self.variant_id}",
+            "variant_name": v.variant_name if v else "Standard",
+            "color_finish": v.color_finish if v else "",
+            "product_id": p.id if p else None,
+            "product_name": p.name if p else "Instrumen Musik",
+            "instrument_type": p.instrument_type if p else "Instrument",
+            "category": p.category if p else "Gear",
+            "brand_id": b.id if b else None,
+            "brand_name": b.name if b else "Official",
+            "image_url": p.image_url if p else None,
+            "cost_price": float(v.cost_price) if v else 0,
+            "selling_price": float(v.price) if v else 0,
+            "current_stock": int(v.stock) if v else int(self.raw_c1_stock),
+            # Raw Criteria Values
+            "raw_c1_stock": float(self.raw_c1_stock),
+            "raw_c2_sales": float(self.raw_c2_sales),
+            "raw_c3_margin": round(float(self.raw_c3_margin), 2),
+            "raw_c4_demand": float(self.raw_c4_demand),
+            "raw_c5_cogs": float(self.raw_c5_cogs),
+            # Weighted Normalized (Y)
+            "norm_c1": round(float(self.norm_c1), 5),
+            "norm_c2": round(float(self.norm_c2), 5),
+            "norm_c3": round(float(self.norm_c3), 5),
+            "norm_c4": round(float(self.norm_c4), 5),
+            "norm_c5": round(float(self.norm_c5), 5),
+            # Distances & Score
+            "d_plus": round(float(self.d_plus), 5),
+            "d_minus": round(float(self.d_minus), 5),
+            "preference_score": round(float(self.preference_score), 4),
+            "rank_number": self.rank_number,
+            "priority_tier": self.priority_tier,
+            "recommended_restock_qty": self.recommended_restock_qty,
+            "estimated_po_cost": float(self.estimated_po_cost or 0),
+            "is_within_budget": bool(self.is_within_budget),
+        }
 
 
 # ============================================================================
@@ -513,3 +769,6 @@ SupportMessage = OASSupportMessage
 SystemSetting = OASSystemSetting
 SavedEvent = TPSWishlist
 Notification = OASNotification
+KMSBrandSupplier = TPSBrandSupplier
+KMSFaq = KMSFAQ
+

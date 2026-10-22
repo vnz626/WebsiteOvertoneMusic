@@ -118,8 +118,13 @@ export default function Checkout() {
     );
   }
 
-  const unitPrice = tier?.price || instrument.price || 0;
+  const isClearance = Boolean(tier?.is_clearance_active);
+  const normalPrice = Number(tier?.price || instrument?.price || 0);
+  const unitPrice = (isClearance && tier?.clearance_price)
+    ? Number(tier.clearance_price)
+    : normalPrice;
   const subtotal = unitPrice * Number(quantity || 1);
+  const totalSavings = isClearance ? (normalPrice - unitPrice) * Number(quantity || 1) : 0;
   const shippingCost = fulfillmentMethod === "delivery" ? selectedCourier.cost : 0;
   const grandTotal = subtotal + shippingCost;
 
@@ -422,18 +427,39 @@ export default function Checkout() {
                   </p>
                   <h4 className="text-xs font-bold text-gray-900 truncate mt-0.5">{instrument?.name}</h4>
                   {tier && (
-                    <p className="text-[11px] text-gray-600 mt-0.5">
-                      Varian: <span className="text-gray-900 font-medium">{tier.color_finish || tier.variant_name || tier.tier_name}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[11px] text-gray-600">
+                        Varian: <span className="text-gray-900 font-medium">{tier.color_finish || tier.variant_name || tier.tier_name}</span>
+                      </span>
+                      {isClearance && (
+                        <span className="rounded bg-red-100 text-red-700 text-[9px] font-black uppercase px-1.5 py-0.2 border border-red-200">
+                          CLEARANCE -{tier.discount_percent}%
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {isClearance ? (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs font-black text-red-600">{formatRupiah(unitPrice)}</span>
+                      <span className="text-[11px] text-gray-400 line-through">{formatRupiah(normalPrice)}</span>
+                      <span className="text-[11px] font-normal text-gray-500">x {quantity} unit</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs font-bold text-gray-900 mt-1">
+                      {formatRupiah(unitPrice)} <span className="text-[11px] font-normal text-gray-500">x {quantity} unit</span>
                     </p>
                   )}
-                  <p className="text-xs font-bold text-gray-900 mt-1">
-                    {formatRupiah(unitPrice)} <span className="text-[11px] font-normal text-gray-500">x {quantity} unit</span>
-                  </p>
                 </div>
               </div>
 
               {/* Price Calculation breakdown */}
               <div className="py-4 space-y-2 border-b border-gray-100 text-xs">
+                {isClearance && totalSavings > 0 && (
+                  <div className="flex items-center justify-between text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 font-bold">
+                    <span>Diskon Cuci Gudang</span>
+                    <span>-{formatRupiah(totalSavings)}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-gray-600">
                   <span>Subtotal ({quantity} unit)</span>
                   <span className="text-gray-900 font-semibold">{formatRupiah(subtotal)}</span>
