@@ -1,128 +1,203 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Boxes,
-  CheckCircle2,
-  Disc,
-  Guitar,
-  Headphones,
-  Keyboard,
-  MapPin,
+  Camera,
+  Aperture,
+  Compass,
+  Sun,
   Mic,
+  Tv,
   Package,
-  Radio,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
   Sparkles,
-  Store,
-  Tag,
-  Truck,
-  Volume2,
-  Award
 } from "lucide-react";
 import api from "../../api";
 import { formatRupiah, fileUrl } from "../../utils/format";
+import Hero from "../../components/hero/Hero";
 import BrandTicker from "../../components/home/BrandTicker";
-
-const SLIDES = [
-  {
-    id: 1,
-    tag: "NEW ARRIVAL HIGHLIGHT",
-    title: "Fender Player II Series",
-    subtitle: "Timeless Tone, Modern Playability — Dirancang untuk musisi panggung dan studio dengan upgrade pickup Alnico V dan profil neck Modern C.",
-    ctaText: "Jelajahi Electric Guitars",
-    ctaLink: "/products?category=Electric+Guitars",
-    secondaryText: "Lihat Semua Seri",
-    secondaryLink: "/products",
-    bgImage: "https://images.unsplash.com/photo-1516924962500-2b4b3b99ea02?auto=format&fit=crop&w=1920&q=80",
-    gradient: "from-black/90 via-black/60 to-black/25",
-  },
-  {
-    id: 2,
-    tag: "STUDIO & PRO AUDIO HIGHLIGHT",
-    title: "Elevate Your Studio Sound",
-    subtitle: "Professional Audio Interfaces, Studio Monitors & Reference Microphones. Akurasi sonik tertinggi untuk rekaman dan mixing tanpa kompromi.",
-    ctaText: "Jelajahi Pro Audio",
-    ctaLink: "/products?category=Pro+Audio+%26+Studio",
-    secondaryText: "Peralatan Rekaman",
-    secondaryLink: "/products",
-    bgImage: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1920&q=80",
-    gradient: "from-black/90 via-black/60 to-black/25",
-  },
-  {
-    id: 3,
-    tag: "EXCLUSIVE SHOWROOM EXPERIENCE",
-    title: "Click & Collect at Overtone",
-    subtitle: "Beli online dengan jaminan alokasi unit resmi, ambil dan coba langsung di Flagship Showroom Overtone bersama tim luthier kami.",
-    ctaText: "Temukan Showroom",
-    ctaLink: "/help",
-    secondaryText: "Cara Pengambilan",
-    secondaryLink: "/help",
-    bgImage: "https://images.unsplash.com/photo-1525201548942-d8732f6617a0?auto=format&fit=crop&w=1920&q=80",
-    gradient: "from-black/90 via-black/60 to-black/25",
-  },
-  {
-    id: 4,
-    tag: "SYNTHESIZERS & KEYS HIGHLIGHT",
-    title: "Roland & Yamaha Flagship Keys",
-    subtitle: "Eksplorasi suara tanpa batas dengan tuts berbobot otentik, ekspresi polifonik, dan sound engine synthesizer kelas konser dunia.",
-    ctaText: "Jelajahi Keyboards & Synths",
-    ctaLink: "/products?category=Keyboards+%26+Synths",
-    secondaryText: "Katalog Piano Digital",
-    secondaryLink: "/products",
-    bgImage: "https://images.unsplash.com/photo-1520523839898-507121c2967e?auto=format&fit=crop&w=1920&q=80",
-    gradient: "from-black/90 via-black/60 to-black/25",
-  },
-];
-
-const BRAND_LOGOS = [
-  { name: "Fender", country: "USA", desc: "Stratocaster & Telecaster" },
-  { name: "Gibson", country: "USA", desc: "Les Paul & SG Standards" },
-  { name: "Yamaha", country: "Japan", desc: "Acoustics & Digital Pianos" },
-  { name: "Roland", country: "Japan", desc: "V-Drums & Synthesizers" },
-  { name: "Taylor", country: "USA", desc: "Acoustic Craftsmanship" },
-  { name: "Ibanez", country: "Japan", desc: "Precision Shred & Bass" },
-  { name: "Marshall", country: "UK", desc: "Iconic Valve Amplifiers" },
-  { name: "Shure", country: "USA", desc: "Industry Standard Audio" },
-];
+import Editorial from "../../components/home/Editorial";
+import Skeleton from "../../components/ui/Skeleton";
 
 const CATEGORY_ITEMS = [
-  { name: "Electric Guitars", icon: Guitar, desc: "Fender, Gibson, Ibanez" },
-  { name: "Acoustic Guitars", icon: Disc, desc: "Taylor, Yamaha, Martin" },
-  { name: "Bass Guitars", icon: Volume2, desc: "Precision & Jazz Basses" },
-  { name: "Keyboards & Synths", icon: Keyboard, desc: "Stage Pianos & Workstations" },
-  { name: "Drums & Percussion", icon: Radio, desc: "Acoustic & Roland V-Drums" },
-  { name: "Pro Audio & Studio", icon: Headphones, desc: "Monitors, Mic & Interface" },
+  {
+    name: "Cinema & Mirrorless Cameras",
+    icon: Camera,
+    desc: "Full-Frame 4K/6K Cinema, Dual Native ISO & Super35",
+  },
+  {
+    name: "Cinema & Prime Lenses",
+    icon: Aperture,
+    desc: "Cine Primes T1.3/T1.5, Cine Zoom & Anamorphic",
+  },
+  {
+    name: "Gimbals & Camera Stabilizers",
+    icon: Compass,
+    desc: "3-Axis & 4-Axis Stabilizers, LiDAR Focus & Sliders",
+  },
+  {
+    name: "Studio & Cinema Lighting",
+    icon: Sun,
+    desc: "High-Output Point Source COB, RGBWW Panels & Modifiers",
+  },
+  {
+    name: "Wireless & Broadcast Audio",
+    icon: Mic,
+    desc: "32-bit Float Wireless Lavs, Shotgun Mics & Recorders",
+  },
+  {
+    name: "Monitors & Field Recorders",
+    icon: Tv,
+    desc: "ProRes RAW 4K/8K Field Monitors & Wireless Video",
+  },
 ];
 
+/**
+ * Kartu Produk Glassmorphism Focalpoint Pro (UI/UX Pro Max):
+ * - Permukaan frosted glass (.fp-glass-card) dengan stage gambar 1:1 (.fp-glass-stage)
+ * - Menampilkan foto, brand, judul, kategori, harga (tabular-nums), dan status stok
+ * - Maksimal 1 badge pill per kartu di sudut kiri atas
+ */
+export function ProductCard({ product }) {
+  const stock = product.remaining_quota ?? product.stock ?? 0;
+  const isAvailable = stock > 0;
+  const brandName =
+    product.brand?.name || product.brand || product.organizer || "Focalpoint Pro";
+  const categoryName =
+    product.instrument_type || product.category || "Cinema Gear";
+  const hasClearance = Boolean(
+    product.has_clearance || product.is_clearance_active
+  );
+  const clearanceDiscount =
+    product.max_discount_percent || product.discount_percent || 0;
+  const originalPrice = product.min_price || product.price || 0;
+  const activeDisplayPrice =
+    hasClearance && product.effective_min_price
+      ? product.effective_min_price
+      : originalPrice;
+
+  // Maksimal 1 badge pill per kartu
+  let primaryBadge = null;
+  if (!isAvailable) {
+    primaryBadge = {
+      label: "Stok Habis",
+      cls: "bg-rose-950/80 text-white border-rose-400/40",
+    };
+  } else if (hasClearance && clearanceDiscount > 0) {
+    primaryBadge = {
+      label: `Diskon -${clearanceDiscount}%`,
+      cls: "bg-[#E8622C]/95 text-white border-white/40",
+    };
+  } else if (stock > 0 && stock <= 3) {
+    primaryBadge = {
+      label: `Sisa ${stock} Unit`,
+      cls: "bg-amber-900/85 text-amber-100 border-amber-400/40",
+    };
+  }
+
+  const reviewCount = Number(product.review_count || 0);
+  const avgRating = product.avg_rating
+    ? Number(product.avg_rating).toFixed(1)
+    : null;
+
+  return (
+    <Link
+      to={`/products/${product.id}`}
+      className="group relative fp-glass-card p-4 sm:p-5 flex flex-col cursor-pointer"
+    >
+      {/* Stage Gambar 1:1 Frosted Glass */}
+      <div className="relative aspect-square w-full fp-glass-stage p-4 flex items-center justify-center overflow-hidden">
+        {primaryBadge && (
+          <span
+            className={`absolute top-3 left-3 z-10 inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-sm ${primaryBadge.cls}`}
+          >
+            {primaryBadge.label}
+          </span>
+        )}
+
+        {product.image_url ? (
+          <img
+            src={fileUrl(product.image_url)}
+            alt={`Foto perlengkapan ${product.name} oleh ${brandName}`}
+            loading="lazy"
+            width={320}
+            height={320}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src =
+                "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+            }}
+            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <Package size={40} className="text-[#3A4A63]/60" aria-hidden="true" />
+        )}
+      </div>
+
+      {/* Informasi Produk */}
+      <div className="mt-4 flex-1 flex flex-col">
+        <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider">
+          <span className="text-[#E8622C] truncate">{brandName}</span>
+          <span className="rounded-full bg-[#0F1B2D]/[0.06] border border-[#0F1B2D]/10 px-2.5 py-0.5 text-[#3A4A63] truncate">
+            {categoryName}
+          </span>
+        </div>
+
+        <h3 className="mt-2 font-display text-sm sm:text-[15px] font-bold text-[#0F1B2D] line-clamp-2 leading-snug group-hover:text-[#E8622C] transition-colors">
+          {product.name}
+        </h3>
+
+        {avgRating && reviewCount > 0 && (
+          <div className="flex items-center gap-1 mt-1.5 text-xs">
+            <span className="text-[#E8622C] font-bold" aria-hidden="true">
+              ★
+            </span>
+            <span className="tabular-nums font-bold text-[#0F1B2D]">
+              {avgRating}
+            </span>
+            <span className="tabular-nums text-[11px] text-[#3A4A63]">
+              ({reviewCount} ulasan)
+            </span>
+          </div>
+        )}
+
+        <div className="mt-auto pt-3.5 border-t border-[#0F1B2D]/10 flex items-end justify-between gap-2">
+          <div>
+            {hasClearance && activeDisplayPrice < originalPrice ? (
+              <div>
+                <span className="block tabular-nums text-[11px] text-[#3A4A63] line-through">
+                  {formatRupiah(originalPrice)}
+                </span>
+                <span className="tabular-nums font-display text-sm sm:text-base font-extrabold text-[#E8622C]">
+                  {formatRupiah(activeDisplayPrice)}
+                </span>
+              </div>
+            ) : (
+              <span className="tabular-nums font-display text-sm sm:text-base font-extrabold text-[#0F1B2D]">
+                {formatRupiah(originalPrice)}
+              </span>
+            )}
+          </div>
+
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums border ${
+              isAvailable
+                ? "bg-emerald-500/12 border-emerald-600/25 text-emerald-900"
+                : "bg-[#0F1B2D]/[0.06] border-[#0F1B2D]/12 text-[#3A4A63]"
+            }`}
+          >
+            {isAvailable ? `Stok: ${stock}` : "Habis"}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function Home() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [products, setProducts] = useState([]);
+  const [bundles, setBundles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Auto-slide effect (every 5 seconds)
-  useEffect(() => {
-    if (isPaused) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isPaused]);
-
-  const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
-  }, []);
-
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
-  }, []);
-
-  // Fetch featured products
   useEffect(() => {
     api
       .get("/products")
@@ -130,139 +205,215 @@ export default function Home() {
       .then((res) => setProducts(res?.data?.data || []))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
+
+    fetch("/api/store/bundles")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.status === "success" && Array.isArray(d.data)) {
+          setBundles(d.data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const slide = SLIDES[currentSlide];
-
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      
-      {/* 1. INTERACTIVE HERO CAROUSEL / SLIDER */}
-      <section
-        className="relative h-[560px] sm:h-[620px] lg:h-[680px] w-full overflow-hidden bg-black select-none"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        {/* Slides rendering with smooth cross-fade */}
-        {SLIDES.map((s, idx) => {
-          const isActive = idx === currentSlide;
-          return (
-            <div
-              key={s.id}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-              }`}
-            >
-              {/* Background Image */}
-              <img
-                src={s.bgImage}
-                alt={s.title}
-                className="h-full w-full object-cover object-center transform scale-105 transition-transform duration-[7000ms] ease-out"
-                style={{ transform: isActive ? "scale(1.02)" : "scale(1.08)" }}
-              />
+    <div className="min-h-screen fp-home-canvas">
+      {/* 1. HERO SECTION — "WINDOW TO THE SET" (FOCALPOINT PRO) */}
+      <Hero productCount={products.length || 91} />
 
-              {/* Clean Dark Overlay for Editorial Legibility */}
-              <div className={`absolute inset-0 bg-gradient-to-r ${s.gradient}`} />
-              <div className="absolute inset-0 bg-black/30" />
-
-              {/* Slide Content Box */}
-              <div className="relative mx-auto flex h-full max-w-[1440px] items-center px-6 lg:px-16">
-                <div className="max-w-2xl text-white">
-                  
-                  {/* Category / Subsystem Pill */}
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-[11px] font-bold uppercase tracking-widest text-white backdrop-blur-md mb-4">
-                    <Sparkles size={12} className="text-[#8C7A5B]" />
-                    {s.tag}
-                  </div>
-
-                  {/* Main Editorial Headline */}
-                  <h1 className="font-jakarta text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-white leading-[1.1]">
-                    {s.title}
-                  </h1>
-
-                  {/* Editorial Description */}
-                  <p className="mt-4 text-sm sm:text-base text-gray-200 leading-relaxed font-sans max-w-xl">
-                    {s.subtitle}
-                  </p>
-
-                  {/* CTAs */}
-                  <div className="mt-8 flex flex-wrap items-center gap-3.5">
-                    <Link
-                      to={s.ctaLink}
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-xs font-bold uppercase tracking-wider text-black shadow-lg hover:bg-gray-100 transition-all"
-                    >
-                      {s.ctaText} <ArrowRight size={15} />
-                    </Link>
-                    <Link
-                      to={s.secondaryLink}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-black/30 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md hover:bg-white/10 transition-all"
-                    >
-                      {s.secondaryText}
-                    </Link>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Carousel Navigation Arrows (< and >) */}
-        <button
-          onClick={prevSlide}
-          aria-label="Slide Sebelumnya"
-          className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black focus:outline-none"
-        >
-          <ChevronLeft size={22} />
-        </button>
-
-        <button
-          onClick={nextSlide}
-          aria-label="Slide Berikutnya"
-          className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black focus:outline-none"
-        >
-          <ChevronRight size={22} />
-        </button>
-
-        {/* Pagination Dots at Bottom Center */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5">
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              aria-label={`Pindah ke slide ${i + 1}`}
-              className={`h-2 transition-all rounded-full ${
-                i === currentSlide
-                  ? "w-8 bg-white"
-                  : "w-2 bg-white/40 hover:bg-white/70"
-              }`}
-            />
-          ))}
-        </div>
-
-      </section>
-
-      {/* 2. REPUTATION & BRAND STRIP (LOOPING GESER KE KIRI / INFINITE MARQUEE) */}
+      {/* 2. BRAND TICKER GLASS BAR */}
       <BrandTicker />
 
-      {/* 3. KATEGORI INSTRUMEN (CLEAN EDITORIAL TILES) */}
-      <section className="py-16 lg:py-20 bg-white">
-        <div className="mx-auto max-w-[1440px] px-6 lg:px-12">
+      {/* 3. RILISAN & GEAR PRODUKSI PILIHAN (GLASS CARDS) */}
+      <section
+        aria-labelledby="featured-heading"
+        className="py-16 lg:py-24 relative z-10"
+      >
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8C7A5B]">
-                Eksplorasi Instrumen
-              </span>
-              <h2 className="font-jakarta text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mt-1">
-                Kategori Alat Musik
+              <div className="fp-section-pill mb-3">
+                <span className="fp-section-pill-dot" aria-hidden="true" />
+                <span>Katalog Kurasi Utama</span>
+              </div>
+              <h2
+                id="featured-heading"
+                className="font-display text-3xl sm:text-4xl font-bold text-[#0F1B2D] tracking-tight"
+              >
+                Rilisan &amp; Gear{" "}
+                <span className="text-[#3A4A63] font-semibold">
+                  Produksi Pilihan
+                </span>
               </h2>
             </div>
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-900 hover:text-[#8C7A5B] transition-colors"
-            >
-              Lihat Seluruh Katalog <ArrowRight size={14} />
+            <Link to="/products" className="fp-btn-glass-primary self-start sm:self-auto">
+              <span>Buka Seluruh Katalog ({products.length || 91} Unit)</span>
+              <ArrowRight size={15} aria-hidden="true" />
             </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <Skeleton key={i} className="h-80 w-full rounded-3xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+              {products.slice(0, 8).map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 4. CURATED RIG BUNDLES — DARK VIDEO VILLAGE GLASS SHOWCASE */}
+      {bundles.length > 0 && (
+        <section
+          aria-labelledby="bundles-heading"
+          className="py-16 lg:py-24 fp-dark-glass-section border-y border-white/10"
+        >
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-10">
+              <div>
+                <div className="fp-section-pill-dark mb-3">
+                  <Sparkles
+                    size={13}
+                    className="text-[#E8622C]"
+                    aria-hidden="true"
+                  />
+                  <span>Curated Indie Filmmaker Production Kits</span>
+                </div>
+                <h2
+                  id="bundles-heading"
+                  className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight"
+                >
+                  Paket Rig Produksi{" "}
+                  <span className="text-white/65 font-semibold">
+                    Film &amp; Broadcast
+                  </span>
+                </h2>
+                <p className="text-xs sm:text-sm text-white/75 mt-2 editorial-measure">
+                  Kombinasi kamera sinema, lensa prime, gimbal 4-axis, lighting,
+                  dan audio nirkabel yang telah diuji kompatibilitasnya oleh
+                  teknisi spesialis Focalpoint Pro.
+                </p>
+              </div>
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/12 backdrop-blur-md px-5 py-2.5 text-xs font-bold text-white hover:bg-white hover:text-[#0F1B2D] transition-all self-start md:self-auto"
+              >
+                <span>Lihat Detail di Katalog</span>
+                <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {bundles.map((bundle) => (
+                <article
+                  key={bundle.id}
+                  className="fp-glass-card-dark p-6 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative aspect-[16/10] w-full rounded-2xl bg-black/40 border border-white/15 overflow-hidden mb-5">
+                      {bundle.image_url ? (
+                        <img
+                          src={bundle.image_url}
+                          alt={`Paket bundling ${bundle.name}`}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-white/40">
+                          <Package size={36} aria-hidden="true" />
+                        </div>
+                      )}
+                      {bundle.savings_amount > 0 && (
+                        <span className="absolute top-3 left-3 rounded-full bg-[#E8622C]/95 backdrop-blur-md border border-white/35 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white tabular-nums shadow-lg">
+                          Hemat {formatRupiah(bundle.savings_amount)}
+                        </span>
+                      )}
+                      <span className="absolute bottom-3 right-3 rounded-full bg-black/65 backdrop-blur-md border border-white/25 px-3 py-1 text-[10px] font-bold text-white tabular-nums">
+                        {bundle.bundle_code}
+                      </span>
+                    </div>
+
+                    <h3 className="font-display text-lg font-bold text-white">
+                      {bundle.name}
+                    </h3>
+                    <p className="text-xs text-white/75 mt-1.5 line-clamp-2 leading-relaxed">
+                      {bundle.description}
+                    </p>
+
+                    <div className="mt-4 pt-3.5 border-t border-white/12 space-y-2">
+                      <p className="text-[10px] uppercase tracking-wider text-white/55 font-bold">
+                        Komponen Paket Rig:
+                      </p>
+                      {(bundle.items || []).slice(0, 3).map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="text-xs text-white/85 flex items-center gap-2 truncate"
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-[#E8622C] shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="truncate tabular-nums">
+                            {item.qty}x {item.product_name} ({item.variant_name})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-white/12 flex items-end justify-between gap-3">
+                    <div>
+                      <span className="block text-[11px] text-white/50 line-through tabular-nums">
+                        {formatRupiah(bundle.normal_total_price)}
+                      </span>
+                      <span className="font-display text-xl font-extrabold text-white tabular-nums">
+                        {formatRupiah(bundle.bundle_price)}
+                      </span>
+                    </div>
+                    <Link
+                      to="/offline-stores"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#0F1B2D] hover:bg-[#E8622C] hover:text-white transition-all shadow-lg"
+                    >
+                      <span>Demo di Showroom</span>
+                      <ArrowRight size={13} aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 5. INDEKS KATEGORI CINEMA & BROADCAST (GLASS GRID) */}
+      <section
+        id="categories-section"
+        aria-labelledby="categories-heading"
+        className="py-16 lg:py-24 relative z-10"
+      >
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+            <div>
+              <div className="fp-section-pill mb-3">
+                <span className="fp-section-pill-dot" aria-hidden="true" />
+                <span>Indeks Departemen</span>
+              </div>
+              <h2
+                id="categories-heading"
+                className="font-display text-3xl sm:text-4xl font-bold text-[#0F1B2D] tracking-tight"
+              >
+                Telusuri Berdasarkan{" "}
+                <span className="text-[#3A4A63] font-semibold">
+                  Kategori Produksi
+                </span>
+              </h2>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
@@ -272,17 +423,27 @@ export default function Home() {
                 <Link
                   key={cat.name}
                   to={`/products?category=${encodeURIComponent(cat.name)}`}
-                  className="group rounded-2xl border border-gray-200 bg-[#F9FAFB] p-5 text-center transition-all hover:border-gray-900 hover:bg-white hover:shadow-sm"
+                  className="group fp-glass-card p-5 flex flex-col justify-between cursor-pointer"
                 >
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-800 group-hover:bg-[#111111] group-hover:text-white transition-all">
-                    <Icon size={22} />
+                  <div className="flex items-center justify-between">
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0F1B2D]/[0.06] border border-[#0F1B2D]/12 text-[#0F1B2D] group-hover:bg-[#E8622C] group-hover:text-white group-hover:border-[#E8622C] transition-all duration-200"
+                      aria-hidden="true"
+                    >
+                      <Icon size={20} />
+                    </div>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/70 border border-[#0F1B2D]/10 text-[#3A4A63] group-hover:border-[#E8622C] group-hover:text-[#E8622C] transition-colors">
+                      <ArrowRight size={13} aria-hidden="true" />
+                    </span>
                   </div>
-                  <h3 className="mt-3.5 text-xs font-bold text-gray-900 truncate">
-                    {cat.name}
-                  </h3>
-                  <p className="mt-1 text-[11px] text-gray-500 truncate">
-                    {cat.desc}
-                  </p>
+                  <div className="mt-5">
+                    <h3 className="font-display text-xs sm:text-sm font-bold text-[#0F1B2D] group-hover:text-[#E8622C] transition-colors">
+                      {cat.name}
+                    </h3>
+                    <p className="mt-1.5 text-[11px] text-[#3A4A63] line-clamp-2 leading-snug">
+                      {cat.desc}
+                    </p>
+                  </div>
                 </Link>
               );
             })}
@@ -290,116 +451,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. FEATURED PRODUCTS (NEW ARRIVALS) */}
-      <section className="py-16 bg-[#F9FAFB] border-t border-gray-200">
-        <div className="mx-auto max-w-[1440px] px-6 lg:px-12">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8C7A5B]">
-                Pilihan Terbaik
-              </span>
-              <h2 className="font-jakarta text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mt-1">
-                Instrumen Musik Terbaru
-              </h2>
-            </div>
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-900 hover:text-[#8C7A5B] transition-colors"
-            >
-              Buka Katalog Lengkap <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-gray-200 h-80" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-              {products.slice(0, 8).map((p) => {
-                const isAvailable = (p.remaining_quota || p.stock || 0) > 0;
-                return (
-                  <Link
-                    key={p.id}
-                    to={`/products/${p.id}`}
-                    className="group rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:border-gray-900 hover:shadow-md transition-all flex flex-col"
-                  >
-                    {/* Aspect Square Image Box */}
-                    <div className="aspect-square w-full rounded-xl bg-white border border-gray-100 p-4 flex items-center justify-center overflow-hidden">
-                      {p.image_url ? (
-                        <img
-                          src={fileUrl(p.image_url)}
-                          alt={p.name}
-                          className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <Package size={40} className="text-gray-300" />
-                      )}
-                    </div>
-
-                    {/* Product Details */}
-                    <div className="mt-4 flex-1 flex flex-col">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A5B]">
-                        {p.brand?.name || p.brand || p.organizer || "Overtone"}
-                      </p>
-                      <h3 className="mt-1 text-xs font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-black">
-                        {p.name}
-                      </h3>
-                      
-                      <div className="mt-auto pt-3">
-                        <p className="text-sm font-extrabold text-gray-900">
-                          {formatRupiah(p.price || p.min_price || 0)}
-                        </p>
-                        <p className="mt-1 text-[11px] font-semibold">
-                          {isAvailable ? (
-                            <span className="text-[#16A34A]">Tersedia</span>
-                          ) : (
-                            <span className="text-gray-400">Stok Habis</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 5. EDITORIAL PILLARS / OVERTONE COMMITMENT */}
-      <section className="py-16 bg-white border-t border-gray-200">
-        <div className="mx-auto max-w-[1440px] px-6 lg:px-12">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-8 text-center sm:text-left">
-              <Award size={28} className="text-[#111111] mb-4" />
-              <h3 className="font-bold text-base text-gray-900">Garansi Distributor Resmi</h3>
-              <p className="mt-2 text-xs text-gray-600 leading-relaxed">
-                Seluruh instrumen di Overtone Music Store merupakan unit orisinal distributor resmi dengan nomor seri terverifikasi dan perlindungan garansi service terpercaya.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-8 text-center sm:text-left">
-              <Store size={28} className="text-[#111111] mb-4" />
-              <h3 className="font-bold text-base text-gray-900">Click &amp; Collect di Showroom</h3>
-              <p className="mt-2 text-xs text-gray-600 leading-relaxed">
-                Pesan gear secara online dan ambil di showroom resmi. Coba langsung kualitas akustik instrumen Anda dan dapatkan setup gratis dari tim spesialis kami.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-8 text-center sm:text-left">
-              <Truck size={28} className="text-[#111111] mb-4" />
-              <h3 className="font-bold text-base text-gray-900">Ekspedisi Berasuransi &amp; Kayu</h3>
-              <p className="mt-2 text-xs text-gray-600 leading-relaxed">
-                Pengiriman jarak jauh menggunakan packing kayu kokoh dan perlindungan asuransi penuh agar gear Anda tiba dalam kondisi sempurna dan siap dimainkan.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* 6. SEKSI EDITORIAL KALIBRASI SENSOR & PENGIRIMAN */}
+      <Editorial />
     </div>
   );
 }

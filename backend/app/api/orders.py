@@ -11,8 +11,9 @@ from flask_jwt_extended import jwt_required
 
 from ..documents import PDF_AVAILABLE, build_invoice_pdf, build_ticket_pdf
 from ..extensions import db
-from ..models.models import TPSProduct, TPSProductVariant, TPSOrder, TPSStoreBranch, TPSInventoryLog, OASStaff, TPSCustomer
+from ..models.models import TPSProduct, TPSProductVariant, TPSOrder, TPSStoreBranch, TPSInventoryLog, OASStaff, TPSCustomer, TPSOrderStatusHistory
 from ..notifications import notify, send_mail
+from ..services.outbox_service import trigger_order_notifications
 from ..security import (
     ROLE_SUPER_ADMIN,
     ROLE_USER,
@@ -156,6 +157,16 @@ def create_order():
         db.session.add(inv_log)
 
     db.session.commit()
+
+    # Trigger Notifikasi Email/WhatsApp & Dashboard (Fitur 1.2 & 1.3)
+    initial_trigger = "ready_for_pickup" if (simulate_pay and fulfillment_method == "click_and_collect") else ("payment_confirmed" if simulate_pay else "order_created")
+    trigger_order_notifications(
+        order=order,
+        template_key=initial_trigger,
+        actor=buyer_name,
+        note=f"Pesanan berhasil dibuat ({fulfillment_method}). Status: {order.order_status}"
+    )
+
     return jsonify({
         "message": "Pesanan instrumen berhasil diproses dan lunas!" if simulate_pay else "Pesanan dibuat",
         "data": order_to_dict(order),
@@ -225,7 +236,120 @@ def pay_order(invoice_code):
         ))
 
     db.session.commit()
+
+    # Trigger Notifikasi Pelunasan (Fitur 1.3)
+    trigger_order_notifications(
+        order=order,
+        template_key="ready_for_pickup" if order.fulfillment_method == "click_and_collect" else "payment_confirmed",
+        actor=user.name if user else "Pembayaran Simulator",
+        note=f"Pembayaran berhasil diverifikasi. Status: {order.order_status}"
+    )
+
     return jsonify({"message": "Pembayaran instan berhasil!", "data": order_to_dict(order)})
+
+
+@orders_bp.get("/<invoice_code>/timeline")
+@jwt_required()
+def get_order_timeline(invoice_code):
+    """Mengambil riwayat kronologis status pesanan untuk timeline stepper UI."""
+    order = TPSOrder.query.filter_by(invoice_code=invoice_code).first()
+    if not order:
+        return jsonify({"message": "Pesanan tidak ditemukan"}), 404
+
+    user = current_user()
+    # Pastikan user berhak melihat (customer pemilik atau staf internal)
+    if isinstance(user, TPSCustomer) and order.customer_id != user.id and order.buyer_email != user.email:
+        return jsonify({"message": "Akses ditolak"}), 403
+
+    history = TPSOrderStatusHistory.query.filter_by(order_id=order.id).order_by(TPSOrderStatusHistory.created_at.asc()).all()
+
+    # Jika history belum ada (pesanan lama sebelum migrasi), buat entry representasi awal
+    timeline_data = [h.to_dict() for h in history]
+    if not timeline_data:
+        timeline_data = [{
+            "id": 0,
+            "order_id": order.id,
+            "status": order.order_status,
+            "note": f"Pesanan dibuat dan tercatat dalam sistem ({order.order_status})",
+            "actor": "Sistem Overtone",
+            "created_at": order.created_at.isoformat() if order.created_at else None
+        }]
+
+    return jsonify({
+        "order": order_to_dict(order),
+        "timeline": timeline_data,
+        "current_status": order.order_status,
+        "fulfillment_method": order.fulfillment_method,
+        "tracking_number": order.tracking_number,
+        "shipping_courier": order.shipping_courier,
+        "pickup_code": order.pickup_code,
+        "pickup_status": order.pickup_status,
+        "branch": {
+            "name": order.pickup_branch.name,
+            "address": order.pickup_branch.address,
+            "city": order.pickup_branch.city
+        } if order.pickup_branch else None
+    })
+
+
+@orders_bp.get("/track")
+def track_guest_order():
+    """Endpoint pelacakan pesanan publik / tamu (tanpa perlu login). Verifikasi invoice + email/phone."""
+    invoice_code = (request.args.get("invoice") or request.args.get("invoice_code") or "").strip()
+    contact = (request.args.get("contact") or request.args.get("email") or request.args.get("phone") or "").strip().lower()
+
+    if not invoice_code or not contact:
+        return jsonify({"message": "Kode invoice dan kontak (email / no. WhatsApp) wajib diisi"}), 400
+
+    order = TPSOrder.query.filter_by(invoice_code=invoice_code).first()
+    if not order:
+        return jsonify({"message": "Pesanan dengan nomor invoice tersebut tidak ditemukan"}), 404
+
+    # Normalisasi nomor telepon dan email untuk pencocokan aman
+    clean_contact = contact.replace(" ", "").replace("-", "")
+    order_email = (order.buyer_email or "").strip().lower()
+    order_phone = (order.buyer_phone or "").strip().replace(" ", "").replace("-", "")
+
+    # Cek apakah kontak cocok dengan email atau nomor hp
+    is_match = False
+    if clean_contact == order_email:
+        is_match = True
+    elif clean_contact in order_phone or order_phone in clean_contact:
+        is_match = True
+    elif (clean_contact.startswith("08") and ("628" + clean_contact[2:]) in order_phone) or \
+         (clean_contact.startswith("628") and ("08" + clean_contact[3:]) in order_phone):
+        is_match = True
+
+    if not is_match:
+        return jsonify({"message": "Nomor invoice atau kontak tidak cocok. Mohon periksa kembali email atau nomor WhatsApp yang digunakan saat pemesanan."}), 403
+
+    history = TPSOrderStatusHistory.query.filter_by(order_id=order.id).order_by(TPSOrderStatusHistory.created_at.asc()).all()
+    timeline_data = [h.to_dict() for h in history]
+    if not timeline_data:
+        timeline_data = [{
+            "id": 0,
+            "order_id": order.id,
+            "status": order.order_status,
+            "note": f"Pesanan dibuat dan tercatat dalam sistem ({order.order_status})",
+            "actor": "Sistem Overtone",
+            "created_at": order.created_at.isoformat() if order.created_at else None
+        }]
+
+    return jsonify({
+        "order": order_to_dict(order),
+        "timeline": timeline_data,
+        "current_status": order.order_status,
+        "fulfillment_method": order.fulfillment_method,
+        "tracking_number": order.tracking_number,
+        "shipping_courier": order.shipping_courier,
+        "pickup_code": order.pickup_code if order.payment_status == "paid" else None,
+        "pickup_status": order.pickup_status,
+        "branch": {
+            "name": order.pickup_branch.name,
+            "address": order.pickup_branch.address,
+            "city": order.pickup_branch.city
+        } if order.pickup_branch else None
+    })
 
 
 @orders_bp.get("/<invoice_code>/invoice")

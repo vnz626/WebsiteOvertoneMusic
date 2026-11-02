@@ -1,5 +1,12 @@
 export default function Skeleton({ className = "h-28 w-full" }) {
-  return <div className={`skeleton ${className}`} />;
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Memuat konten"
+      className={`skeleton ${className}`}
+    />
+  );
 }
 
 export function SkeletonGrid({ count = 3 }) {

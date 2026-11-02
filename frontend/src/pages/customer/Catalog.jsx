@@ -3,8 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   ChevronDown,
   ChevronUp,
-  Filter,
-  Grid,
   LayoutGrid,
   List,
   Package,
@@ -12,47 +10,49 @@ import {
   Search,
   SlidersHorizontal,
   X,
-  Check
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import api from "../../api";
 import { fileUrl, formatRupiah } from "../../utils/format";
+import { ProductCard } from "./Home";
+import Skeleton from "../../components/ui/Skeleton";
 
-const CATEGORIES_LIST = [
-  "Electric Guitars",
-  "Acoustic Guitars",
-  "Bass Guitars",
-  "Drums & Percussion",
-  "Keyboards & Synths",
-  "Pro Audio & Studio",
+const OFFICIAL_CINEMA_CATEGORIES = [
+  "Cinema & Mirrorless Cameras",
+  "Cinema & Prime Lenses",
+  "Gimbals & Camera Stabilizers",
+  "Studio & Cinema Lighting",
+  "Wireless & Broadcast Audio",
+  "Monitors & Field Recorders",
 ];
 
 const PRICE_PRESETS = [
-  { label: "Semua Harga", min: null, max: null },
-  { label: "Di bawah Rp 5 Juta", min: 0, max: 5000000 },
-  { label: "Rp 5 Juta - Rp 15 Juta", min: 5000000, max: 15000000 },
-  { label: "Rp 15 Juta - Rp 30 Juta", min: 15000000, max: 30000000 },
-  { label: "Di atas Rp 30 Juta", min: 30000000, max: null },
+  { label: "Semua Rentang Harga", min: null, max: null },
+  { label: "Di bawah Rp 10.000.000", min: 0, max: 10000000 },
+  { label: "Rp 10.000.000 – Rp 35.000.000", min: 10000000, max: 35000000 },
+  { label: "Rp 35.000.000 – Rp 75.000.000", min: 35000000, max: 75000000 },
+  { label: "Di atas Rp 75.000.000", min: 75000000, max: null },
 ];
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allProducts, setAllProducts] = useState([]);
+  const [bundles, setBundles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Search & Filter States
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const selectedCategory = searchParams.get("category") || "all";
   const [selectedBrands, setSelectedBrands] = useState(() => {
     const b = searchParams.get("brand");
     return b ? b.split(",").filter(Boolean) : [];
   });
-  const [availability, setAvailability] = useState(searchParams.get("availability") || "all"); // 'all' | 'in_stock' | 'out_of_stock'
+  const [availability, setAvailability] = useState(searchParams.get("availability") || "all");
   const [minPrice, setMinPrice] = useState(searchParams.get("min_price") || "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "relevance");
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
+  const [viewMode, setViewMode] = useState("grid");
 
-  // Accordion open/close states
   const [accordionOpen, setAccordionOpen] = useState({
     category: true,
     brand: true,
@@ -64,7 +64,6 @@ export default function Catalog() {
     setAccordionOpen((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Load all published products
   useEffect(() => {
     setLoading(true);
     api
@@ -75,9 +74,17 @@ export default function Catalog() {
       })
       .catch(() => setAllProducts([]))
       .finally(() => setLoading(false));
+
+    fetch("/api/store/bundles")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.status === "success" && Array.isArray(d.data)) {
+          setBundles(d.data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  // Update query params in URL
   const updateParams = (updates) => {
     const next = new URLSearchParams(searchParams);
     Object.entries(updates).forEach(([key, val]) => {
@@ -91,8 +98,6 @@ export default function Catalog() {
   };
 
   function handleCategoryChange(cat) {
-    updateParams({ category: cat });
-    // Reset selected brands if they don't apply, or let the user re-pick
     setSelectedBrands([]);
     const next = new URLSearchParams(searchParams);
     if (cat === "all") next.delete("category");
@@ -128,12 +133,31 @@ export default function Catalog() {
     setSearchParams(new URLSearchParams());
   }
 
-  // DYNAMIC REACTIVE BRAND FILTER:
-  // Calculate available brands based solely on the currently selected category!
+  const categoryList = useMemo(() => {
+    const catsFromData = Array.from(
+      new Set(allProducts.map((p) => p.category).filter(Boolean))
+    );
+    if (catsFromData.length > 0) {
+      const ordered = OFFICIAL_CINEMA_CATEGORIES.filter((c) =>
+        catsFromData.some((pCat) => pCat.toLowerCase() === c.toLowerCase())
+      );
+      catsFromData.forEach((c) => {
+        if (!ordered.some((o) => o.toLowerCase() === c.toLowerCase())) {
+          ordered.push(c);
+        }
+      });
+      return ordered;
+    }
+    return OFFICIAL_CINEMA_CATEGORIES;
+  }, [allProducts]);
+
   const dynamicBrands = useMemo(() => {
-    const productsInCat = selectedCategory === "all"
-      ? allProducts
-      : allProducts.filter((p) => (p.category || "").toLowerCase() === selectedCategory.toLowerCase());
+    const productsInCat =
+      selectedCategory === "all"
+        ? allProducts
+        : allProducts.filter(
+            (p) => (p.category || "").toLowerCase() === selectedCategory.toLowerCase()
+          );
 
     const brandCounts = new Map();
     productsInCat.forEach((p) => {
@@ -148,11 +172,9 @@ export default function Catalog() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allProducts, selectedCategory]);
 
-  // FILTER & SORT PRODUCTS
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
-    // 1. Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
@@ -164,14 +186,12 @@ export default function Catalog() {
       );
     }
 
-    // 2. Category
     if (selectedCategory !== "all") {
       result = result.filter(
         (p) => (p.category || "").toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
-    // 3. Brands (Multiple select)
     if (selectedBrands.length > 0) {
       result = result.filter((p) => {
         const bName = p.brand?.name || p.brand || p.organizer;
@@ -179,14 +199,12 @@ export default function Catalog() {
       });
     }
 
-    // 4. Availability
     if (availability === "in_stock") {
       result = result.filter((p) => (p.remaining_quota || p.stock || 0) > 0);
     } else if (availability === "out_of_stock") {
       result = result.filter((p) => (p.remaining_quota || p.stock || 0) <= 0);
     }
 
-    // 5. Price Range
     if (minPrice) {
       result = result.filter((p) => (p.price || p.min_price || 0) >= Number(minPrice));
     }
@@ -194,7 +212,6 @@ export default function Catalog() {
       result = result.filter((p) => (p.price || p.min_price || 0) <= Number(maxPrice));
     }
 
-    // 6. Sorting
     if (sortBy === "price_asc") {
       result.sort((a, b) => (a.price || a.min_price || 0) - (b.price || b.min_price || 0));
     } else if (sortBy === "price_desc") {
@@ -204,7 +221,16 @@ export default function Catalog() {
     }
 
     return result;
-  }, [allProducts, searchQuery, selectedCategory, selectedBrands, availability, minPrice, maxPrice, sortBy]);
+  }, [
+    allProducts,
+    searchQuery,
+    selectedCategory,
+    selectedBrands,
+    availability,
+    minPrice,
+    maxPrice,
+    sortBy,
+  ]);
 
   const hasActiveFilters =
     selectedCategory !== "all" ||
@@ -215,54 +241,63 @@ export default function Catalog() {
     Boolean(searchQuery);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 pb-24">
-      {/* Editorial Breadcrumb & Header Bar */}
-      <div className="border-b border-gray-200 bg-[#FBFBFB]">
-        <div className="mx-auto max-w-[1440px] px-6 py-6 lg:px-12">
-          <nav className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            <Link to="/" className="hover:text-black transition-colors">Beranda</Link>
-            <span>/</span>
-            <span className="text-gray-900 font-semibold">Katalog Alat Musik</span>
+    <div className="min-h-screen bg-canvas text-ink pb-20">
+      {/* Header Katalog */}
+      <div className="border-b border-line bg-surface">
+        <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-12">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-ink-muted mb-2">
+            <Link to="/" className="hover:text-ink transition-colors duration-fast">
+              Beranda
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="text-ink font-bold">Katalog Cinema Gear</span>
             {selectedCategory !== "all" && (
               <>
-                <span>/</span>
-                <span className="text-[#8C7A5B] font-semibold">{selectedCategory}</span>
+                <span aria-hidden="true">/</span>
+                <span className="text-accent font-bold">{selectedCategory}</span>
               </>
             )}
           </nav>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                {selectedCategory === "all" ? "Katalog Instrumen Musik" : selectedCategory}
+              <h1 className="font-display text-2xl sm:text-4xl font-extrabold text-ink tracking-tight">
+                {selectedCategory === "all" ? "Katalog Cinema Cameras & Broadcast Gear" : selectedCategory}
               </h1>
-              <p className="mt-1 text-xs sm:text-sm text-gray-600">
-                Peralatan musik orisinal bergaransi distributor resmi Overtone Music Store.
+              <p className="mt-1 text-xs sm:text-sm text-ink-secondary">
+                Unit orisinal bergaransi distributor resmi dengan inspeksi 10-point sensor calibration &amp; firmware QC.
               </p>
             </div>
-            
-            {/* Search Input */}
+
+            {/* Pencarian Katalog */}
             <div className="relative w-full md:w-80">
-              <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search
+                size={15}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
+                aria-hidden="true"
+              />
               <input
-                type="text"
+                type="search"
+                aria-label="Cari kamera cinema, lensa, atau kode SKU"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   updateParams({ q: e.target.value });
                 }}
-                placeholder="Cari tipe instrumen atau SKU..."
-                className="w-full rounded-full border border-gray-200 bg-white py-2 pl-10 pr-4 text-xs font-medium text-gray-900 placeholder-gray-400 outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                placeholder="Cari seri kamera, merek, atau SKU..."
+                className="ot-input pl-10 pr-8"
               />
               {searchQuery && (
                 <button
+                  type="button"
+                  aria-label="Bersihkan kata kunci pencarian"
                   onClick={() => {
                     setSearchQuery("");
                     updateParams({ q: null });
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink p-1"
                 >
-                  <X size={14} />
+                  <X size={14} aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -270,67 +305,78 @@ export default function Catalog() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1440px] px-6 pt-8 lg:px-12">
+      <div className="mx-auto max-w-[1440px] px-4 pt-8 sm:px-6 lg:px-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          
-          {/* ============================================================== */}
-          {/* 1. SIDEBAR FILTER KIRI (ACCORDION ABU-ABU MUDA #F5F5F5)        */}
-          {/* ============================================================== */}
-          <aside className="lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-900 flex items-center gap-2">
-                <SlidersHorizontal size={14} /> Filter Produk
+          {/* 1. SIDEBAR FILTER KIRI */}
+          <aside aria-label="Filter katalog produk" className="lg:col-span-3 space-y-4">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
+              <span className="font-display text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-2">
+                <SlidersHorizontal size={14} className="text-accent" aria-hidden="true" />
+                <span>Filter Katalog</span>
               </span>
               {hasActiveFilters && (
                 <button
+                  type="button"
                   onClick={resetAllFilters}
-                  className="text-[11px] font-semibold text-[#8C7A5B] hover:text-black flex items-center gap-1 transition-colors"
+                  className="text-[11px] font-bold text-accent hover:underline flex items-center gap-1"
                 >
-                  <RotateCcw size={12} /> Reset Filter
+                  <RotateCcw size={12} aria-hidden="true" />
+                  <span>Reset Filter</span>
                 </button>
               )}
             </div>
 
             {/* ACCORDION 1: KATEGORI */}
-            <div className="rounded-xl border border-gray-200 bg-[#F5F5F5] overflow-hidden transition-all">
+            <div className="rounded-md border border-line bg-surface overflow-hidden">
               <button
                 type="button"
+                aria-expanded={accordionOpen.category}
                 onClick={() => toggleAccordion("category")}
-                className="w-full px-4 py-3.5 flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-gray-900 hover:bg-gray-200/60 transition-colors"
+                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
               >
-                <span>Kategori Gear</span>
-                {accordionOpen.category ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <span>Kategori Cinema &amp; Broadcast</span>
+                {accordionOpen.category ? (
+                  <ChevronUp size={15} aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={15} aria-hidden="true" />
+                )}
               </button>
 
               {accordionOpen.category && (
-                <div className="px-4 pb-4 pt-1 space-y-1.5 border-t border-gray-200/80 bg-white">
+                <div className="p-3 space-y-1 border-t border-line">
                   <button
+                    type="button"
                     onClick={() => handleCategoryChange("all")}
-                    className={`w-full text-left rounded-lg px-2.5 py-1.5 text-xs transition-colors flex items-center justify-between ${
+                    className={`w-full text-left rounded-sm px-2.5 py-1.5 text-xs transition-colors duration-fast flex items-center justify-between ${
                       selectedCategory === "all"
-                        ? "font-bold text-black bg-gray-100"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                        ? "font-bold text-accent bg-accent-subtle"
+                        : "text-ink-secondary hover:bg-surface-muted hover:text-ink"
                     }`}
                   >
                     <span>Semua Kategori</span>
-                    <span className="text-[11px] text-gray-400 font-mono">({allProducts.length})</span>
+                    <span className="text-[11px] text-ink-muted tabular-nums">
+                      ({allProducts.length})
+                    </span>
                   </button>
 
-                  {CATEGORIES_LIST.map((c) => {
+                  {categoryList.map((c) => {
                     const isSelected = selectedCategory.toLowerCase() === c.toLowerCase();
-                    const count = allProducts.filter((p) => (p.category || "").toLowerCase() === c.toLowerCase()).length;
+                    const count = allProducts.filter(
+                      (p) => (p.category || "").toLowerCase() === c.toLowerCase()
+                    ).length;
                     return (
                       <button
                         key={c}
+                        type="button"
                         onClick={() => handleCategoryChange(c)}
-                        className={`w-full text-left rounded-lg px-2.5 py-1.5 text-xs transition-colors flex items-center justify-between ${
+                        className={`w-full text-left rounded-sm px-2.5 py-1.5 text-xs transition-colors duration-fast flex items-center justify-between ${
                           isSelected
-                            ? "font-bold text-black bg-gray-100"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                            ? "font-bold text-accent bg-accent-subtle"
+                            : "text-ink-secondary hover:bg-surface-muted hover:text-ink"
                         }`}
                       >
                         <span className="truncate">{c}</span>
-                        <span className="text-[11px] text-gray-400 font-mono">({count})</span>
+                        <span className="text-[11px] text-ink-muted tabular-nums">({count})</span>
                       </button>
                     );
                   })}
@@ -338,22 +384,27 @@ export default function Catalog() {
               )}
             </div>
 
-            {/* ACCORDION 2: MEREK (DYNAMIC BRAND FILTER - REACTIVE TO CATEGORY) */}
-            <div className="rounded-xl border border-gray-200 bg-[#F5F5F5] overflow-hidden transition-all">
+            {/* ACCORDION 2: MEREK */}
+            <div className="rounded-md border border-line bg-surface overflow-hidden">
               <button
                 type="button"
+                aria-expanded={accordionOpen.brand}
                 onClick={() => toggleAccordion("brand")}
-                className="w-full px-4 py-3.5 flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-gray-900 hover:bg-gray-200/60 transition-colors"
+                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
               >
-                <span>Merek (Brand)</span>
-                {accordionOpen.brand ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <span>Merek Resmi (Brand)</span>
+                {accordionOpen.brand ? (
+                  <ChevronUp size={15} aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={15} aria-hidden="true" />
+                )}
               </button>
 
               {accordionOpen.brand && (
-                <div className="px-4 pb-4 pt-2 space-y-2 border-t border-gray-200/80 bg-white max-h-60 overflow-y-auto">
+                <div className="p-3.5 space-y-2 border-t border-line max-h-60 overflow-y-auto">
                   {dynamicBrands.length === 0 ? (
-                    <p className="text-xs text-gray-400 italic py-2">
-                      Tidak ada merek yang cocok di kategori ini.
+                    <p className="text-xs text-ink-muted py-1">
+                      Tidak ada merek di kategori ini.
                     </p>
                   ) : (
                     dynamicBrands.map((b) => {
@@ -361,20 +412,22 @@ export default function Catalog() {
                       return (
                         <label
                           key={b.name}
-                          className="flex items-center justify-between cursor-pointer text-xs text-gray-700 hover:text-black py-0.5"
+                          className="flex items-center justify-between cursor-pointer text-xs text-ink-secondary hover:text-ink py-0.5"
                         >
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => handleBrandToggle(b.name)}
-                              className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black accent-black cursor-pointer"
+                              className="h-4 w-4 rounded-xs accent-[var(--color-accent)] cursor-pointer"
                             />
-                            <span className={isChecked ? "font-bold text-black" : "font-normal"}>
+                            <span className={isChecked ? "font-bold text-ink" : "font-normal"}>
                               {b.name}
                             </span>
                           </div>
-                          <span className="text-[11px] text-gray-400 font-mono">({b.count})</span>
+                          <span className="text-[11px] text-ink-muted tabular-nums">
+                            ({b.count})
+                          </span>
                         </label>
                       );
                     })
@@ -383,65 +436,84 @@ export default function Catalog() {
               )}
             </div>
 
-            {/* ACCORDION 3: KETERSEDIAAN (AVAILABILITY) */}
-            <div className="rounded-xl border border-gray-200 bg-[#F5F5F5] overflow-hidden transition-all">
+            {/* ACCORDION 3: KETERSEDIAAN */}
+            <div className="rounded-md border border-line bg-surface overflow-hidden">
               <button
                 type="button"
+                aria-expanded={accordionOpen.availability}
                 onClick={() => toggleAccordion("availability")}
-                className="w-full px-4 py-3.5 flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-gray-900 hover:bg-gray-200/60 transition-colors"
+                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
               >
                 <span>Ketersediaan Stok</span>
-                {accordionOpen.availability ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {accordionOpen.availability ? (
+                  <ChevronUp size={15} aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={15} aria-hidden="true" />
+                )}
               </button>
 
               {accordionOpen.availability && (
-                <div className="px-4 pb-4 pt-2 space-y-2.5 border-t border-gray-200/80 bg-white">
-                  <label className="flex items-center justify-between cursor-pointer text-xs text-gray-700 hover:text-black">
+                <div className="p-3.5 space-y-2.5 border-t border-line">
+                  <label className="flex items-center justify-between cursor-pointer text-xs text-ink-secondary hover:text-ink">
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={availability === "in_stock"}
                         onChange={() => handleAvailabilityChange("in_stock")}
-                        className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black accent-black cursor-pointer"
+                        className="h-4 w-4 rounded-xs accent-[var(--color-accent)] cursor-pointer"
                       />
-                      <span>Tersedia (In Stock)</span>
+                      <span>Stok Tersedia (Siap Kirim)</span>
                     </div>
-                    <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+                    <span
+                      className="h-2 w-2 rounded-full bg-status-success-text"
+                      aria-hidden="true"
+                    />
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer text-xs text-gray-700 hover:text-black">
+                  <label className="flex items-center justify-between cursor-pointer text-xs text-ink-secondary hover:text-ink">
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={availability === "out_of_stock"}
                         onChange={() => handleAvailabilityChange("out_of_stock")}
-                        className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black accent-black cursor-pointer"
+                        className="h-4 w-4 rounded-xs accent-[var(--color-accent)] cursor-pointer"
                       />
-                      <span>Stok Habis (Out of Stock)</span>
+                      <span>Stok Habis</span>
                     </div>
-                    <span className="h-2 w-2 rounded-full bg-gray-400" />
+                    <span className="h-2 w-2 rounded-full bg-ink-muted" aria-hidden="true" />
                   </label>
                 </div>
               )}
             </div>
 
-            {/* ACCORDION 4: KISARAN HARGA (IDR) */}
-            <div className="rounded-xl border border-gray-200 bg-[#F5F5F5] overflow-hidden transition-all">
+            {/* ACCORDION 4: KISARAN HARGA */}
+            <div className="rounded-md border border-line bg-surface overflow-hidden">
               <button
                 type="button"
+                aria-expanded={accordionOpen.price}
                 onClick={() => toggleAccordion("price")}
-                className="w-full px-4 py-3.5 flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-gray-900 hover:bg-gray-200/60 transition-colors"
+                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
               >
-                <span>Kisaran Harga (IDR)</span>
-                {accordionOpen.price ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <span>Rentang Harga (Rp)</span>
+                {accordionOpen.price ? (
+                  <ChevronUp size={15} aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={15} aria-hidden="true" />
+                )}
               </button>
 
               {accordionOpen.price && (
-                <div className="px-4 pb-4 pt-3 border-t border-gray-200/80 bg-white space-y-3">
+                <div className="p-3.5 border-t border-line space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold text-gray-500 uppercase">Min (IDR)</label>
+                      <label
+                        htmlFor="catalog-min-price"
+                        className="block text-[10px] font-bold text-ink-muted uppercase mb-1"
+                      >
+                        Minimum (Rp)
+                      </label>
                       <input
+                        id="catalog-min-price"
                         type="number"
                         placeholder="0"
                         value={minPrice}
@@ -449,25 +521,31 @@ export default function Catalog() {
                           setMinPrice(e.target.value);
                           updateParams({ min_price: e.target.value });
                         }}
-                        className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
+                        className="ot-input py-1.5 px-2.5 text-xs tabular-nums"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-gray-500 uppercase">Max (IDR)</label>
+                      <label
+                        htmlFor="catalog-max-price"
+                        className="block text-[10px] font-bold text-ink-muted uppercase mb-1"
+                      >
+                        Maksimum (Rp)
+                      </label>
                       <input
+                        id="catalog-max-price"
                         type="number"
-                        placeholder="Maksimal"
+                        placeholder="Maks"
                         value={maxPrice}
                         onChange={(e) => {
                           setMaxPrice(e.target.value);
                           updateParams({ max_price: e.target.value });
                         }}
-                        className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
+                        className="ot-input py-1.5 px-2.5 text-xs tabular-nums"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1 pt-1">
+                  <div className="space-y-1 pt-1 border-t border-line">
                     {PRICE_PRESETS.map((p, idx) => (
                       <button
                         key={idx}
@@ -480,7 +558,7 @@ export default function Catalog() {
                             max_price: p.max !== null ? String(p.max) : null,
                           });
                         }}
-                        className="block w-full text-left text-[11px] text-gray-600 hover:text-black py-0.5 truncate"
+                        className="block w-full text-left text-[11px] font-medium text-ink-secondary hover:text-accent py-1 truncate tabular-nums"
                       >
                         • {p.label}
                       </button>
@@ -489,253 +567,364 @@ export default function Catalog() {
                 </div>
               )}
             </div>
-
           </aside>
 
-          {/* ============================================================== */}
-          {/* 2. TOP BAR & PRODUCT GRID / LIST VIEW (COL 9)                   */}
-          {/* ============================================================== */}
-          <main className="lg:col-span-9">
-            
-            {/* Top Bar Katalog */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4 mb-6">
-              
-              {/* Kiri: Info Jumlah Hasil */}
-              <div className="text-xs text-gray-600 font-medium">
-                Halaman 1 | Menunjukkan 1–{Math.min(filteredProducts.length, filteredProducts.length)} dari{" "}
-                <span className="font-bold text-gray-900">{filteredProducts.length}</span> hasil ditemukan
+          {/* 2. AREA UTAMA DAFTAR PRODUK */}
+          <div className="lg:col-span-9">
+            {/* Curated Rig Bundles Showcase */}
+            {bundles.length > 0 && selectedCategory === "all" && !searchQuery && (
+              <section
+                aria-label="Paket Bundling Kurasi"
+                className="mb-8 rounded-md border border-line-strong bg-surface p-5 sm:p-6"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-line mb-5 gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-accent text-[11px] font-bold uppercase tracking-wider">
+                      <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Curated Indie Filmmaker Production Kits</span>
+                    </div>
+                    <h2 className="text-xl font-display font-extrabold text-ink tracking-tight mt-0.5">
+                      Paket Rig Lengkap Pilihan Overtone
+                    </h2>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-accent-subtle text-accent border border-accent/30 rounded-xs self-start md:self-auto">
+                    Alokasi Rig Terbatas
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {bundles.map((bundle) => (
+                    <article
+                      key={bundle.id}
+                      className="rounded-sm border border-line bg-canvas p-4 flex flex-col justify-between hover:border-line-strong transition-colors duration-fast"
+                    >
+                      <div>
+                        <div className="relative h-32 bg-surface-muted overflow-hidden mb-3 border border-line rounded-xs">
+                          <img
+                            src={
+                              bundle.image_url ||
+                              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80"
+                            }
+                            alt={`Paket rig ${bundle.name}`}
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                          {bundle.savings_amount > 0 && (
+                            <span className="absolute top-2 right-2 bg-accent text-accent-on text-[10px] font-bold px-2 py-0.5 rounded-xs tabular-nums">
+                              Hemat {formatRupiah(bundle.savings_amount)}
+                            </span>
+                          )}
+                          <span className="absolute bottom-2 left-2 bg-surface/95 border border-line px-2 py-0.5 text-[10px] font-bold text-ink rounded-xs tabular-nums">
+                            {bundle.bundle_code}
+                          </span>
+                        </div>
+
+                        <h3 className="font-display font-bold text-sm text-ink line-clamp-1">
+                          {bundle.name}
+                        </h3>
+                        <p className="text-[11px] text-ink-secondary mt-1 line-clamp-2">
+                          {bundle.description}
+                        </p>
+
+                        <div className="mt-3 pt-2.5 border-t border-line space-y-1">
+                          <p className="text-[10px] uppercase tracking-wider text-ink-muted font-bold">
+                            Isi Paket:
+                          </p>
+                          {(bundle.items || []).slice(0, 3).map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="text-[11px] text-ink-secondary flex items-center gap-1.5 truncate tabular-nums"
+                            >
+                              <span
+                                className="w-1 h-1 rounded-full bg-accent shrink-0"
+                                aria-hidden="true"
+                              />
+                              <span className="truncate">
+                                {item.qty}x {item.product_name} ({item.variant_name})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-line">
+                        <div className="text-[11px] text-ink-muted line-through tabular-nums">
+                          {formatRupiah(bundle.normal_total_price)}
+                        </div>
+                        <div className="text-base font-display font-extrabold text-ink flex items-baseline justify-between tabular-nums">
+                          <span>{formatRupiah(bundle.bundle_price)}</span>
+                          <Link
+                            to="/offline-stores"
+                            className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-bold text-accent hover:underline"
+                          >
+                            <span>Cek di Cabang</span>
+                            <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Bar Pengurutan & Chip Filter Aktif (Aturan G) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4 mb-4">
+              <div className="text-xs text-ink-secondary font-medium tabular-nums">
+                Menampilkan <strong className="font-bold text-ink">{filteredProducts.length}</strong>{" "}
+                dari <strong className="font-bold text-ink">{allProducts.length}</strong> unit produk cinema
               </div>
 
-              {/* Kanan: Dropdown "Urut berdasarkan" & View Toggle */}
               <div className="flex items-center gap-3 self-end sm:self-auto">
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-gray-500 font-medium hidden sm:inline">Urut berdasarkan:</span>
+                  <label htmlFor="catalog-sort" className="text-ink-secondary font-bold">
+                    Urutkan:
+                  </label>
                   <select
+                    id="catalog-sort"
                     value={sortBy}
                     onChange={(e) => {
                       setSortBy(e.target.value);
                       updateParams({ sort: e.target.value });
                     }}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 outline-none focus:border-black cursor-pointer"
+                    className="rounded-sm border border-line-strong bg-surface px-3 py-1.5 text-xs font-bold text-ink cursor-pointer"
                   >
-                    <option value="relevance">Relevansi</option>
+                    <option value="relevance">Relevansi Kurasi</option>
                     <option value="price_asc">Harga: Rendah ke Tinggi</option>
                     <option value="price_desc">Harga: Tinggi ke Rendah</option>
-                    <option value="newest">Terbaru</option>
+                    <option value="newest">Rilisan Terbaru</option>
                   </select>
                 </div>
 
-                {/* View Toggle: Grid vs List */}
-                <div className="flex items-center rounded-lg border border-gray-300 bg-white p-0.5">
+                <div className="flex items-center rounded-sm border border-line-strong bg-surface p-0.5">
                   <button
                     type="button"
                     onClick={() => setViewMode("grid")}
-                    title="Tampilan Grid (4 Kolom)"
-                    className={`rounded-md p-1.5 transition-colors ${
+                    aria-pressed={viewMode === "grid"}
+                    aria-label="Tampilan Grid"
+                    title="Tampilan Grid"
+                    className={`rounded-xs p-1.5 transition-colors duration-fast ${
                       viewMode === "grid"
-                        ? "bg-[#111111] text-white"
-                        : "text-gray-500 hover:text-black"
+                        ? "bg-ink text-surface"
+                        : "text-ink-muted hover:text-ink"
                     }`}
                   >
-                    <LayoutGrid size={15} />
+                    <LayoutGrid size={15} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode("list")}
-                    title="Tampilan List"
-                    className={`rounded-md p-1.5 transition-colors ${
+                    aria-pressed={viewMode === "list"}
+                    aria-label="Tampilan Daftar"
+                    title="Tampilan Daftar"
+                    className={`rounded-xs p-1.5 transition-colors duration-fast ${
                       viewMode === "list"
-                        ? "bg-[#111111] text-white"
-                        : "text-gray-500 hover:text-black"
+                        ? "bg-ink text-surface"
+                        : "text-ink-muted hover:text-ink"
                     }`}
                   >
-                    <List size={15} />
+                    <List size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>
-
             </div>
 
-            {/* PRODUCT LISTINGS */}
+            {/* Baris Filter Aktif yang Selalu Terlihat (Aturan G) */}
+            {hasActiveFilters && (
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                  Filter Aktif:
+                </span>
+                {selectedCategory !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryChange("all")}
+                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent"
+                  >
+                    <span>Kategori: {selectedCategory}</span>
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                )}
+                {selectedBrands.map((b) => (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => handleBrandToggle(b)}
+                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent"
+                  >
+                    <span>Merek: {b}</span>
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                ))}
+                {availability !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => handleAvailabilityChange(availability)}
+                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent"
+                  >
+                    <span>{availability === "in_stock" ? "Stok Tersedia" : "Stok Habis"}</span>
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                )}
+                {(minPrice || maxPrice) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinPrice("");
+                      setMaxPrice("");
+                      updateParams({ min_price: null, max_price: null });
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent tabular-nums"
+                  >
+                    <span>
+                      Harga: {minPrice ? formatRupiah(minPrice) : "Rp 0"} –{" "}
+                      {maxPrice ? formatRupiah(maxPrice) : "Maks"}
+                    </span>
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="text-xs font-bold text-accent hover:underline ml-1"
+                >
+                  Hapus Semua
+                </button>
+              </div>
+            )}
+
+            {/* DAFTAR PRODUK */}
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                  <div key={n} className="animate-pulse rounded-2xl bg-gray-200 h-80" />
+                  <Skeleton key={n} className="h-80 w-full" />
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-12 text-center my-6">
-                <Package size={48} className="mx-auto text-gray-400 stroke-1 mb-3" />
-                <h3 className="text-base font-bold text-gray-900">Tidak Ada Produk yang Cocok</h3>
-                <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
-                  Cobalah menyesuaikan filter pencarian, memilih kategori lain, atau reset semua filter.
+              <div className="rounded-md border border-dashed border-line-strong bg-surface p-10 text-center my-4">
+                <Package
+                  size={44}
+                  className="mx-auto text-ink-muted mb-3"
+                  aria-hidden="true"
+                />
+                <h2 className="font-display text-lg font-bold text-ink">
+                  Tidak Ada Cinema Gear yang Sesuai Filter
+                </h2>
+                <p className="mt-1 text-xs text-ink-secondary max-w-md mx-auto leading-relaxed">
+                  Longgarkan batas harga, hapus filter merek, atau kembali ke seluruh kategori untuk melihat kamera dan lensa yang tersedia.
                 </p>
-                <button
-                  onClick={resetAllFilters}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#111111] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black"
-                >
-                  <RotateCcw size={13} /> Reset Semua Filter
-                </button>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="inline-flex items-center gap-1.5 rounded-sm bg-accent px-5 py-2.5 text-xs font-bold text-accent-on hover:bg-accent-hover transition-colors duration-fast"
+                  >
+                    <RotateCcw size={13} aria-hidden="true" />
+                    <span>Reset Semua Filter</span>
+                  </button>
+                  <Link
+                    to="/offline-stores"
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-line-strong bg-canvas px-4 py-2.5 text-xs font-bold text-ink hover:bg-surface-muted transition-colors duration-fast"
+                  >
+                    <span>Tanyakan Stok di Cabang</span>
+                  </Link>
+                </div>
               </div>
             ) : viewMode === "grid" ? (
-              /* GRID VIEW (4 KOLOM) */
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                {filteredProducts.map((p) => {
-                  const stock = p.remaining_quota || p.stock || 0;
-                  const isAvailable = stock > 0;
-                  const brandName = p.brand?.name || p.brand || p.organizer || "Overtone";
-                  const hasClearance = Boolean(p.has_clearance || p.is_clearance_active);
-                  const clearanceDiscount = p.max_discount_percent || p.discount_percent || 0;
-                  const originalPrice = p.min_price || p.price || 0;
-                  const activeDisplayPrice = hasClearance && p.effective_min_price ? p.effective_min_price : originalPrice;
-
-                  return (
-                    <Link
-                      key={p.id}
-                      to={`/products/${p.id}`}
-                      className="group relative rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:border-gray-900 hover:shadow-md transition-all flex flex-col"
-                    >
-                      {/* Badge Clearance Promo */}
-                      {hasClearance && (
-                        <div className="absolute top-3 left-3 z-10">
-                          <span className="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-xs">
-                            CLEARANCE -{clearanceDiscount}%
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Gambar Bersih di Atas Putih (aspect-square, object-contain) */}
-                      <div className="aspect-square w-full rounded-xl bg-white border border-gray-100 p-4 flex items-center justify-center overflow-hidden">
-                        {p.image_url ? (
-                          <img
-                            src={fileUrl(p.image_url)}
-                            alt={p.name}
-                            className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <Package size={40} className="text-gray-300" />
-                        )}
-                      </div>
-
-                      {/* Info Produk */}
-                      <div className="mt-4 flex-1 flex flex-col">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A5B]">
-                          {brandName}
-                        </p>
-                        <h3 className="mt-1 text-xs font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-black">
-                          {p.name}
-                        </h3>
-
-                        <div className="mt-auto pt-3">
-                          {hasClearance ? (
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-gray-400 font-semibold line-through">
-                                  {formatRupiah(originalPrice)}
-                                </span>
-                              </div>
-                              <p className="text-sm font-black text-red-600">
-                                {formatRupiah(activeDisplayPrice)}
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-sm font-extrabold text-gray-900">
-                              {formatRupiah(originalPrice)}
-                            </p>
-                          )}
-                          <p className="mt-1 text-[11px] font-semibold">
-                            {isAvailable ? (
-                              <span className="text-[#16A34A]">Tersedia</span>
-                            ) : (
-                              <span className="text-gray-400">Stok Habis</span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredProducts.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
               </div>
             ) : (
-              /* LIST VIEW */
-              <div className="space-y-4">
+              <div className="space-y-3.5">
                 {filteredProducts.map((p) => {
-                  const stock = p.remaining_quota || p.stock || 0;
+                  const stock = p.remaining_quota ?? p.stock ?? 0;
                   const isAvailable = stock > 0;
                   const brandName = p.brand?.name || p.brand || p.organizer || "Overtone";
                   const hasClearance = Boolean(p.has_clearance || p.is_clearance_active);
                   const clearanceDiscount = p.max_discount_percent || p.discount_percent || 0;
                   const originalPrice = p.min_price || p.price || 0;
-                  const activeDisplayPrice = hasClearance && p.effective_min_price ? p.effective_min_price : originalPrice;
+                  const activeDisplayPrice =
+                    hasClearance && p.effective_min_price
+                      ? p.effective_min_price
+                      : originalPrice;
+                  const reviewCount = Number(p.review_count || 0);
+                  const avgRating = p.avg_rating ? Number(p.avg_rating).toFixed(1) : null;
 
                   return (
                     <Link
                       key={p.id}
                       to={`/products/${p.id}`}
-                      className="group relative rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm hover:border-gray-900 transition-all flex flex-col sm:flex-row gap-5 items-center"
+                      className="group relative rounded-md border border-line bg-surface p-4 sm:p-5 hover:border-ink transition-colors duration-fast flex flex-col sm:flex-row gap-5 items-center"
                     >
-                      {hasClearance && (
-                        <div className="absolute top-3 left-3 sm:hidden z-10">
-                          <span className="inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
-                            CLEARANCE -{clearanceDiscount}%
-                          </span>
-                        </div>
-                      )}
-                      <div className="h-28 w-28 shrink-0 rounded-xl bg-white border border-gray-100 p-2 flex items-center justify-center overflow-hidden">
+                      <div className="h-28 w-28 aspect-square shrink-0 rounded-sm bg-surface-muted border border-line p-2 flex items-center justify-center overflow-hidden">
                         {p.image_url ? (
                           <img
                             src={fileUrl(p.image_url)}
-                            alt={p.name}
-                            className="h-full w-full object-contain group-hover:scale-105 transition-transform"
+                            alt={`Foto ${p.name} oleh ${brandName}`}
+                            loading="lazy"
+                            className="h-full w-full object-contain"
                           />
                         ) : (
-                          <Package size={32} className="text-gray-300" />
+                          <Package size={32} className="text-ink-muted" aria-hidden="true" />
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A5B]">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
                             {brandName}
-                          </p>
-                          {hasClearance && (
-                            <span className="hidden sm:inline-flex rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
-                              CLEARANCE -{clearanceDiscount}%
+                          </span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                            • {p.instrument_type || p.category || "Cinema Gear"}
+                          </span>
+                          {hasClearance && clearanceDiscount > 0 && (
+                            <span className="rounded-xs bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-on">
+                              Diskon -{clearanceDiscount}%
                             </span>
                           )}
                         </div>
-                        <h3 className="text-sm font-bold text-gray-900 mt-0.5 truncate">
+                        <h3 className="font-display text-base font-bold text-ink mt-0.5 truncate group-hover:text-accent transition-colors duration-fast">
                           {p.name}
                         </h3>
-                        <p className="text-xs text-gray-500 line-clamp-2 mt-1">
-                          {p.description || "Instrumen musik bergaransi distributor resmi Overtone Music Store."}
+                        {avgRating && reviewCount > 0 && (
+                          <div className="flex items-center gap-1.5 mt-1 text-xs">
+                            <span className="text-accent font-bold" aria-hidden="true">
+                              ★
+                            </span>
+                            <span className="tabular-nums font-bold text-ink">{avgRating}</span>
+                            <span className="tabular-nums text-[11px] text-ink-muted">
+                              ({reviewCount} ulasan)
+                            </span>
+                          </div>
+                        )}
+                        <p className="text-xs text-ink-secondary line-clamp-2 mt-1 leading-relaxed">
+                          {p.description ||
+                            "Peralatan cinema & broadcast bergaransi distributor resmi Overtone Pro Cinema Store."}
                         </p>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
-                          {p.instrument_type && <span>Tipe: {p.instrument_type}</span>}
-                          {p.sku_prefix && <span>• SKU: {p.sku_prefix}</span>}
-                        </div>
                       </div>
 
-                      <div className="sm:text-right shrink-0">
-                        {hasClearance ? (
+                      <div className="sm:text-right shrink-0 w-full sm:w-auto border-t sm:border-t-0 border-line pt-3 sm:pt-0 flex sm:block items-center justify-between">
+                        {hasClearance && activeDisplayPrice < originalPrice ? (
                           <div>
-                            <span className="text-xs text-gray-400 font-semibold line-through">
+                            <span className="block text-xs text-ink-muted line-through tabular-nums">
                               {formatRupiah(originalPrice)}
                             </span>
-                            <p className="text-base font-black text-red-600">
+                            <p className="font-display text-base font-extrabold text-accent tabular-nums">
                               {formatRupiah(activeDisplayPrice)}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-base font-extrabold text-gray-900">
+                          <p className="font-display text-base font-extrabold text-ink tabular-nums">
                             {formatRupiah(originalPrice)}
                           </p>
                         )}
-                        <p className="mt-1 text-xs font-semibold">
+                        <p className="mt-1 text-xs font-bold tabular-nums">
                           {isAvailable ? (
-                            <span className="text-[#16A34A]">Tersedia</span>
+                            <span className="text-status-success-text">Stok: {stock} unit</span>
                           ) : (
-                            <span className="text-gray-400">Stok Habis</span>
+                            <span className="text-ink-muted">Stok Habis</span>
                           )}
                         </p>
                       </div>
@@ -744,9 +933,7 @@ export default function Catalog() {
                 })}
               </div>
             )}
-
-          </main>
-
+          </div>
         </div>
       </div>
     </div>

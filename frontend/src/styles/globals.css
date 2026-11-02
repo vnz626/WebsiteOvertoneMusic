@@ -5,91 +5,421 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-ts-canvas text-ts-ink antialiased dark:bg-surface dark:text-slate-100;
-    font-family: Inter, system-ui, Arial, sans-serif;
-    margin: 0;
+  html {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    overflow-x: hidden;
   }
-  h1, h2, h3, h4 {
-    font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
-    @apply tracking-tight;
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    margin: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  /* Format angka & harga konsisten dengan tabular-nums (Aturan D) */
+  .tabular-nums,
+  .font-mono,
+  td,
+  th,
+  input[type="number"],
+  price,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Focus ring jelas dan tidak tertutup (Aturan H & L) */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Elemen Form Global: Input, Select, Textarea (Tahap 1) — menggunakan :where() agar tidak menimpa class komponen seperti .hero__search-input */
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(.hero__search-input)),
+  :where(select),
+  :where(textarea) {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    transition: border-color var(--duration-fast) var(--ease-standard),
+                background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(.hero__search-input)):hover:not(:disabled),
+  :where(select):hover:not(:disabled),
+  :where(textarea):hover:not(:disabled) {
+    border-color: var(--border-strong);
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(.hero__search-input)):focus,
+  :where(select):focus,
+  :where(textarea):focus {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent);
+    outline-offset: 0px;
+  }
+
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.85;
+  }
+
+  /* Tabel Global (Tahap 1) */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead {
+    background-color: var(--bg-muted);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  th {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: left;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
   }
 }
 
 @layer components {
+  /* Skeleton loading berukuran konsisten tanpa pergeseran layout (Aturan H & M) */
   .skeleton {
-    @apply animate-pulse rounded-2xl bg-slate-200 dark:bg-surface-high;
+    background-color: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    animation: pulse-warm 1.6s ease-in-out infinite;
   }
 
-  /* Kartu efek "kaca" ala mockup — dipakai di kartu event & panel dashboard mode gelap */
-  .glass-card {
-    @apply rounded-2xl border border-ts-subtle bg-white shadow-sm transition-all duration-300;
-  }
-  .glass-card:hover {
-    @apply shadow-xl shadow-ts-primary/10;
-  }
-
-  /* Input seragam dengan gaya homepage */
-  .ts-field {
-    @apply w-full rounded-xl border border-ts-subtle bg-white px-4 py-2.5 text-sm text-ts-ink outline-none transition-colors focus:border-ts-primary dark:border-white/10 dark:bg-surface-container dark:text-white;
-  }
-  .dark .glass-card {
-    background: rgba(23, 27, 38, 0.7);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+  /* Pengganti kartu lama bebas glassmorphism/blur (Aturan H) */
+  .glass-card,
+  .ot-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--duration-fast) var(--ease-standard),
+                box-shadow var(--duration-normal) var(--ease-standard);
   }
 
-  .neon-glow {
-    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  .glass-card:hover,
+  .ot-card-interactive:hover {
+    border-color: var(--border-strong);
   }
-  .dark .neon-glow {
-    box-shadow: 0 0 30px rgba(160, 120, 255, 0.25);
+
+  .ts-field,
+  .ot-input {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    padding: 0.625rem 0.875rem;
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    transition: border-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .ts-field:focus,
+  .ot-input:focus {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent);
+    outline-offset: 0px;
+  }
+
+  .editorial-measure {
+    max-width: 68ch;
+  }
+
+  .display-heading {
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.025em;
   }
 }
 
-/* Blob cahaya ambient di background (dekorasi, hanya tampak di mode gelap) */
-.ambient-blob {
-  position: fixed;
+@keyframes pulse-warm {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.home-surface {
+  background-color: var(--bg-canvas);
+}
+
+/* ==========================================================================
+   FOCALPOINT PRO — GLASSMORPHISM DESIGN SYSTEM (UI/UX PRO MAX)
+   Unified with Hero Section ("Window to the Set" — Inter Tight + Plus Jakarta Sans)
+   ========================================================================== */
+
+.fp-home-canvas {
+  position: relative;
+  background-color: #F2F5FA;
+  background-image:
+    radial-gradient(circle at 12% 14%, rgba(156, 196, 232, 0.36) 0%, transparent 38%),
+    radial-gradient(circle at 88% 26%, rgba(232, 98, 44, 0.12) 0%, transparent 36%),
+    radial-gradient(circle at 22% 72%, rgba(156, 196, 232, 0.28) 0%, transparent 42%),
+    radial-gradient(circle at 84% 88%, rgba(232, 98, 44, 0.10) 0%, transparent 40%),
+    linear-gradient(180deg, #E9F0F8 0%, #F4F6FA 48%, #EFECE6 100%);
+  color: #0F1B2D;
+}
+
+/* Frosted Glass Bar (Brand Ticker & Sticky Headers) */
+.fp-glass-bar {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 10px 30px -10px rgba(15, 27, 45, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Primary Light Frosted Glass Card */
+.fp-glass-card {
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  box-shadow:
+    0 12px 32px -8px rgba(15, 27, 45, 0.08),
+    0 2px 6px rgba(15, 27, 45, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.24s ease,
+    background-color 0.24s ease,
+    box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fp-glass-card:hover {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(232, 98, 44, 0.45);
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 44px -10px rgba(15, 27, 45, 0.14),
+    0 4px 12px rgba(232, 98, 44, 0.08),
+    inset 0 1px 0 #ffffff;
+}
+
+/* Inner Frosted Stage for Product Photos (1:1 aspect-square) */
+.fp-glass-stage {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(232, 241, 250, 0.68) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  box-shadow: inset 0 2px 8px rgba(15, 27, 45, 0.04);
+}
+
+/* Section Eyebrow Glass Pill (Matches Hero Badge Pill) */
+.fp-section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 15px;
+  border-radius: 999px;
+  background: rgba(15, 27, 45, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(15, 27, 45, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #0F1B2D;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fp-section-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #E8622C;
+  box-shadow: 0 0 0 3px rgba(232, 98, 44, 0.22);
+}
+
+/* Glass Pill Buttons (Matches Hero CTA & Search Pill) */
+.fp-btn-glass-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: #0F1B2D;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 22px -4px rgba(15, 27, 45, 0.28);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.fp-btn-glass-primary:hover {
+  background: #E8622C;
+  border-color: #E8622C;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px -4px rgba(232, 98, 44, 0.45);
+}
+
+.fp-btn-glass-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #0F1B2D;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(15, 27, 45, 0.15);
+  box-shadow:
+    0 6px 18px -4px rgba(15, 27, 45, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.fp-btn-glass-secondary:hover {
+  background: #ffffff;
+  border-color: #E8622C;
+  color: #E8622C;
+  transform: translateY(-1px);
+}
+
+/* Dark Cinema "Video Village" Glass Section (Echoes Hero Interior Trailer Frame) */
+.fp-dark-glass-section {
+  position: relative;
+  background-color: #0D131D;
+  background-image:
+    radial-gradient(circle at 16% 20%, rgba(232, 98, 44, 0.18) 0%, transparent 42%),
+    radial-gradient(circle at 84% 78%, rgba(156, 196, 232, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #0B1018 0%, #111927 100%);
+  color: #F8FAFC;
+  overflow: hidden;
+}
+
+.fp-glass-card-dark {
+  background: rgba(255, 255, 255, 0.065);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 24px;
+  box-shadow:
+    0 20px 48px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.24s ease,
+    background-color 0.24s ease,
+    box-shadow 0.24s ease;
+}
+
+.fp-glass-card-dark:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(232, 98, 44, 0.55);
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 52px -12px rgba(0, 0, 0, 0.65),
+    0 0 28px rgba(232, 98, 44, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.fp-section-pill-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 15px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Lubang tiket pada kartu Pickup Pass / Invoice */
+.ticket-notch-left,
+.ticket-notch-right {
+  position: absolute;
+  width: 16px;
+  height: 16px;
   border-radius: 9999px;
-  pointer-events: none;
-  z-index: -10;
-  filter: blur(140px);
-  opacity: 0;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
 }
-.dark .ambient-blob {
-  opacity: 0.18;
-}
-
-/* ===== Homepage redesign (Ticksy) ===== */
-.home-surface { --page-bg: #F8FAFC; background: var(--page-bg); }
-.dark .home-surface { --page-bg: #0f131d; background: var(--page-bg); }
-
-/* Lubang tiket di sisi divider perforasi */
-.ticket-notch-left, .ticket-notch-right {
-  position: absolute; width: 16px; height: 16px; border-radius: 9999px;
-  background: var(--page-bg, #F8FAFC); border: 1px solid #E2E8F0;
-}
-.dark .ticket-notch-left, .dark .ticket-notch-right { border-color: rgba(255,255,255,0.08); }
 .ticket-notch-left { left: -9px; border-left-color: transparent; }
 .ticket-notch-right { right: -9px; border-right-color: transparent; }
 
-@keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-.reveal { animation: fade-up .7s cubic-bezier(.2,.7,.2,1) both; }
-.reveal-on-scroll { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
-.reveal-on-scroll.is-visible { opacity: 1; transform: none; }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  animation: fade-up var(--duration-normal) var(--ease-standard) both;
+}
 
-@keyframes slide-in-hero { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
-.hero-slide-in { animation: slide-in-hero .8s ease both; }
-@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
-.kenburns { animation: kenburns 9s ease-out both; }
-@keyframes progress-bar { from { width: 0; } to { width: 100%; } }
-.hero-progress { animation: progress-bar 6s linear both; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
-/* Infinite Logo Marquee */
+/* Marquee dengan penghormatan pada fokus, hover, dan prefers-reduced-motion (Aturan J) */
 @keyframes marquee-left {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
@@ -97,9 +427,28 @@
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee-left 35s linear infinite;
+  animation: marquee-left 38s linear infinite;
 }
-.animate-marquee:hover {
-  animation-play-state: running;
+.animate-marquee:hover,
+.animate-marquee:focus-within,
+.animate-marquee.is-paused {
+  animation-play-state: paused;
 }
 
+/* Hormati prefers-reduced-motion secara mutlak (Aturan J & L) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-marquee {
+    animation: none !important;
+    transform: none !important;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}

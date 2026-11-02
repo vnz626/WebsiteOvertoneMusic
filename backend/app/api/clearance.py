@@ -8,6 +8,7 @@ from flask import Blueprint, jsonify, request
 from ..extensions import db
 from ..models.models import TPSProduct, TPSProductVariant, TPSOrder
 from ..security import roles_required, ROLE_SUPER_ADMIN, ROLE_MANAGER, ROLE_FINANCE
+from ..audit import log_action
 
 clearance_bp = Blueprint("clearance", __name__)
 
@@ -105,8 +106,8 @@ def get_aging_analysis():
             "product_id": v.product_id,
             "product_name": product.name if product else "Unknown Product",
             "brand_name": product.brand.name if product and product.brand else "Official",
-            "category": product.category if product else "Guitars",
-            "instrument_type": product.instrument_type if product else "Instrument",
+            "category": product.category if product else "Cinema Cameras",
+            "instrument_type": product.instrument_type if product else "Cinema Gear",
             "image_url": product.image_url if product else None,
             "sku_code": v.sku_code,
             "variant_name": v.variant_name,
@@ -276,6 +277,19 @@ def apply_clearance():
 
     db.session.commit()
 
+    log_action(
+        action="APPLY_CLEARANCE",
+        entity_type="clearance",
+        entity_id=str(updated[0]) if len(updated) == 1 else "bulk",
+        before={"is_clearance_active": False, "discount_percent": 0.0},
+        after={
+            "is_clearance_active": True,
+            "discount_percent": discount_pct,
+            "updated_variant_ids": updated,
+            "clearance_note": note,
+        },
+    )
+
     return jsonify({
         "message": f"Berhasil menerapkan diskon clearance {discount_pct}% pada {len(updated)} SKU instrumen.",
         "updated_variant_ids": updated,
@@ -292,12 +306,21 @@ def revoke_clearance_single(variant_id):
     if not variant:
         return jsonify({"message": "Varian SKU tidak ditemukan"}), 404
 
+    old_discount = variant.discount_percent
     variant.is_clearance_active = False
     variant.clearance_price = None
     variant.discount_percent = 0.0
     variant.clearance_note = None
 
     db.session.commit()
+
+    log_action(
+        action="REVOKE_CLEARANCE",
+        entity_type="product_variant",
+        entity_id=str(variant.id),
+        before={"is_clearance_active": True, "discount_percent": old_discount},
+        after={"is_clearance_active": False, "discount_percent": 0.0},
+    )
 
     return jsonify({
         "message": f"Promo clearance pada SKU {variant.sku_code} berhasil dibatalkan. Harga kembali normal.",
@@ -317,6 +340,7 @@ def revoke_clearance_bulk():
         query = query.filter(TPSProductVariant.id.in_(variant_ids))
 
     variants = query.all()
+    revoked_ids = [v.id for v in variants]
     for v in variants:
         v.is_clearance_active = False
         v.clearance_price = None
@@ -324,6 +348,14 @@ def revoke_clearance_bulk():
         v.clearance_note = None
 
     db.session.commit()
+
+    log_action(
+        action="REVOKE_CLEARANCE_BULK",
+        entity_type="clearance",
+        entity_id="bulk",
+        before={"active_count": len(revoked_ids)},
+        after={"revoked_count": len(revoked_ids), "revoked_variant_ids": revoked_ids},
+    )
 
     return jsonify({
         "message": f"Promo clearance berhasil dibatalkan pada {len(variants)} SKU.",

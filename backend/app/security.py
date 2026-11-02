@@ -40,17 +40,17 @@ INTERNAL_ROLES = (
 )
 BUYER_ROLES = (ROLE_USER, ROLE_STORE_STAFF, ROLE_SUPER_ADMIN)
 
-INSTRUMENT_CATEGORIES = [
-    "Electric Guitars",
-    "Acoustic Guitars",
-    "Bass Guitars",
-    "Drums & Percussion",
-    "Keyboards & Synths",
-    "Amplifiers & Effects",
-    "Pro Audio & Studio",
-    "Accessories",
+CINEMA_CATEGORIES = [
+    "Cinema & Mirrorless Cameras",
+    "Cinema & Prime Lenses",
+    "Gimbals & Camera Stabilizers",
+    "Studio & Cinema Lighting",
+    "Wireless & Broadcast Audio",
+    "Monitors & Field Recorders",
+    "Accessories & Rigging",
 ]
-EVENT_CATEGORIES = INSTRUMENT_CATEGORIES
+INSTRUMENT_CATEGORIES = CINEMA_CATEGORIES
+EVENT_CATEGORIES = CINEMA_CATEGORIES
 
 INDONESIAN_CITIES = [
     "Jakarta Selatan",

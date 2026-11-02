@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Zap } from "lucide-react";
 import api from "../api";
 import { useAuth, homeForRole } from "../auth/AuthContext";
 import Button from "../components/ui/Button";
@@ -35,54 +35,122 @@ export default function InternalLogin() {
     }
   }
 
-  const field =
-    "w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs sm:text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-black focus:ring-1 focus:ring-black transition-all";
-
   return (
-    <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-[#F9FAFB] p-6">
-      <Card className="w-full max-w-md border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-canvas p-4 sm:p-6 text-ink">
+      <Card className="w-full max-w-md border border-line bg-surface p-6 sm:p-8">
         <div className="text-center mb-6">
-          <span className="block font-extrabold text-2xl tracking-tight text-gray-900 uppercase font-sans">
-            OVERTONE <span className="text-gray-500 font-light text-lg">OAS Portal</span>
-          </span>
-          <h1 className="mt-2 text-base font-bold text-gray-900">Portal Staf Internal</h1>
-          <p className="mt-1 text-xs text-gray-500">Khusus Super Admin, Manager, Finance, Warehouse &amp; Showroom Staff.</p>
+          <div className="inline-flex flex-col items-center mb-3">
+            <span className="font-display text-2xl font-bold tracking-tight text-ink leading-none">
+              OVERTONE
+            </span>
+            <span className="text-[10px] font-bold tracking-[0.26em] uppercase text-accent mt-1">
+              INTERNAL OAS PORTAL
+            </span>
+          </div>
+          <h1 className="mt-2 text-lg font-display font-bold text-ink">Portal Staf Operasional Internal</h1>
+          <p className="mt-1 text-xs text-ink-secondary">
+            Khusus Super Admin, General Manager, Finance Controller, Warehouse Lead &amp; Operational Staff.
+          </p>
         </div>
 
         <form onSubmit={submit} className="space-y-4">
-          {error && <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs text-red-600 font-medium">{error}</p>}
+          {error && (
+            <div role="alert" className="rounded-sm border border-status-danger/30 bg-status-danger-bg px-3.5 py-2.5 text-xs text-status-danger font-medium">
+              {error}
+            </div>
+          )}
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Username Staf</label>
+            <label htmlFor="internal-username" className="block text-xs font-semibold text-ink mb-1.5">
+              Username Staf Internal
+            </label>
             <input
-              className={field}
+              id="internal-username"
+              type="text"
+              className="ot-input"
               placeholder="Username akun internal"
               value={form.username}
               onChange={(e) => update("username", e.target.value)}
               required
+              autoComplete="username"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+            <label htmlFor="internal-password" className="block text-xs font-semibold text-ink mb-1.5">
+              Password
+            </label>
             <input
+              id="internal-password"
               type="password"
-              className={field}
+              className="ot-input"
               placeholder="Password staf"
               value={form.password}
               onChange={(e) => update("password", e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
-          <Button type="submit" className="w-full py-3 bg-[#111111] hover:bg-black text-white font-semibold text-xs rounded-xl shadow-sm transition-all" disabled={loading}>
+          <Button type="submit" variant="primary" size="lg" className="w-full" loading={loading} disabled={loading}>
             {loading ? "Memverifikasi Kredensial..." : "Masuk ke Portal Internal"}
           </Button>
         </form>
 
-        <div className="mt-6 border-t border-gray-100 pt-4 text-center">
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
-            <ShieldCheck size={13} className="text-[#16A34A]" /> OAS Secure Internal Gateway
+        {/* Quick Demo Role Switcher (1-Click) */}
+        <div className="mt-6 rounded-sm border border-line bg-surface-muted p-4">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
+              <Zap size={13} className="text-accent" aria-hidden="true" /> Quick Demo Role Switcher
+            </p>
+            <span className="text-[10px] text-ink-muted font-mono tabular-nums">pwd: password123</span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {[
+              { label: "Super Admin", username: "admin", email: "admin@overtone.id" },
+              { label: "General Manager", username: "manager", email: "manager@overtone.id" },
+              { label: "Finance Controller", username: "finance", email: "finance@overtone.id" },
+              { label: "Warehouse Lead", username: "warehouse", email: "warehouse@overtone.id" },
+              { label: "Operational Staff", username: "store", email: "store@overtone.id" },
+            ].map((d) => (
+              <button
+                key={d.label}
+                type="button"
+                disabled={loading}
+                onClick={async () => {
+                  setForm({ username: d.username, password: "password123" });
+                  setError("");
+                  setLoading(true);
+                  try {
+                    const res = await api.post("/auth/admin/login", {
+                      username: d.username,
+                      password: "password123",
+                    });
+                    const role = login(res.data);
+                    toast.success(`Login berhasil sebagai ${d.label}!`);
+                    navigate(homeForRole(role), { replace: true });
+                  } catch (err) {
+                    const msg = errorMessage(err, `Login ${d.label} gagal.`);
+                    setError(msg);
+                    toast.error(msg);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="flex items-center justify-between rounded-xs border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink hover:border-line-strong transition-colors disabled:opacity-50"
+              >
+                <span>{d.label}</span>
+                <span className="text-[11px] text-ink-muted font-mono">
+                  {d.email}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-line pt-4 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-ink-muted">
+            <ShieldCheck size={13} className="text-status-success" aria-hidden="true" /> OAS Secure Internal Gateway
           </div>
         </div>
       </Card>

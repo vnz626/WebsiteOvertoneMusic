@@ -1,4 +1,4 @@
-"""Endpoint autentikasi: register musisi/pelanggan, login universal (staf internal OAS & pelanggan TPS), profil."""
+"""Endpoint autentikasi: register filmmaker/pelanggan, login universal (staf internal OAS & pelanggan TPS), profil."""
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
@@ -6,13 +6,14 @@ from ..extensions import db
 from ..models.models import OASStaff, TPSCustomer
 from ..security import current_user, make_token
 from ..serializers import user_to_dict
+from ..audit import log_action
 
 auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.post("/register")
 def register():
-    """Daftar akun pelanggan/musisi baru ke tabel tps_customers."""
+    """Daftar akun pelanggan/filmmaker baru ke tabel tps_customers."""
     data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     email = (data.get("email") or "").strip().lower()
@@ -70,15 +71,42 @@ def login():
     if not identifier or not password:
         return jsonify({"message": "Email/Username dan password wajib diisi"}), 400
 
+    # Expand candidate identifiers (supports username, @overtone.id, and @sweelee.id aliases)
+    prefix = identifier.split("@")[0]
+    candidates = list(
+        {
+            identifier,
+            prefix,
+            f"{prefix}@overtone.id",
+            f"{prefix}@sweelee.id",
+        }
+    )
+
     # 1. Periksa akun staf internal (OAS)
     staff = OASStaff.query.filter(
-        (db.func.lower(OASStaff.email) == identifier) | (db.func.lower(OASStaff.username) == identifier)
+        db.func.lower(OASStaff.email).in_(candidates)
+        | db.func.lower(OASStaff.username).in_(candidates)
     ).first()
 
     if staff and staff.check_password(password):
         if not staff.is_active:
+            log_action(
+                action="LOGIN_BLOCKED",
+                entity_type="staff",
+                entity_id=str(staff.id),
+                actor_override=staff,
+                after={"identifier": identifier, "reason": "account_suspended"},
+            )
             return jsonify({"message": "Akun staf ini telah dinonaktifkan. Hubungi Super Administrator."}), 403
+
         access_token = make_token(staff, is_staff=True)
+        log_action(
+            action="LOGIN_STAFF_SUCCESS",
+            entity_type="staff",
+            entity_id=str(staff.id),
+            actor_override=staff,
+            after={"role": staff.role, "email": staff.email},
+        )
         return jsonify(
             {
                 "access_token": access_token,
@@ -91,7 +119,8 @@ def login():
 
     # 2. Periksa akun pelanggan ritel (TPS)
     customer = TPSCustomer.query.filter(
-        (db.func.lower(TPSCustomer.email) == identifier) | (db.func.lower(TPSCustomer.username) == identifier)
+        db.func.lower(TPSCustomer.email).in_(candidates)
+        | db.func.lower(TPSCustomer.username).in_(candidates)
     ).first()
 
     if customer and customer.check_password(password):
@@ -106,6 +135,24 @@ def login():
                 "is_staff": False,
                 "user": customer.to_dict(),
             }
+        )
+
+    # Log kegagalan login internal bila identifier cocok dengan format username staf atau email staf
+    if staff:
+        log_action(
+            action="LOGIN_STAFF_FAILED",
+            entity_type="staff",
+            entity_id=str(staff.id),
+            actor_override={"type": "staff", "id": staff.id, "role": staff.role, "name": staff.name},
+            after={"identifier": identifier, "reason": "invalid_password"},
+        )
+    else:
+        log_action(
+            action="LOGIN_FAILED",
+            entity_type="auth",
+            entity_id=None,
+            actor_override={"type": "unknown", "id": None, "role": "anonymous", "name": identifier},
+            after={"identifier": identifier, "reason": "user_not_found"},
         )
 
     return jsonify({"message": "Email/Username atau password salah"}), 401
@@ -151,6 +198,10 @@ def update_profile():
         user.phone = (data["phone"] or "").strip() or None
     if hasattr(user, "address") and "address" in data:
         user.address = (data["address"] or "").strip() or None
+    if hasattr(user, "notify_email") and "notify_email" in data:
+        user.notify_email = bool(data["notify_email"])
+    if hasattr(user, "notify_whatsapp") and "notify_whatsapp" in data:
+        user.notify_whatsapp = bool(data["notify_whatsapp"])
 
     db.session.commit()
     is_staff = isinstance(user, OASStaff)

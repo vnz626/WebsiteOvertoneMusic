@@ -1,14 +1,19 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
-  Package, Truck, FileText, AlertTriangle, ArrowRight,
-  ClipboardList, CheckCircle2, RefreshCw, Boxes, BarChart2
+  Package,
+  Truck,
+  FileText,
+  AlertTriangle,
+  ArrowRight,
+  ClipboardList,
+  RefreshCw,
+  Boxes,
 } from "lucide-react";
 import api from "../../api";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Button from "../../components/ui/Button";
 import { SkeletonGrid } from "../../components/ui/Skeleton";
-import QuickSopWidget from "../../components/kms/QuickSopWidget";
 
 export default function WarehouseDashboard() {
   const [stats, setStats] = useState({
@@ -19,7 +24,6 @@ export default function WarehouseDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-  const navigate = useNavigate();
 
   const fetchWarehouseStats = useCallback(() => {
     setLoading(true);
@@ -36,7 +40,8 @@ export default function WarehouseDashboard() {
         let pendingPo = 0;
 
         if (summaryResult.status === "fulfilled" && summaryResult.value?.data) {
-          const s = summaryResult.value.data?.data || summaryResult.value.data || {};
+          const s =
+            summaryResult.value.data?.data || summaryResult.value.data || {};
           totalSkus = Number(s?.total_skus ?? 0);
           lowStockSkus = Number(s?.low_stock_skus ?? 0);
           pendingDispatch = Number(s?.pending_dispatch ?? 0);
@@ -74,24 +79,25 @@ export default function WarehouseDashboard() {
   }, [fetchWarehouseStats]);
 
   const refreshAction = (
-    <Button
-      variant="outline"
-      onClick={fetchWarehouseStats}
-      className="border-gray-300 dark:border-slate-700 text-xs text-gray-700 dark:text-slate-200 flex items-center gap-1.5 hover:bg-gray-100 dark:hover:bg-slate-800"
-    >
-      <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh Data
+    <Button variant="secondary" size="sm" onClick={fetchWarehouseStats}>
+      <RefreshCw
+        size={13}
+        className={loading ? "animate-spin" : ""}
+        aria-hidden="true"
+      />
+      Refresh Data
     </Button>
   );
 
   return (
     <DashboardLayout
       title="Warehouse & Inventory Center"
-      subtitle="Pusat monitoring stok fisik instrumen musik, pengajuan restock PO, dan pemrosesan packing ekspedisi Overtone Music Store."
+      subtitle="Pusat monitoring stok fisik cinema & broadcast gear, pengajuan restock PO, dan pemrosesan packing ekspedisi Overtone Pro Cinema."
       actions={refreshAction}
     >
       <div className="space-y-6">
         {errorMsg && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+          <div className="rounded-sm border border-status-warning/30 bg-status-warning/10 p-4 text-xs text-status-warning">
             {errorMsg}
           </div>
         )}
@@ -100,141 +106,175 @@ export default function WarehouseDashboard() {
         {loading ? (
           <SkeletonGrid count={4} />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900/70 p-5 shadow-sm">
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 mb-2">
-                <span className="font-medium">Total Varian SKU</span>
-                <Package size={17} className="text-gray-700 dark:text-slate-300" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 tabular-nums">
+            <div className="rounded-md border border-line bg-surface p-5">
+              <div className="mb-2 flex items-center justify-between text-xs text-ink-muted">
+                <span className="font-bold uppercase tracking-wider">
+                  Total Varian SKU
+                </span>
+                <Package size={16} className="text-ink-secondary" aria-hidden="true" />
               </div>
-              <p className="text-2xl font-extrabold text-gray-900 dark:text-white font-mono">
+              <p className="font-display text-2xl font-bold text-ink">
                 {stats?.total_skus ?? 0}
               </p>
-              <p className="text-[11px] text-gray-500 dark:text-slate-500 mt-1">Stok instrumen aktif terdaftar</p>
+              <p className="mt-1 text-[11px] text-ink-secondary">
+                Stok hardware aktif terdaftar
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/50 dark:border-amber-900/40 dark:bg-amber-950/20 p-5 shadow-sm">
-              <div className="flex items-center justify-between text-xs text-amber-800 dark:text-amber-300 mb-2">
-                <span className="font-medium">Peringatan Stok Menipis</span>
-                <AlertTriangle size={17} className="text-amber-600 dark:text-amber-400" />
+            <div className="rounded-md border border-status-warning/30 bg-status-warning/5 p-5">
+              <div className="mb-2 flex items-center justify-between text-xs text-status-warning">
+                <span className="font-bold uppercase tracking-wider">
+                  Peringatan Stok Menipis
+                </span>
+                <AlertTriangle size={16} aria-hidden="true" />
               </div>
-              <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-400 font-mono">
+              <p className="font-display text-2xl font-bold text-status-warning">
                 {stats?.low_stock_skus ?? 0} SKU
               </p>
-              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-1">Segera ajukan Purchase Order (PO)</p>
+              <p className="mt-1 text-[11px] text-ink-secondary">
+                Segera ajukan Purchase Order (PO)
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900/70 p-5 shadow-sm">
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 mb-2">
-                <span className="font-medium">Perlu Dipacking &amp; Resi</span>
-                <Truck size={17} className="text-emerald-600 dark:text-emerald-400" />
+            <div className="rounded-md border border-line bg-surface p-5">
+              <div className="mb-2 flex items-center justify-between text-xs text-ink-muted">
+                <span className="font-bold uppercase tracking-wider">
+                  Perlu Dipacking &amp; Resi
+                </span>
+                <Truck size={16} className="text-status-success" aria-hidden="true" />
               </div>
-              <p className="text-2xl font-extrabold text-gray-900 dark:text-white font-mono">
+              <p className="font-display text-2xl font-bold text-ink">
                 {stats?.pending_dispatch ?? 0} Paket
               </p>
-              <p className="text-[11px] text-gray-500 dark:text-slate-500 mt-1">Pesanan online kirim ekspedisi</p>
+              <p className="mt-1 text-[11px] text-ink-secondary">
+                Pesanan online kirim ekspedisi
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900/70 p-5 shadow-sm">
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 mb-2">
-                <span className="font-medium">PO Restock Disetujui</span>
-                <ClipboardList size={17} className="text-blue-600 dark:text-cyan-400" />
+            <div className="rounded-md border border-line bg-surface p-5">
+              <div className="mb-2 flex items-center justify-between text-xs text-ink-muted">
+                <span className="font-bold uppercase tracking-wider">
+                  PO Restock Disetujui
+                </span>
+                <ClipboardList size={16} className="text-accent" aria-hidden="true" />
               </div>
-              <p className="text-2xl font-extrabold text-gray-900 dark:text-white font-mono">
+              <p className="font-display text-2xl font-bold text-ink">
                 {stats?.pending_po ?? 0} PO
               </p>
-              <p className="text-[11px] text-gray-500 dark:text-slate-500 mt-1">Menunggu barang tiba dari supplier</p>
+              <p className="mt-1 text-[11px] text-ink-secondary">
+                Menunggu barang tiba dari supplier
+              </p>
             </div>
           </div>
         )}
 
-        {/* SOP & Prosedur Operasional Warehouse */}
-        <QuickSopWidget role="warehouse_staff" linkTo="/warehouse/sop" />
-
         {/* Shortcut Navigasi Cepat Modul Warehouse */}
         <div className="grid gap-5 md:grid-cols-2">
-          
           <Link
             to="/warehouse/inventory"
-            className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:border-gray-900 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-slate-600 transition-all flex items-start gap-4"
+            className="group flex items-start gap-4 rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong"
           >
-            <div className="rounded-xl bg-gray-100 p-3 text-gray-800 dark:bg-slate-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
-              <Boxes size={24} />
+            <div className="rounded-sm border border-line bg-surface-muted p-3 text-ink">
+              <Boxes size={22} aria-hidden="true" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-[#8C7A5B] transition-colors">
+                <h3 className="font-display text-base font-bold text-ink transition-colors group-hover:text-accent">
                   Kartu Stok Fisik &amp; Serial Number
                 </h3>
-                <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
+                <ArrowRight
+                  size={16}
+                  className="text-ink-muted transition-transform group-hover:translate-x-1 group-hover:text-ink"
+                  aria-hidden="true"
+                />
               </div>
-              <p className="mt-1 text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
-                Pantau ketersediaan unit tiap varian SKU warna, lakukan penyesuaian stok opname manual, dan catat nomor seri (SN) instrumen fisik.
+              <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
+                Pantau ketersediaan unit tiap varian SKU, lakukan
+                penyesuaian stok opname manual, dan catat nomor seri (SN)
+                hardware fisik.
               </p>
             </div>
           </Link>
 
           <Link
             to="/warehouse/po"
-            className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:border-gray-900 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-slate-600 transition-all flex items-start gap-4"
+            className="group flex items-start gap-4 rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong"
           >
-            <div className="rounded-xl bg-gray-100 p-3 text-gray-800 dark:bg-slate-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
-              <ClipboardList size={24} />
+            <div className="rounded-sm border border-line bg-surface-muted p-3 text-ink">
+              <ClipboardList size={22} aria-hidden="true" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-[#8C7A5B] transition-colors">
+                <h3 className="font-display text-base font-bold text-ink transition-colors group-hover:text-accent">
                   Purchase Orders (PO) Pengadaan Barang
                 </h3>
-                <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
+                <ArrowRight
+                  size={16}
+                  className="text-ink-muted transition-transform group-hover:translate-x-1 group-hover:text-ink"
+                  aria-hidden="true"
+                />
               </div>
-              <p className="mt-1 text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
-                Ajukan PO pengadaan instrumen musik ke supplier (Fender, Gibson, Roland, Yamaha), dan konfirmasi penerimaan barang untuk auto-increment stok.
+              <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
+                Ajukan PO pengadaan cinema gear ke supplier / distributor resmi (Sony, RED,
+                Canon, DJI), dan konfirmasi penerimaan barang untuk
+                auto-increment stok.
               </p>
             </div>
           </Link>
 
           <Link
             to="/warehouse/orders"
-            className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:border-gray-900 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-slate-600 transition-all flex items-start gap-4"
+            className="group flex items-start gap-4 rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong"
           >
-            <div className="rounded-xl bg-gray-100 p-3 text-gray-800 dark:bg-slate-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
-              <Truck size={24} />
+            <div className="rounded-sm border border-line bg-surface-muted p-3 text-ink">
+              <Truck size={22} aria-hidden="true" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-[#8C7A5B] transition-colors">
+                <h3 className="font-display text-base font-bold text-ink transition-colors group-hover:text-accent">
                   Packing &amp; Input Nomor Resi Ekspedisi
                 </h3>
-                <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
+                <ArrowRight
+                  size={16}
+                  className="text-ink-muted transition-transform group-hover:translate-x-1 group-hover:text-ink"
+                  aria-hidden="true"
+                />
               </div>
-              <p className="mt-1 text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
-                Daftar pesanan online delivery. Tandai status packing kayu selesai dan masukkan nomor resi kurir (JNE/SiCepat) agar pelanggan dapat melacak pesanan.
+              <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
+                Daftar pesanan online delivery. Tandai status packing kayu
+                selesai dan masukkan nomor resi kurir (JNE/SiCepat) agar
+                pelanggan dapat melacak pesanan.
               </p>
             </div>
           </Link>
 
           <Link
             to="/warehouse/logs"
-            className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:border-gray-900 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-slate-600 transition-all flex items-start gap-4"
+            className="group flex items-start gap-4 rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong"
           >
-            <div className="rounded-xl bg-gray-100 p-3 text-gray-800 dark:bg-slate-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
-              <FileText size={24} />
+            <div className="rounded-sm border border-line bg-surface-muted p-3 text-ink">
+              <FileText size={22} aria-hidden="true" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-[#8C7A5B] transition-colors">
+                <h3 className="font-display text-base font-bold text-ink transition-colors group-hover:text-accent">
                   Audit Trail Mutasi Stok (Inventory Logs)
                 </h3>
-                <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
+                <ArrowRight
+                  size={16}
+                  className="text-ink-muted transition-transform group-hover:translate-x-1 group-hover:text-ink"
+                  aria-hidden="true"
+                />
               </div>
-              <p className="mt-1 text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
-                Riwayat kronologis mutasi keluar-masuk stok: penerimaan PO supplier, penjualan online delivery, serah-terima showroom, dan retur refund.
+              <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
+                Riwayat kronologis mutasi keluar-masuk stok: penerimaan PO
+                supplier, penjualan online delivery, serah-terima Offline Store,
+                dan retur refund.
               </p>
             </div>
           </Link>
-
         </div>
-
       </div>
     </DashboardLayout>
   );

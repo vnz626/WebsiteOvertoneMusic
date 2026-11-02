@@ -1,5 +1,120 @@
 :root {
-  --ticksy-primary: #6c5ce7;
-  --ticksy-secondary: #00b894;
-  --ticksy-bg: #f8fafc;
+  /* === PALET WARNA: WARM STUDIO PAPER (LIGHT MODE) === */
+  --bg-canvas: #F7F4EE;
+  --bg-surface: #FCFBF8;
+  --bg-muted: #EFECE4;
+  --bg-subtle: #E4DFD3;
+
+  --text-primary: #181614;
+  --text-secondary: #44403C;
+  --text-muted: #645E57;
+
+  --color-primary: #181614;
+  --color-on-primary: #FCFBF8;
+
+  --color-accent: #B83A14;
+  --color-accent-hover: #9A2E0E;
+  --color-on-accent: #FCFBF8;
+  --color-accent-subtle: #FBECE7;
+
+  --border-subtle: #DDD7CA;
+  --border-strong: #9E9587;
+
+  /* === STATUS SEMANTIK (WCAG AA >= 4.5:1) === */
+  --status-success-bg: #EBF5EE;
+  --status-success-text: #14532D;
+  --status-success-border: #86EFAC;
+
+  --status-warning-bg: #FEF5E7;
+  --status-warning-text: #7C2D12;
+  --status-warning-border: #FDBA74;
+
+  --status-danger-bg: #FDECEC;
+  --status-danger-text: #881337;
+  --status-danger-border: #FDA4AF;
+
+  --status-info-bg: #EEF2F6;
+  --status-info-text: #1E3A5F;
+  --status-info-border: #93C5FD;
+
+  /* === TIPOGRAFI (FOCALPOINT PRO: INTER TIGHT + PLUS JAKARTA SANS) === */
+  --font-display: "Inter Tight", "Plus Jakarta Sans", "Outfit", "Noto Sans JP", "Noto Sans KR", "Noto Sans Arabic", sans-serif;
+  --font-sans: "Plus Jakarta Sans", "DM Sans", "Noto Sans JP", "Noto Sans KR", "Noto Sans Arabic", sans-serif;
+
+  /* === SKALA UKURAN TIPOGRAFI === */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-display: clamp(2.5rem, 4.5vw, 3.75rem);
+
+  /* === SPACING, RADIUS & ELEVATION === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(24, 22, 20, 0.06);
+  --shadow-md: 0 4px 12px -2px rgba(24, 22, 20, 0.10);
+  --shadow-lg: 0 12px 28px -4px rgba(24, 22, 20, 0.16);
+
+  /* === MOTION TOKENS === */
+  --duration-fast: 120ms;
+  --duration-normal: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dark {
+  /* === PALET WARNA: ANALOG CONSOLE DARK === */
+  --bg-canvas: #121110;
+  --bg-surface: #1A1816;
+  --bg-muted: #24211E;
+  --bg-subtle: #2E2A27;
+
+  --text-primary: #F5F2EB;
+  --text-secondary: #D6D1C7;
+  --text-muted: #A69F93;
+
+  --color-primary: #F5F2EB;
+  --color-on-primary: #121110;
+
+  --color-accent: #E05328;
+  --color-accent-hover: #F0643A;
+  --color-on-accent: #121110;
+  --color-accent-subtle: #331B14;
+
+  --border-subtle: #2E2A27;
+  --border-strong: #575048;
+
+  --status-success-bg: #0D2818;
+  --status-success-text: #86EFAC;
+  --status-success-border: #166534;
+
+  --status-warning-bg: #2B1908;
+  --status-warning-text: #FDBA74;
+  --status-warning-border: #9A3412;
+
+  --status-danger-bg: #2D0F16;
+  --status-danger-text: #FDA4AF;
+  --status-danger-border: #9F1239;
+
+  --status-info-bg: #111F33;
+  --status-info-text: #93C5FD;
+  --status-info-border: #1E40AF;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.65);
 }

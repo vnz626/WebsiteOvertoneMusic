@@ -131,7 +131,7 @@ def compute_ahp_weights(matrix_values, criteria_codes):
     }
 
 
-def execute_topsis_calculation(budget_limit, title="Simulasi Pengadaan Instrumen", executed_by_id=None):
+def execute_topsis_calculation(budget_limit, title="Simulasi Pengadaan Cinema Gear", executed_by_id=None):
     """
     Mesin kalkulasi TOPSIS lengkap terintegrasi dengan database Overtone:
     - Menarik seluruh varian aktif dari tps_product_variants
@@ -538,8 +538,8 @@ def run_simulation():
     user = current_user()
     data = request.get_json(silent=True) or {}
 
-    budget_limit = float(data.get("budget_limit") or 150_000_000.0)
-    title = data.get("title") or f"Simulasi Pengadaan Instrumen - Rp {budget_limit:,.0f}"
+    budget_limit = float(data.get("budget_limit") or 250_000_000.0)
+    title = data.get("title") or f"Simulasi Pengadaan Cinema Gear - Rp {budget_limit:,.0f}"
 
     if budget_limit <= 0:
         return jsonify({"message": "Batas anggaran pengadaan harus bernilai positif"}), 400

@@ -2,19 +2,22 @@ export default function Card({ children, className = "", ...props }) {
   return (
     <div
       {...props}
-      className={`rounded-2xl border border-ts-subtle bg-white p-5 shadow-sm dark:border-white/10 dark:bg-surface-container ${className}`}
+      className={`rounded-md border border-line bg-surface p-5 shadow-xs transition-colors duration-fast ${className}`}
     >
       {children}
     </div>
   );
 }
 
-export function StatCard({ label, value, hint }) {
+export function StatCard({ label, value, hint, icon: Icon }) {
   return (
-    <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-ts-primary/10">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ts-muted dark:text-slate-400">{label}</p>
-      <p className="mt-2 font-jakarta text-2xl font-extrabold text-ts-ink dark:text-white">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ts-muted">{hint}</p>}
+    <Card className="hover:border-line-strong">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-ink-muted">{label}</p>
+        {Icon && <Icon size={16} className="text-ink-muted shrink-0" aria-hidden="true" />}
+      </div>
+      <p className="mt-2 font-display text-2xl font-bold text-ink tabular-nums">{value}</p>
+      {hint && <p className="mt-1 text-xs text-ink-secondary">{hint}</p>}
     </Card>
   );
 }

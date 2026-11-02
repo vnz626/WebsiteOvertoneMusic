@@ -121,9 +121,9 @@ KMS_QUICK_RESPONSES = {
     "pengiriman": {
         "title": "Pengiriman & Packing Kayu Asuransi",
         "answer": (
-            "Seluruh pengiriman instrumen di Overtone Music Store menggunakan Packing Kayu Standar Ekspedisi "
-            "(JNE Trucking / SiCepat Cargo) dilapisi double bubble wrap di dalam gigbag/hardcase. "
-            "Pesanan diasuransikan 100% penuh dari risiko benturan, retak, maupun kerusakan cuaca selama perjalanan. "
+            "Seluruh pengiriman peralatan kamera & broadcast di Overtone Store menggunakan Packing Kayu Anti-Statis Standar Ekspedisi "
+            "(JNE Trucking / SiCepat Cargo) dilapisi busa pelindung optik & desiccant kelembapan. "
+            "Pesanan diasuransikan 100% penuh dari risiko benturan, getaran sensor, maupun kerusakan cuaca selama perjalanan. "
             "Estimasi pengiriman Pulau Jawa: 2-3 hari kerja; Luar Jawa: 4-6 hari kerja."
         ),
         "category": "shipping",
@@ -131,29 +131,29 @@ KMS_QUICK_RESPONSES = {
     "click_collect": {
         "title": "Click & Collect Showroom",
         "answer": (
-            "Layanan Click & Collect memungkinkan Anda berbelanja online dan mengambil langsung instrumen "
+            "Layanan Click & Collect memungkinkan Anda berbelanja online dan mengambil langsung kamera serta gear cinema "
             "di showroom resmi kami (Jakarta Flagship, Surabaya, Bandung, & Bali). "
             "Setelah transaksi terverifikasi, Anda akan menerima Kode Unik Ambil Barang (PICKUP-XXXX). "
-            "Unit akan di-setup dan disiapkan oleh tim Store Staff kami untuk unboxing dan sound-check bersama!"
+            "Unit akan di-inspeksi dan disiapkan di Cleanroom Tech Bench untuk unboxing dan uji kalibrasi sensor bersama!"
         ),
         "category": "click_and_collect",
     },
     "garansi": {
-        "title": "Garansi Resmi & Setup Luthier",
+        "title": "Garansi Resmi & Kalibrasi Sensor",
         "answer": (
-            "Setiap instrumen di Overtone bergaransi resmi distributor selama 12-24 bulan (kelistrikan, pickup, hardware). "
-            "Selain itu, setiap pembelian gitar/bass mendapatkan Gratis 1x Professional Setup Luthier "
-            "(kalibrasi action senar, fret leveling inspection, intonasi saddle, dan pembersihan fretboard) "
+            "Setiap kamera cinema dan lensa di Overtone bergaransi resmi distributor selama 12-24 bulan (sensor, motherboard, motor fokus, optik). "
+            "Selain itu, setiap pembelian kamera/lensa mendapatkan Gratis 10-Point Sensor Calibration & Firmware QC "
+            "(pembersihan sensor chamber di cleanroom, dead pixel scan, kalibrasi back-focus lensa, dan update firmware) "
             "yang dapat diklaim di seluruh service desk showroom kami."
         ),
         "category": "warranty",
     },
     "konsultasi": {
-        "title": "Konsultasi Spesifikasi Gear",
+        "title": "Konsultasi Rig & Cinema Gear",
         "answer": (
-            "Tim Gear Specialist dan Luthier kami siap membantu Anda mencocokkan instrumen impian! "
-            "Apakah Anda mencari tone hangat (Mahogany / Humbucker), neck profile nyaman (Modern C / Thin U), "
-            "atau audio interface untuk home recording? "
+            "Tim Cinema Specialist dan Sensor Technician kami siap membantu Anda merancang paket produksi impian! "
+            "Apakah Anda mencari kamera bioskop Full-Frame 4K/6K RAW, sistem gimbal 4-axis, lensa cinema prime, "
+            "atau wireless audio 32-bit float untuk produksi film indie dan siaran broadcast? "
             "Silakan klik tombol 'Hubungi Live Agent' atau ketik pertanyaan spesifik Anda di kolom chat, staf kami akan segera membalas!"
         ),
         "category": "consultation",
@@ -544,7 +544,7 @@ def get_staff_chat_sessions():
             "category": t.category,
             "status": t.status,
             "customer_id": t.customer_id,
-            "customer_name": cust.name if cust else "Musisi / Tamu",
+            "customer_name": cust.name if cust else "Filmmaker / Tamu",
             "customer_email": cust.email if cust else None,
             "customer_phone": getattr(cust, "phone", None),
             "assigned_staff_id": t.assigned_staff_id,

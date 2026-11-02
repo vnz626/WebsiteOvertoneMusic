@@ -20,20 +20,19 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout
-      title="Admin Dashboard"
-      subtitle="Ringkasan seluruh aktivitas platform Ticksy"
+      title="Super Administrator Dashboard"
+      subtitle="Ringkasan aktivitas ekosistem Overtone Music Store (OAS, KMS, MIS, DSS & TPS)"
     >
-
       {loading ? (
         <SkeletonGrid count={6} />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard label="Total Pengguna" value={stats?.total_users ?? 0} />
-          <StatCard label="Total Event" value={stats?.total_events ?? 0} hint={`${stats?.approved_events ?? 0} disetujui`} />
-          <StatCard label="Menunggu Persetujuan" value={stats?.pending_events ?? 0} />
-          <StatCard label="Tiket Terjual" value={stats?.tickets_sold ?? 0} />
-          <StatCard label="Pendapatan" value={formatRupiah(stats?.revenue)} />
-          <StatCard label="Pembayaran Belum Diverifikasi" value={stats?.pending_payments ?? 0} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StatCard label="Total Akun Terdaftar" value={stats?.total_users ?? 0} />
+          <StatCard label="Total SKU Katalog" value={stats?.total_events ?? 0} hint={`${stats?.approved_events ?? 0} aktif di etalase`} />
+          <StatCard label="Menunggu Approval" value={stats?.pending_events ?? 0} />
+          <StatCard label="Unit Instrumen Terjual" value={stats?.tickets_sold ?? 0} />
+          <StatCard label="Total Pendapatan Bruto" value={formatRupiah(stats?.revenue)} />
+          <StatCard label="Transaksi Menunggu Verifikasi" value={stats?.pending_payments ?? 0} />
         </div>
       )}
     </DashboardLayout>

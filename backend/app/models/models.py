@@ -17,7 +17,7 @@ from ..extensions import db
 # ============================================================================
 
 class OASStaff(db.Model):
-    """Akun pegawai internal toko alat musik (super_admin, manager, finance, warehouse_staff, store_staff)."""
+    """Akun pegawai internal toko cinema gear (super_admin, manager, finance, warehouse_staff, store_staff)."""
     __tablename__ = "oas__staff"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -59,7 +59,7 @@ class OASStaff(db.Model):
 
 
 class OASAnnouncement(db.Model):
-    """Pengumuman internal kantor toko alat musik & memo staf."""
+    """Pengumuman internal kantor toko cinema gear & memo staf."""
     __tablename__ = "oas__announcements"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -74,22 +74,82 @@ class OASAnnouncement(db.Model):
 
 
 class OASNotification(db.Model):
-    """Notifikasi in-dashboard untuk staf dan customer."""
+    """Notifikasi in-dashboard untuk staf dan customer (Fitur 1.2)."""
     __tablename__ = "oas__notifications"
 
     id = db.Column(db.Integer, primary_key=True)
     recipient_kind = db.Column(db.String(20), default="user", nullable=False)
+    recipient_type = db.Column(db.String(20), default="user", nullable=False)  # staff / customer / user
     recipient_id = db.Column(db.Integer, nullable=False, index=True)
+    recipient_role = db.Column(db.String(50), nullable=True, index=True)  # manager, warehouse_staff, store_staff, etc.
     category = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50), nullable=True)  # stock_alert, po_approval, support_ticket, order_status, refund
     title = db.Column(db.String(200), nullable=False)
     body = db.Column(db.Text, nullable=False)
     link = db.Column(db.String(255), nullable=True)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
+    read_at = db.Column(db.DateTime, nullable=True)
+    dedupe_key = db.Column(db.String(150), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "recipient_kind": self.recipient_kind,
+            "recipient_type": self.recipient_type,
+            "recipient_id": self.recipient_id,
+            "recipient_role": self.recipient_role,
+            "category": self.category,
+            "type": self.type or self.category,
+            "title": self.title,
+            "body": self.body,
+            "link": self.link,
+            "is_read": self.is_read,
+            "read_at": self.read_at.isoformat() if self.read_at else None,
+            "dedupe_key": self.dedupe_key,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class OASNotificationOutbox(db.Model):
+    """Antrean pengiriman pesan asynchronous email & WhatsApp (Fitur 1.3)."""
+    __tablename__ = "oas__notification_outbox"
+
+    id = db.Column(db.Integer, primary_key=True)
+    channel = db.Column(db.String(20), nullable=False)  # 'email' / 'whatsapp'
+    to_address = db.Column(db.String(150), nullable=False)
+    template_key = db.Column(db.String(100), nullable=False)
+    payload_json = db.Column(db.JSON, nullable=False)
+    status = db.Column(db.String(20), default="pending", nullable=False)  # 'pending', 'sent', 'failed'
+    attempts = db.Column(db.Integer, default=0, nullable=False)
+    last_error = db.Column(db.Text, nullable=True)
+    scheduled_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.Index("idx_status_scheduled", "status", "scheduled_at"),
+        db.Index("idx_channel", "channel"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "channel": self.channel,
+            "to_address": self.to_address,
+            "template_key": self.template_key,
+            "payload_json": self.payload_json,
+            "status": self.status,
+            "attempts": self.attempts,
+            "last_error": self.last_error,
+            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class OASSystemSetting(db.Model):
-    """Konfigurasi global toko alat musik."""
+    """Konfigurasi global toko cinema gear."""
     __tablename__ = "oas__system_settings"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -99,12 +159,53 @@ class OASSystemSetting(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class OASAuditLog(db.Model):
+    """Jejak audit trail seluruh aktivitas sensitif sistem (Fitur 1.1)."""
+    __tablename__ = "oas__audit_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    actor_type = db.Column(db.String(20), default="staff", nullable=False)  # staff / customer / system
+    actor_id = db.Column(db.Integer, nullable=True, index=True)
+    actor_role = db.Column(db.String(50), nullable=True)
+    actor_name = db.Column(db.String(150), nullable=True)
+    action = db.Column(db.String(100), nullable=False, index=True)  # e.g. UPDATE_PRICE, APPROVE_PO, PAY_PO
+    entity_type = db.Column(db.String(50), nullable=False)  # e.g. product, purchase_order, staff
+    entity_id = db.Column(db.String(50), nullable=True)
+    before_json = db.Column(db.JSON, nullable=True)
+    after_json = db.Column(db.JSON, nullable=True)
+    ip = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    __table_args__ = (
+        db.Index("idx_entity", "entity_type", "entity_id"),
+        db.Index("idx_actor_created", "actor_id", "created_at"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "actor_type": self.actor_type,
+            "actor_id": self.actor_id,
+            "actor_role": self.actor_role,
+            "actor_name": self.actor_name or "System / Anon",
+            "action": self.action,
+            "entity_type": self.entity_type,
+            "entity_id": str(self.entity_id) if self.entity_id is not None else None,
+            "before_json": self.before_json,
+            "after_json": self.after_json,
+            "ip": self.ip,
+            "user_agent": self.user_agent,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 # ============================================================================
 # 2. TPS (TRANSACTION PROCESSING SYSTEM) - Operasional Retail, Gudang & Penjualan
 # ============================================================================
 
 class TPSCustomer(db.Model):
-    """Akun musisi / pelanggan ritel alat musik."""
+    """Akun filmmaker / pelanggan ritel cinema gear."""
     __tablename__ = "tps__customers"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -115,6 +216,8 @@ class TPSCustomer(db.Model):
     phone = db.Column(db.String(30), nullable=True)
     address = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    notify_email = db.Column(db.Boolean, default=True, nullable=False)
+    notify_whatsapp = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -136,12 +239,14 @@ class TPSCustomer(db.Model):
             "phone": self.phone,
             "address": self.address,
             "is_active": self.is_active,
+            "notify_email": bool(self.notify_email),
+            "notify_whatsapp": bool(self.notify_whatsapp),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
 class TPSBrandSupplier(db.Model):
-    """Merek & Supplier resmi alat musik (Fender, Gibson, Roland, Yamaha, dll.)."""
+    """Merek & Supplier resmi cinema gear (Sony, RED, Canon, DJI, Aputure, Rode, dll.)."""
     __tablename__ = "kms__brands_suppliers"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -321,13 +426,14 @@ class TPSOrder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_code = db.Column(db.String(100), unique=True, nullable=False, index=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("tps__customers.id", ondelete="SET NULL"), nullable=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="RESTRICT"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="RESTRICT"), nullable=True)
     variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="SET NULL"), nullable=True)
+    bundle_id = db.Column(db.Integer, db.ForeignKey("tps__bundles.id", ondelete="SET NULL"), nullable=True)
     quantity = db.Column(db.Integer, default=1, nullable=False)
     unit_price = db.Column(db.BigInteger, default=0, nullable=False)
     total_price = db.Column(db.BigInteger, default=0, nullable=False)
     fulfillment_method = db.Column(
-        db.Enum("delivery", "click_and_collect", name="fulfillment_method_enum"),
+        db.String(50),
         default="delivery",
         nullable=False
     )
@@ -363,6 +469,7 @@ class TPSOrder(db.Model):
     customer = db.relationship("TPSCustomer", foreign_keys=[customer_id], lazy=True)
     product = db.relationship("TPSProduct", foreign_keys=[product_id], lazy=True)
     variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
+    bundle = db.relationship("TPSBundle", foreign_keys=[bundle_id], lazy=True)
     pickup_branch = db.relationship("TPSStoreBranch", foreign_keys=[pickup_branch_id], lazy=True)
     handled_by_staff = db.relationship("OASStaff", foreign_keys=[handled_by_staff_id], lazy=True)
 
@@ -379,6 +486,106 @@ class TPSOrder(db.Model):
         return "used" if self.pickup_status == "collected" else "valid"
 
 
+class TPSOrderStatusHistory(db.Model):
+    """Jejak kronologis timeline siklus order status (Fitur 1.3)."""
+    __tablename__ = "tps__order_status_history"
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("tps__orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = db.Column(db.String(50), nullable=False)
+    note = db.Column(db.Text, nullable=True)
+    actor = db.Column(db.String(150), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    order = db.relationship("TPSOrder", backref=db.backref("timeline_entries", lazy="dynamic", cascade="all, delete-orphan", order_by="TPSOrderStatusHistory.created_at.asc()"))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "order_id": self.order_id,
+            "status": self.status,
+            "note": self.note,
+            "actor": self.actor or "Sistem OAS/TPS",
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class TPSReturnRequest(db.Model):
+    """Pengajuan klaim retur / garansi dari pelanggan (Fitur 1.5)."""
+    __tablename__ = "tps__return_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    return_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("tps__orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("tps__customers.id", ondelete="SET NULL"), nullable=True, index=True)
+    reason_code = db.Column(db.String(50), nullable=False)  # damaged_shipping, defective_hardware, wrong_item, not_as_described, change_of_mind
+    description = db.Column(db.Text, nullable=False)
+    resolution = db.Column(db.String(30), default="refund", nullable=False)  # refund, replace, repair
+    status = db.Column(db.String(30), default="requested", nullable=False, index=True)  # requested, approved, rejected, received, refunded, cancelled
+    reviewed_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    review_note = db.Column(db.Text, nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    received_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    received_note = db.Column(db.Text, nullable=True)
+    received_at = db.Column(db.DateTime, nullable=True)
+    refund_amount = db.Column(db.Numeric(15, 2), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    order = db.relationship("TPSOrder", backref=db.backref("return_requests", lazy="dynamic", cascade="all, delete-orphan"))
+    customer = db.relationship("TPSCustomer", foreign_keys=[customer_id], lazy=True)
+    reviewer = db.relationship("OASStaff", foreign_keys=[reviewed_by], lazy=True)
+    receiver = db.relationship("OASStaff", foreign_keys=[received_by], lazy=True)
+    photos = db.relationship("TPSReturnRequestPhoto", backref="return_request", lazy="dynamic", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "return_number": self.return_number,
+            "order_id": self.order_id,
+            "invoice_code": self.order.invoice_code if self.order else None,
+            "product_name": (getattr(self.order.product, "name", None) or getattr(self.order.product, "title", "Instrumen")) if self.order else None,
+            "customer_id": self.customer_id,
+            "customer_name": self.customer.name if self.customer else (self.order.buyer_name if self.order else None),
+            "customer_email": self.customer.email if self.customer else (self.order.buyer_email if self.order else None),
+            "customer_phone": self.customer.phone if self.customer else (self.order.buyer_phone if self.order else None),
+            "reason_code": self.reason_code,
+            "description": self.description,
+            "resolution": self.resolution,
+            "status": self.status,
+            "reviewed_by": self.reviewed_by,
+            "reviewer_name": self.reviewer.name if self.reviewer else None,
+            "review_note": self.review_note,
+            "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
+            "received_by": self.received_by,
+            "receiver_name": self.receiver.name if self.receiver else None,
+            "received_note": self.received_note,
+            "received_at": self.received_at.isoformat() if self.received_at else None,
+            "refund_amount": float(self.refund_amount) if self.refund_amount is not None else (float(self.order.total_price) if self.order else 0),
+            "photos": [p.photo_url for p in self.photos.all()],
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class TPSReturnRequestPhoto(db.Model):
+    """Foto bukti kerusakan/cacat fisik instrumen untuk klaim retur (Fitur 1.5)."""
+    __tablename__ = "tps__return_request_photos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    return_request_id = db.Column(db.Integer, db.ForeignKey("tps__return_requests.id", ondelete="CASCADE"), nullable=False, index=True)
+    photo_url = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "return_request_id": self.return_request_id,
+            "photo_url": self.photo_url,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class TPSWishlist(db.Model):
     """Daftar instrumen musik favorit / wishlist pembeli."""
     __tablename__ = "tps__wishlists"
@@ -390,6 +597,42 @@ class TPSWishlist(db.Model):
 
     customer = db.relationship("TPSCustomer", foreign_keys=[customer_id], lazy=True)
     product = db.relationship("TPSProduct", foreign_keys=[product_id], lazy=True)
+
+
+class TPSProductReview(db.Model):
+    """Rating bintang & ulasan kepuasan filmmaker ritel atas cinema gear yang dibeli."""
+    __tablename__ = "tps__product_reviews"
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("tps__products.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("tps__customers.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("tps__orders.id", ondelete="SET NULL"), nullable=True)
+    variant_name = db.Column(db.String(100), nullable=True)
+    rating = db.Column(db.Integer, default=5, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    comment = db.Column(db.Text, nullable=False)
+    is_verified_purchase = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    product = db.relationship("TPSProduct", foreign_keys=[product_id], lazy=True)
+    customer = db.relationship("TPSCustomer", foreign_keys=[customer_id], lazy=True)
+    order = db.relationship("TPSOrder", foreign_keys=[order_id], lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "product_id": self.product_id,
+            "product_name": self.product.name if self.product else None,
+            "customer_id": self.customer_id,
+            "customer_name": self.customer.name if self.customer else "Filmmaker Overtone",
+            "order_id": self.order_id,
+            "variant_name": self.variant_name,
+            "rating": self.rating,
+            "title": self.title,
+            "comment": self.comment,
+            "is_verified_purchase": self.is_verified_purchase,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class TPSPurchaseOrder(db.Model):
@@ -436,7 +679,7 @@ class TPSInventoryLog(db.Model):
     variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="CASCADE"), nullable=False)
     branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
     change_type = db.Column(
-        db.Enum("po_received", "sale_delivery", "sale_click_and_collect", "manual_adjustment", "return_refund", name="inventory_change_type_enum"),
+        db.String(50),
         nullable=False
     )
     quantity_change = db.Column(db.Integer, nullable=False)
@@ -451,6 +694,213 @@ class TPSInventoryLog(db.Model):
     variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
     branch = db.relationship("TPSStoreBranch", foreign_keys=[branch_id], lazy=True)
     staff = db.relationship("OASStaff", foreign_keys=[logged_by], lazy=True)
+
+
+class OASStaffShift(db.Model):
+    """Sesi absensi & mode operasional staf toko (Offline Showroom Staff vs Online CS Staff)."""
+    __tablename__ = "oas__staff_shifts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="CASCADE"), nullable=False, index=True)
+    shift_mode = db.Column(
+        db.Enum("offline_store", "online_cs", name="staff_shift_mode_enum"),
+        default="offline_store",
+        nullable=False
+    )
+    branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
+    clock_in_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    clock_out_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(
+        db.Enum("active", "completed", name="staff_shift_status_enum"),
+        default="active",
+        nullable=False
+    )
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    staff = db.relationship("OASStaff", foreign_keys=[staff_id], lazy=True)
+    branch = db.relationship("TPSStoreBranch", foreign_keys=[branch_id], lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "staff_id": self.staff_id,
+            "staff_name": self.staff.name if self.staff else None,
+            "staff_email": self.staff.email if self.staff else None,
+            "shift_mode": self.shift_mode,
+            "branch_id": self.branch_id,
+            "branch_name": self.branch.name if self.branch else ("Online CS Specialist" if self.shift_mode == "online_cs" else "Showroom"),
+            "clock_in_at": self.clock_in_at.isoformat() if self.clock_in_at else None,
+            "clock_out_at": self.clock_out_at.isoformat() if self.clock_out_at else None,
+            "status": self.status,
+            "notes": self.notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class TPSBranchStock(db.Model):
+    """Penyimpanan kuota stok fisik per varian SKU di cabang showroom & gudang pusat."""
+    __tablename__ = "tps__branch_stocks"
+
+    id = db.Column(db.Integer, primary_key=True)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="CASCADE"), nullable=False, index=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="CASCADE"), nullable=False, index=True)
+    quantity = db.Column(db.Integer, default=0, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("variant_id", "branch_id", name="uq_variant_branch"),
+    )
+
+    variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
+    branch = db.relationship("TPSStoreBranch", foreign_keys=[branch_id], lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "variant_id": self.variant_id,
+            "branch_id": self.branch_id,
+            "branch_name": self.branch.name if self.branch else None,
+            "branch_type": self.branch.branch_type if self.branch else None,
+            "branch_city": self.branch.city if self.branch else None,
+            "quantity": self.quantity,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class TPSStockTransfer(db.Model):
+    """Pengajuan & eksekusi mutasi distribusi stok dari Gudang Pusat ke Cabang Showroom."""
+    __tablename__ = "tps__stock_transfers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    transfer_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="CASCADE"), nullable=False)
+    from_branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="SET NULL"), nullable=True)
+    to_branch_id = db.Column(db.Integer, db.ForeignKey("tps__store_branches.id", ondelete="CASCADE"), nullable=False)
+    qty = db.Column(db.Integer, default=1, nullable=False)
+    serial_numbers = db.Column(db.Text, nullable=True)
+    requested_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="RESTRICT"), nullable=False)
+    processed_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    status = db.Column(
+        db.Enum("pending_warehouse", "shipped_to_branch", "completed", name="stock_transfer_status_enum"),
+        default="pending_warehouse",
+        nullable=False
+    )
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
+    from_branch = db.relationship("TPSStoreBranch", foreign_keys=[from_branch_id], lazy=True)
+    to_branch = db.relationship("TPSStoreBranch", foreign_keys=[to_branch_id], lazy=True)
+    requester = db.relationship("OASStaff", foreign_keys=[requested_by], lazy=True)
+    processor = db.relationship("OASStaff", foreign_keys=[processed_by], lazy=True)
+
+    def to_dict(self):
+        v = self.variant
+        p = v.product_rel if (v and hasattr(v, "product_rel")) else None
+        return {
+            "id": self.id,
+            "transfer_code": self.transfer_code,
+            "variant_id": self.variant_id,
+            "sku_code": v.sku_code if v else None,
+            "variant_name": v.variant_name if v else None,
+            "product_name": p.name if p else None,
+            "from_branch_id": self.from_branch_id,
+            "from_branch_name": self.from_branch.name if self.from_branch else "Gudang Pusat",
+            "to_branch_id": self.to_branch_id,
+            "to_branch_name": self.to_branch.name if self.to_branch else None,
+            "qty": self.qty,
+            "serial_numbers": self.serial_numbers,
+            "requested_by": self.requested_by,
+            "requester_name": self.requester.name if self.requester else None,
+            "processed_by": self.processed_by,
+            "processor_name": self.processor.name if self.processor else None,
+            "status": self.status,
+            "notes": self.notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class TPSBundle(db.Model):
+    """Paket Bundling instrumen musik / Starter Rig kurasi manajer."""
+    __tablename__ = "tps__bundles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    bundle_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    bundle_price = db.Column(db.BigInteger, default=0, nullable=False)
+    normal_total_price = db.Column(db.BigInteger, default=0, nullable=False)
+    total_cogs = db.Column(db.BigInteger, default=0, nullable=False)
+    savings_amount = db.Column(db.BigInteger, default=0, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="SET NULL"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    creator = db.relationship("OASStaff", foreign_keys=[created_by], lazy=True)
+    items = db.relationship("TPSBundleItem", backref="bundle_rel", lazy="dynamic", cascade="all, delete-orphan")
+
+    def to_dict(self, include_items=True):
+        items_list = []
+        if include_items:
+            items_list = [item.to_dict() for item in self.items.all()]
+        margin_pct = 0.0
+        if self.bundle_price > 0:
+            margin_pct = round(((self.bundle_price - self.total_cogs) / self.bundle_price) * 100, 2)
+        return {
+            "id": self.id,
+            "bundle_code": self.bundle_code,
+            "name": self.name,
+            "description": self.description,
+            "bundle_price": self.bundle_price,
+            "normal_total_price": self.normal_total_price,
+            "total_cogs": self.total_cogs,
+            "savings_amount": self.savings_amount,
+            "profit_margin_percent": margin_pct,
+            "is_active": self.is_active,
+            "image_url": self.image_url,
+            "created_by": self.created_by,
+            "creator_name": self.creator.name if self.creator else "Store Manager",
+            "items_count": self.items.count(),
+            "items": items_list,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class TPSBundleItem(db.Model):
+    """Daftar item varian SKU penyusun paket bundle."""
+    __tablename__ = "tps__bundle_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    bundle_id = db.Column(db.Integer, db.ForeignKey("tps__bundles.id", ondelete="CASCADE"), nullable=False, index=True)
+    variant_id = db.Column(db.Integer, db.ForeignKey("tps__product_variants.id", ondelete="CASCADE"), nullable=False, index=True)
+    qty = db.Column(db.Integer, default=1, nullable=False)
+
+    variant = db.relationship("TPSProductVariant", foreign_keys=[variant_id], lazy=True)
+
+    def to_dict(self):
+        v = self.variant
+        p = v.product_rel if (v and hasattr(v, "product_rel")) else None
+        return {
+            "id": self.id,
+            "bundle_id": self.bundle_id,
+            "variant_id": self.variant_id,
+            "qty": self.qty,
+            "sku_code": v.sku_code if v else None,
+            "variant_name": v.variant_name if v else None,
+            "product_name": p.name if p else None,
+            "brand_name": p.brand.name if (p and p.brand) else None,
+            "price": v.price if v else 0,
+            "cost_price": v.cost_price if v else 0,
+            "stock": v.stock if v else 0,
+            "image_url": p.image_url if p else None,
+        }
 
 
 # ============================================================================
@@ -486,6 +936,7 @@ class KMSArticle(db.Model):
         default="customer",
         nullable=False,
     )
+    version = db.Column(db.Integer, default=1, nullable=False)
     target_role = db.Column(db.String(50), default="public", nullable=False)
     sop_code = db.Column(db.String(30), nullable=True)
     priority_level = db.Column(
@@ -505,6 +956,37 @@ class KMSArticle(db.Model):
 
     author = db.relationship("OASStaff", foreign_keys=[author_staff_id], lazy=True)
     feedbacks = db.relationship("KMSArticleFeedback", backref="article_rel", lazy="dynamic", cascade="all, delete-orphan")
+
+
+class KMSSopAcknowledgement(db.Model):
+    """Konfirmasi pemahaman SOP oleh staf internal (Fitur 1.6)."""
+    __tablename__ = "kms__sop_acknowledgements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.Integer, db.ForeignKey("oas__staff.id", ondelete="CASCADE"), nullable=False, index=True)
+    article_id = db.Column(db.Integer, db.ForeignKey("kms__articles.id", ondelete="CASCADE"), nullable=False, index=True)
+    article_version = db.Column(db.Integer, default=1, nullable=False)
+    acknowledged_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("staff_id", "article_id", "article_version", name="uq_staff_sop_ver"),
+    )
+
+    staff = db.relationship("OASStaff", foreign_keys=[staff_id], lazy=True)
+    article = db.relationship("KMSArticle", foreign_keys=[article_id], lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "staff_id": self.staff_id,
+            "staff_name": self.staff.name if self.staff else None,
+            "staff_role": self.staff.role if self.staff else None,
+            "article_id": self.article_id,
+            "sop_code": self.article.sop_code if self.article else None,
+            "sop_title": self.article.title if self.article else None,
+            "article_version": self.article_version,
+            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+        }
 
 
 class KMSArticleFeedback(db.Model):
@@ -771,4 +1253,10 @@ SavedEvent = TPSWishlist
 Notification = OASNotification
 KMSBrandSupplier = TPSBrandSupplier
 KMSFaq = KMSFAQ
+StaffShift = OASStaffShift
+BranchStock = TPSBranchStock
+StockTransfer = TPSStockTransfer
+Bundle = TPSBundle
+BundleItem = TPSBundleItem
+ProductReview = TPSProductReview
 

@@ -35,43 +35,64 @@ def _ticket_sale_to_dict(row: MisTicketSalesSummary) -> dict:
 @mis_tickets_bp.get("/trend")
 @roles_required(ROLE_SUPER_ADMIN, ROLE_MANAGER, ROLE_FINANCE)
 def ticket_trend_global():
-    """Tren penjualan tiket secara global (semua event) per hari.
+    """Distribusi penjualan per kategori gear ritel & tren penjualan instrumen."""
+    from ..models.mis_models import MisSalesSummary
+    from ..models.models import TPSOrder, TPSProduct
 
-    Query params:
-      days  : jumlah hari ke belakang (default: 30, max: 90)
-    """
-    days = min(int(request.args.get("days", 30)), 90)
-    since = date.today() - timedelta(days=days)
-
-    from sqlalchemy import func
-    from ..extensions import db
-
-    # Aggregate per tanggal
-    results = (
-        db.session.query(
-            MisTicketSalesSummary.sale_date,
-            func.sum(MisTicketSalesSummary.tickets_sold).label("tickets_sold"),
-            func.sum(MisTicketSalesSummary.total_transactions).label("total_transactions"),
-            func.sum(MisTicketSalesSummary.daily_revenue).label("daily_revenue"),
-        )
-        .filter(MisTicketSalesSummary.sale_date >= since)
-        .group_by(MisTicketSalesSummary.sale_date)
-        .order_by(MisTicketSalesSummary.sale_date.asc())
-        .all()
-    )
-
-    return jsonify({
-        "data": [
+    # 1. Cek dari MisSalesSummary (Tabel Distribusi Kategori Gear)
+    cat_summaries = MisSalesSummary.query.order_by(MisSalesSummary.units_sold.desc()).all()
+    if cat_summaries:
+        data = [
             {
-                "date":               r.sale_date.isoformat(),
-                "tickets_sold":       r.tickets_sold or 0,
-                "total_transactions": r.total_transactions or 0,
-                "daily_revenue":      r.daily_revenue or 0,
+                "date": s.instrument_category,
+                "category": s.instrument_category,
+                "label": s.instrument_category,
+                "tickets_sold": s.units_sold,
+                "units_sold": s.units_sold,
+                "daily_revenue": s.revenue,
+                "revenue": s.revenue,
+                "profit_margin_pct": s.profit_margin_pct,
             }
-            for r in results
-        ],
-        "days":  days,
-        "total": len(results),
+            for s in cat_summaries
+        ]
+        return jsonify({
+            "status": "success",
+            "data": data,
+            "total": len(data),
+            "type": "category_distribution"
+        })
+
+    # 2. Fallback dinamis dari TPSOrder & TPSProduct
+    orders = TPSOrder.query.filter(
+        TPSOrder.order_status.in_(["paid", "completed", "delivered", "shipped", "picked_up", "ready_for_pickup"])
+    ).all()
+
+    by_cat = {}
+    for o in orders:
+        cat = "Cinema Cameras"
+        if o.product and o.product.category:
+            cat = o.product.category
+        by_cat.setdefault(cat, {"units": 0, "rev": 0})
+        by_cat[cat]["units"] += (o.quantity or 1)
+        by_cat[cat]["rev"] += (o.total_price or 0)
+
+    data = [
+        {
+            "date": cat,
+            "category": cat,
+            "label": cat,
+            "tickets_sold": v["units"],
+            "units_sold": v["units"],
+            "daily_revenue": v["rev"],
+            "revenue": v["rev"],
+        }
+        for cat, v in sorted(by_cat.items(), key=lambda x: x[1]["units"], reverse=True)
+    ]
+    return jsonify({
+        "status": "success",
+        "data": data,
+        "total": len(data),
+        "type": "category_distribution"
     })
 
 

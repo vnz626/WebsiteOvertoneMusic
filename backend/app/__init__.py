@@ -36,8 +36,7 @@ def create_app():
 
     from .api.admin import admin_bp
     from .api.auth import auth_bp
-    from .api.products import products_bp
-    from .api.events import events_bp
+    from .api.products import products_bp, events_bp
     from .api.finance import finance_bp
     from .api.notifications import notifications_bp
     from .api.orders import orders_bp
@@ -58,12 +57,18 @@ def create_app():
     from .api.clearance import clearance_bp
     # Support & Concierge blueprint
     from .api.support import support_bp
+    # Returns & RMA blueprint (Fitur 1.5)
+    from .api.returns import returns_bp
+    # Manager blueprint (Katalog, Vendor, Bundles & Shifts)
+    from .api.manager import manager_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(products_bp, url_prefix="/api/products")
     app.register_blueprint(events_bp, url_prefix="/api/events")
     app.register_blueprint(orders_bp, url_prefix="/api/orders")
+    app.register_blueprint(returns_bp, url_prefix="/api/returns")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
+    app.register_blueprint(manager_bp, url_prefix="/api/manager")
     app.register_blueprint(finance_bp, url_prefix="/api/finance")
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
     app.register_blueprint(uploads_bp, url_prefix="/api/uploads")
@@ -141,10 +146,9 @@ def _register_cli(app):
 
     @app.cli.command("seed")
     def seed_cmd():
-        """Isi data contoh: `flask --app run.py seed`"""
-        from .seed import run_seed
-
-        run_seed()
+        """Isi data master & demo Overtone Store: `flask --app run.py seed`"""
+        from init_overtone_db import init_database
+        init_database()
 
     @app.cli.command("mis-sync")
     def mis_sync_cmd():
@@ -155,9 +159,9 @@ def _register_cli(app):
 
     @app.cli.command("dss-seed")
     def dss_seed_cmd():
-        """Isi data master DSS (Kriteria, Subkriteria, AHP 5x5, dan simulasi awal): `flask --app run.py dss-seed`"""
-        from .seed_dss import seed_dss_subsystem
-        seed_dss_subsystem(app)
+        """Isi data master DSS: `flask --app run.py dss-seed`"""
+        from init_overtone_db import init_database
+        init_database()
 
 
 def _init_mis_scheduler(app):

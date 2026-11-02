@@ -1,31 +1,27 @@
 /**
- * MisStatusOverview – Donut chart ringkasan jumlah event per performance status.
- *
- * Props:
- *   data    – { hot: {count, total_revenue}, normal: {...}, slow: {...} }
- *   loading – skeleton state
+ * MisStatusOverview – Donut chart ringkasan jumlah instrumen per performance status.
  */
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatRupiah } from "../../../utils/format";
 
 const STATUS_CONFIG = {
-  hot:    { label: "Hot 🔥",    color: "#f43f5e" },
-  normal: { label: "Normal",    color: "#8b5cf6" },
-  slow:   { label: "Slow ❄️",  color: "#3b82f6" },
+  hot: { label: "Fast Moving", color: "#B83A14" },
+  normal: { label: "Normal", color: "#181614" },
+  slow: { label: "Slow Stock", color: "#645E57" },
 };
 
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const entry = payload[0];
   return (
-    <div className="rounded-xl border border-ts-subtle bg-white px-4 py-3 shadow-lg dark:border-white/10 dark:bg-surface-container">
-      <p className="mb-1 text-sm font-bold" style={{ color: entry.payload.color }}>
+    <div className="rounded-sm border border-line bg-surface px-4 py-3 shadow-md tabular-nums">
+      <p className="mb-1 text-xs font-bold" style={{ color: entry.payload.color }}>
         {entry.name}
       </p>
-      <p className="text-xs text-slate-600 dark:text-slate-300">
-        {entry.value} event
+      <p className="text-xs text-ink-secondary">
+        {entry.value} SKU
       </p>
-      <p className="text-xs text-ts-muted">
+      <p className="text-xs text-ink font-semibold">
         {formatRupiah(entry.payload.total_revenue)}
       </p>
     </div>
@@ -34,9 +30,7 @@ const CustomTooltip = ({ active, payload }) => {
 
 export default function MisStatusOverview({ data = {}, loading = false }) {
   if (loading) {
-    return (
-      <div className="h-48 animate-pulse rounded-2xl bg-slate-100 dark:bg-surface-high/40" />
-    );
+    return <div className="h-48 skeleton rounded-md border border-line" />;
   }
 
   const chartData = Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
@@ -49,7 +43,7 @@ export default function MisStatusOverview({ data = {}, loading = false }) {
   const total = chartData.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-6 tabular-nums">
       <ResponsiveContainer width={120} height={120}>
         <PieChart>
           <Pie
@@ -69,23 +63,23 @@ export default function MisStatusOverview({ data = {}, loading = false }) {
         </PieChart>
       </ResponsiveContainer>
 
-      {/* Legend */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-1">
         {chartData.map((entry) => (
-          <div key={entry.name} className="flex items-center gap-2 text-sm">
+          <div key={entry.name} className="flex items-center gap-2 text-xs">
             <span
-              className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ background: entry.color }}
+              aria-hidden="true"
             />
-            <span className="text-slate-600 dark:text-slate-300">{entry.name}</span>
-            <span className="ml-auto font-bold text-slate-900 dark:text-slate-100">
+            <span className="text-ink-secondary">{entry.name}</span>
+            <span className="ml-auto font-bold text-ink">
               {entry.value}
             </span>
           </div>
         ))}
-        <div className="mt-1 flex items-center gap-2 border-t border-ts-subtle pt-1 text-sm dark:border-white/10">
-          <span className="text-slate-400">Total</span>
-          <span className="ml-auto font-bold text-slate-900 dark:text-slate-100">{total}</span>
+        <div className="mt-1 flex items-center gap-2 border-t border-line pt-1.5 text-xs">
+          <span className="text-ink-muted font-medium">Total SKU</span>
+          <span className="ml-auto font-bold text-ink">{total}</span>
         </div>
       </div>
     </div>

@@ -31,95 +31,119 @@ export default function Register() {
     }
   }
 
-  const field =
-    "w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs sm:text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-black focus:ring-1 focus:ring-black transition-all";
-
   return (
-    <div className="flex min-h-[calc(100vh-72px)] items-center justify-center p-6 bg-[#F9FAFB]">
-      <Card className="w-full max-w-md border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-[calc(100vh-72px)] items-center justify-center p-4 sm:p-6 bg-canvas text-ink">
+      <Card className="w-full max-w-md border border-line bg-surface p-6 sm:p-8">
         <div className="text-center mb-6">
-          <span className="block font-extrabold text-2xl tracking-tight text-gray-900 uppercase font-sans">
-            OVERTONE <span className="text-gray-500 font-light text-lg">Music Store</span>
-          </span>
-          <h1 className="mt-2 text-base font-bold text-gray-900">Daftar Akun Pelanggan</h1>
-          <p className="mt-1 text-xs text-gray-500">
-            Daftar untuk belanja instrumen musik resmi bergaransi distributor, melacak resi pengiriman, dan pickup showroom.
+          <Link to="/" className="inline-flex flex-col items-center group mb-3">
+            <span className="font-display text-2xl font-bold tracking-tight text-ink leading-none">
+              OVERTONE
+            </span>
+            <span className="text-[10px] font-bold tracking-[0.26em] uppercase text-accent mt-1">
+              MUSIC STORE
+            </span>
+          </Link>
+          <h1 className="mt-2 text-lg font-display font-bold text-ink">Daftar Akun Pelanggan</h1>
+          <p className="mt-1 text-xs text-ink-secondary">
+            Daftar untuk berbelanja instrumen musik resmi bergaransi distributor, melacak resi pengiriman, dan menggunakan layanan Pickup Pass.
           </p>
         </div>
 
         <form onSubmit={submit} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap</label>
+            <label htmlFor="register-name" className="block text-xs font-semibold text-ink mb-1.5">
+              Nama Lengkap <span className="text-accent">*</span>
+            </label>
             <input
-              className={field}
+              id="register-name"
+              type="text"
+              className="ot-input"
               placeholder="Contoh: Dewa Budjana"
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
               required
+              autoComplete="name"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Alamat Email</label>
+            <label htmlFor="register-email" className="block text-xs font-semibold text-ink mb-1.5">
+              Alamat Email <span className="text-accent">*</span>
+            </label>
             <input
+              id="register-email"
               type="email"
-              className={field}
+              className="ot-input"
               placeholder="nama@email.com"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Nomor WhatsApp / HP</label>
+            <label htmlFor="register-phone" className="block text-xs font-semibold text-ink mb-1.5">
+              Nomor WhatsApp / HP <span className="text-accent">*</span>
+            </label>
             <input
+              id="register-phone"
               type="tel"
-              className={field}
+              className="ot-input tabular-nums"
               placeholder="081234567890"
               value={form.phone}
               onChange={(e) => update("phone", e.target.value)}
               required
+              autoComplete="tel"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Alamat Pengiriman (Opsional)</label>
+            <label htmlFor="register-address" className="block text-xs font-semibold text-ink mb-1.5">
+              Alamat Pengiriman Utama (Opsional)
+            </label>
             <input
-              className={field}
-              placeholder="Kota domisili / alamat"
+              id="register-address"
+              type="text"
+              className="ot-input"
+              placeholder="Kota domisili / alamat lengkap"
               value={form.address}
               onChange={(e) => update("address", e.target.value)}
+              autoComplete="street-address"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+            <label htmlFor="register-password" className="block text-xs font-semibold text-ink mb-1.5">
+              Password <span className="text-accent">*</span>
+            </label>
             <input
+              id="register-password"
               type="password"
-              className={field}
+              className="ot-input"
               placeholder="Minimal 6 karakter"
               value={form.password}
               onChange={(e) => update("password", e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
-          <Button type="submit" className="w-full py-3 bg-[#111111] hover:bg-black text-white font-semibold text-xs rounded-xl shadow-sm transition-all" disabled={loading}>
+          <Button type="submit" variant="primary" size="lg" className="w-full" loading={loading} disabled={loading}>
             {loading ? "Mendaftarkan Akun..." : "Daftar Akun Sekarang"}
           </Button>
         </form>
 
-        <div className="mt-6 border-t border-gray-100 pt-4 text-center">
-          <p className="text-xs text-gray-600">
+        <div className="mt-6 border-t border-line pt-4 text-center">
+          <p className="text-xs text-ink-secondary">
             Sudah memiliki akun?{" "}
-            <Link to="/login" className="font-bold text-gray-900 hover:underline">
+            <Link to="/login" className="font-bold text-ink underline hover:text-accent">
               Masuk di Sini
             </Link>
           </p>
-          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
-            <ShieldCheck size={13} className="text-[#16A34A]" /> 100% Data &amp; Privasi Terlindungi
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-ink-muted">
+            <ShieldCheck size={13} className="text-status-success" aria-hidden="true" /> 100% Data &amp; Privasi Terlindungi
           </div>
         </div>
       </Card>

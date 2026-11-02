@@ -1,12 +1,5 @@
 /**
  * MisFilterPanel – Filter bar untuk periode & kategori.
- *
- * Props:
- *   filters      – { period_type, days, category }
- *   onChange     – callback({ ...filters, field: value })
- *   onRefresh    – trigger manual refresh
- *   refreshing   – bool, saat sync sedang berjalan
- *   categories   – array string kategori event
  */
 import { RefreshCw } from "lucide-react";
 import Button from "../../../components/ui/Button";
@@ -31,13 +24,13 @@ export default function MisFilterPanel({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      {/* Periode */}
       <div className="flex items-center gap-2">
-        <label className="text-xs font-semibold text-ts-muted dark:text-slate-400">Periode</label>
+        <label htmlFor="mis-filter-period" className="text-xs font-semibold text-ink-secondary">Periode</label>
         <select
+          id="mis-filter-period"
           value={filters.period_key || "monthly"}
           onChange={(e) => handleChange("period_key", e.target.value)}
-          className="rounded-xl border border-ts-subtle bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-ts-primary dark:border-white/10 dark:bg-surface-container dark:text-slate-200"
+          className="ot-input py-1.5 text-xs"
         >
           {PERIOD_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -47,16 +40,16 @@ export default function MisFilterPanel({
         </select>
       </div>
 
-      {/* Kategori event (jika tersedia) */}
       {categories.length > 0 && (
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-ts-muted dark:text-slate-400">
+          <label htmlFor="mis-filter-category" className="text-xs font-semibold text-ink-secondary">
             Kategori
           </label>
           <select
+            id="mis-filter-category"
             value={filters.category || ""}
             onChange={(e) => handleChange("category", e.target.value)}
-            className="rounded-xl border border-ts-subtle bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-ts-primary dark:border-white/10 dark:bg-surface-container dark:text-slate-200"
+            className="ot-input py-1.5 text-xs"
           >
             <option value="">Semua Kategori</option>
             {categories.map((c) => (
@@ -68,16 +61,17 @@ export default function MisFilterPanel({
         </div>
       )}
 
-      {/* Refresh */}
       {onRefresh && (
         <Button
-          variant="ghost"
+          type="button"
+          variant="secondary"
+          size="sm"
           onClick={onRefresh}
           disabled={refreshing}
-          className="ml-auto flex items-center gap-2 text-sm"
+          className="ml-auto"
         >
-          <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-          {refreshing ? "Menyinkronkan..." : "Refresh Data"}
+          <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} aria-hidden="true" />
+          {refreshing ? "Menyinkronkan..." : "Muat Ulang Data"}
         </Button>
       )}
     </div>

@@ -21,6 +21,8 @@ from ..security import (
     roles_required,
 )
 from ..serializers import purchase_order_to_dict
+from ..audit import log_action
+from ..notifications import notify_po_pending_approval, notify_role
 
 po_bp = Blueprint("po", __name__)
 
@@ -119,6 +121,13 @@ def create_purchase_order():
     db.session.add(po)
     db.session.commit()
 
+    # Trigger Notifikasi ke Manager (Fitur 1.2)
+    notify_po_pending_approval(
+        po_id=po.id,
+        po_number=po.po_number,
+        total_amount=float(po.total_cost or 0)
+    )
+
     return jsonify({
         "message": f"Purchase Order {po.po_number} berhasil diajukan ke Manager",
         "data": purchase_order_to_dict(po),
@@ -136,9 +145,29 @@ def approve_po(po_id):
         return jsonify({"message": f"PO tidak dapat disetujui karena berstatus '{po.status}'"}), 400
 
     user = current_user()
+    old_status = po.status
     po.status = "approved"
     po.approved_by = user.id
     db.session.commit()
+
+    log_action(
+        action="APPROVE_PO",
+        entity_type="purchase_order",
+        entity_id=str(po.id),
+        before={"status": old_status, "po_number": po.po_number, "total_cost": float(po.total_cost)},
+        after={"status": "approved", "po_number": po.po_number, "total_cost": float(po.total_cost), "approved_by": user.id},
+    )
+
+    # Notifikasi ke Finance bahwa PO siap diproses bayar
+    formatted_amount = f"Rp {int(po.total_cost or 0):,}".replace(",", ".")
+    notify_role(
+        role="finance",
+        type="po_approval",
+        title=f"PO Siap Dibayar: {po.po_number}",
+        body=f"Purchase order {po.po_number} senilai {formatted_amount} telah disetujui Manager dan menunggu pelunasan tagihan supplier.",
+        link="/finance/transactions",
+        dedupe_key=f"po-{po.id}-ready-pay"
+    )
 
     return jsonify({
         "message": f"PO {po.po_number} telah disetujui dan diteruskan ke Finance",
@@ -159,10 +188,19 @@ def reject_po(po_id):
     reason = data.get("reason") or "Ditolak oleh Manager"
 
     user = current_user()
+    old_status = po.status
     po.status = "rejected"
     po.notes = f"{po.notes or ''} [Penolakan Manager: {reason}]"
     po.approved_by = user.id
     db.session.commit()
+
+    log_action(
+        action="REJECT_PO",
+        entity_type="purchase_order",
+        entity_id=str(po.id),
+        before={"status": old_status, "po_number": po.po_number},
+        after={"status": "rejected", "po_number": po.po_number, "reason": reason},
+    )
 
     return jsonify({
         "message": f"PO {po.po_number} ditolak",
@@ -184,12 +222,21 @@ def pay_po(po_id):
     notes = data.get("notes") or ""
 
     user = current_user()
+    old_status = po.status
     po.status = "paid"
     po.paid_by = user.id
     if notes:
         po.notes = f"{po.notes or ''} [Catatan Finance: {notes}]"
 
     db.session.commit()
+
+    log_action(
+        action="PAY_PO",
+        entity_type="purchase_order",
+        entity_id=str(po.id),
+        before={"status": old_status, "po_number": po.po_number, "total_cost": float(po.total_cost)},
+        after={"status": "paid", "po_number": po.po_number, "total_cost": float(po.total_cost), "notes": notes},
+    )
 
     return jsonify({
         "message": f"Pembayaran tagihan PO {po.po_number} berhasil dicatat",

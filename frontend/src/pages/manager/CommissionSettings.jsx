@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Percent, Save, RefreshCw, Calculator, HelpCircle, ShieldAlert } from "lucide-react";
+import { Percent, Save, Calculator, HelpCircle } from "lucide-react";
 import api from "../../api";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/ui/Card";
@@ -13,7 +13,6 @@ export default function CommissionSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Simulasi kalkulator
   const [simSales, setSimSales] = useState(50000000);
 
   function fetchSettings() {
@@ -59,24 +58,27 @@ export default function CommissionSettings() {
   return (
     <DashboardLayout
       title="Pengaturan Komisi Platform"
-      subtitle="Atur persentase bagi hasil platform Ticksy dari setiap penjualan tiket event promoter"
+      subtitle="Atur persentase komisi dan simulasi bagi hasil operasional Overtone"
     >
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Form Pengaturan */}
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ts-primary/10 text-ts-primary">
-              <Percent size={20} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-accent/30 bg-accent-subtle text-accent">
+              <Percent size={18} aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-ts-ink dark:text-white">Potongan Komisi Default</h3>
-              <p className="text-xs text-ts-muted">Diterapkan otomatis pada setiap pengajuan pencairan dana payout</p>
+              <h3 className="font-display text-base font-bold text-ink">
+                Potongan Komisi Default
+              </h3>
+              <p className="text-xs text-ink-secondary">
+                Diterapkan otomatis pada setiap pengajuan pencairan dana payout
+              </p>
             </div>
           </div>
 
           <form onSubmit={handleSave} className="mt-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-ts-muted">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary">
                 Persentase Komisi Platform (%)
               </label>
               <div className="relative mt-2 flex items-center">
@@ -87,83 +89,97 @@ export default function CommissionSettings() {
                   max="100"
                   value={feePercent}
                   onChange={(e) => setFeePercent(e.target.value)}
-                  className="w-full rounded-xl border border-ts-subtle bg-ts-low px-4 py-3 text-lg font-bold text-ts-ink outline-none transition focus:border-ts-primary dark:border-white/10 dark:bg-surface-container dark:text-white"
+                  className="ot-input pr-10 text-base font-bold tabular-nums"
                   required
                 />
-                <span className="absolute right-4 font-bold text-ts-muted">%</span>
+                <span className=" absolute right-4 font-bold text-ink-muted">%</span>
               </div>
-              <p className="mt-2 text-xs text-ts-muted">
-                Nilai standar industri adalah 5.0%. Sisanya ({100 - currentFee}%) akan menjadi hak bersih promotor.
+              <p className="mt-2 text-xs text-ink-secondary">
+                Nilai standar industri adalah 5.0%. Sisanya ({100 - currentFee}%) akan
+                menjadi hak bersih mitra.
               </p>
             </div>
 
             {updatedAt && (
-              <div className="text-xs text-ts-muted">
-                Terakhir diperbarui: <span className="font-semibold text-ts-ink dark:text-slate-300">{formatDate(updatedAt)}</span>
+              <div className="text-xs text-ink-muted tabular-nums">
+                Terakhir diperbarui:{" "}
+                <span className="font-semibold text-ink">{formatDate(updatedAt)}</span>
               </div>
             )}
 
             <div className="pt-2">
-              <Button type="submit" disabled={saving || loading} className="gap-2">
-                <Save size={16} />
-                {saving ? "Menyimpan..." : "Simpan Kebijakan Komisi"}
+              <Button type="submit" disabled={saving || loading} loading={saving}>
+                <Save size={15} aria-hidden="true" />
+                Simpan Kebijakan Komisi
               </Button>
             </div>
           </form>
         </Card>
 
-        {/* Simulasi Bagi Hasil */}
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
-              <Calculator size={20} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-muted text-ink">
+              <Calculator size={18} aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-ts-ink dark:text-white">Simulasi Perhitungan Payout</h3>
-              <p className="text-xs text-ts-muted">Uji coba simulasi bagi hasil dengan persentase saat ini</p>
+              <h3 className="font-display text-base font-bold text-ink">
+                Simulasi Perhitungan Payout
+              </h3>
+              <p className="text-xs text-ink-secondary">
+                Uji coba simulasi bagi hasil dengan persentase saat ini
+              </p>
             </div>
           </div>
 
           <div className="mt-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-ts-muted">
-                Contoh Total Penjualan Tiket Kotor (Gross Sales)
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary">
+                Contoh Total Penjualan Kotor (Gross Sales)
               </label>
               <input
                 type="number"
                 step="1000000"
                 value={simSales}
-                onChange={(e) => setSimSales(Math.max(0, parseInt(e.target.value) || 0))}
-                className="mt-2 w-full rounded-xl border border-ts-subtle bg-ts-low px-4 py-2.5 text-sm font-semibold outline-none focus:border-ts-primary dark:border-white/10 dark:bg-surface-container dark:text-white"
+                onChange={(e) =>
+                  setSimSales(Math.max(0, parseInt(e.target.value) || 0))
+                }
+                className="ot-input mt-2 text-sm font-semibold tabular-nums"
               />
             </div>
 
-            {/* Hasil Bagi Hasil */}
-            <div className="space-y-3 rounded-xl border border-ts-subtle bg-ts-low/60 p-4 text-sm dark:border-white/5 dark:bg-surface-high/30">
+            <div className="space-y-3 rounded-sm border border-line bg-surface-muted p-4 text-xs tabular-nums">
               <div className="flex items-center justify-between">
-                <span className="text-ts-muted">Total Penjualan Event:</span>
-                <span className="font-bold text-ts-ink dark:text-white">{formatRupiah(simSales)}</span>
+                <span className="text-ink-secondary">Total Penjualan:</span>
+                <span className="font-bold text-ink">{formatRupiah(simSales)}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-ts-subtle pt-2 dark:border-white/10">
-                <span className="flex items-center gap-1.5 text-ts-primary font-medium">
-                  <Percent size={14} /> Komisi Platform ({currentFee}%):
+              <div className="flex items-center justify-between border-t border-line pt-2">
+                <span className="flex items-center gap-1.5 font-medium text-accent">
+                  <Percent size={13} aria-hidden="true" /> Komisi Platform ({currentFee}
+                  %):
                 </span>
-                <span className="font-bold text-ts-primary">{formatRupiah(platformAmount)}</span>
+                <span className="font-bold text-accent">
+                  {formatRupiah(platformAmount)}
+                </span>
               </div>
-              <div className="flex items-center justify-between border-t border-ts-subtle pt-2 dark:border-white/10">
-                <span className="text-emerald-600 font-semibold dark:text-emerald-400">
-                  Dana Ditransfer ke Promoter ({100 - currentFee}%):
+              <div className="flex items-center justify-between border-t border-line pt-2">
+                <span className="font-semibold text-status-success">
+                  Dana Bersih Diterima ({100 - currentFee}%):
                 </span>
-                <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                <span className="font-display text-base font-bold text-status-success">
                   {formatRupiah(promoterAmount)}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-start gap-2 rounded-xl bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-              <HelpCircle size={16} className="shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 rounded-sm border border-line bg-canvas p-3 text-xs text-ink-secondary">
+              <HelpCircle
+                size={15}
+                className="mt-0.5 shrink-0 text-ink-muted"
+                aria-hidden="true"
+              />
               <p>
-                Perubahan komisi ini akan langsung berlaku pada setiap pengajuan pencairan dana (request payout) baru oleh promotor.
+                Perubahan komisi ini akan langsung berlaku pada setiap pengajuan
+                pencairan dana baru.
               </p>
             </div>
           </div>

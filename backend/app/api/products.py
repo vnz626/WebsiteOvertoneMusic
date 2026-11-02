@@ -65,7 +65,7 @@ def _list_products_handler():
 def _detail_product_handler(product_id):
     product = TPSProduct.query.get(product_id)
     if not product or product.status != "published":
-        return jsonify({"message": "Produk instrumen tidak ditemukan atau belum dipublikasikan"}), 404
+        return jsonify({"message": "Produk cinema gear tidak ditemukan atau belum dipublikasikan"}), 404
     return jsonify({"data": product_to_dict(product, detail=True)})
 
 
@@ -75,6 +75,72 @@ def _product_variants_handler(product_id):
         return jsonify({"message": "Produk tidak ditemukan"}), 404
     variants = TPSProductVariant.query.filter_by(product_id=product.id, is_active=True).all()
     return jsonify({"data": [variant_to_dict(v) for v in variants], "total": len(variants)})
+
+
+def _product_reviews_handler(product_id):
+    from ..models.models import TPSProductReview
+    product = TPSProduct.query.get(product_id)
+    if not product:
+        return jsonify({"message": "Produk tidak ditemukan"}), 404
+    reviews = TPSProductReview.query.filter_by(product_id=product.id).order_by(TPSProductReview.created_at.desc()).all()
+    count = len(reviews)
+    avg = round(sum(r.rating for r in reviews) / count, 1) if count > 0 else 5.0
+    return jsonify({
+        "data": [r.to_dict() for r in reviews],
+        "avg_rating": avg,
+        "review_count": count
+    })
+
+
+def _create_review_handler(product_id):
+    from flask_jwt_extended import verify_jwt_in_request
+    from ..extensions import db
+    from ..models.models import TPSProductReview, TPSCustomer, TPSOrder
+    from ..security import current_user
+
+    product = TPSProduct.query.get(product_id)
+    if not product:
+        return jsonify({"message": "Produk tidak ditemukan"}), 404
+
+    try:
+        verify_jwt_in_request(optional=True)
+    except Exception:
+        pass
+    user = current_user()
+    if not user:
+        user = TPSCustomer.query.first()
+
+    data = request.get_json(silent=True) or {}
+    rating = int(data.get("rating") or 5)
+    title = (data.get("title") or "Ulasan Cinema Gear").strip()
+    comment = (data.get("comment") or "").strip()
+    variant_name = (data.get("variant_name") or "").strip() or None
+
+    if not comment:
+        return jsonify({"message": "Komentar ulasan wajib diisi"}), 400
+
+    cust_id = getattr(user, "id", 1)
+    past_order = TPSOrder.query.filter_by(customer_id=cust_id, product_id=product.id).first()
+    is_verified = past_order is not None
+
+    new_rev = TPSProductReview(
+        product_id=product.id,
+        customer_id=cust_id,
+        order_id=past_order.id if past_order else None,
+        variant_name=variant_name or (past_order.variant.variant_name if past_order and past_order.variant else None),
+        rating=max(1, min(5, rating)),
+        title=title,
+        comment=comment,
+        is_verified_purchase=is_verified,
+    )
+    db.session.add(new_rev)
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": "Terima kasih! Ulasan filmmaker Anda berhasil diterbitkan.",
+        "data": new_rev.to_dict()
+    }), 201
 
 
 # Route bindings for products_bp
@@ -87,6 +153,8 @@ products_bp.get("/")(_list_products_handler)
 products_bp.get("/<int:product_id>")(_detail_product_handler)
 products_bp.get("/<int:product_id>/variants")(_product_variants_handler)
 products_bp.get("/<int:product_id>/tiers")(_product_variants_handler)
+products_bp.get("/<int:product_id>/reviews")(_product_reviews_handler)
+products_bp.post("/<int:product_id>/reviews")(_create_review_handler)
 
 # Route bindings for events_bp (Backward compatibility)
 events_bp.get("/meta")(_meta_handler)
@@ -98,3 +166,5 @@ events_bp.get("/")(_list_products_handler)
 events_bp.get("/<int:product_id>")(_detail_product_handler)
 events_bp.get("/<int:product_id>/variants")(_product_variants_handler)
 events_bp.get("/<int:product_id>/tiers")(_product_variants_handler)
+events_bp.get("/<int:product_id>/reviews")(_product_reviews_handler)
+events_bp.post("/<int:product_id>/reviews")(_create_review_handler)

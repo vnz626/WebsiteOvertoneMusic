@@ -1,28 +1,42 @@
 const TONES = {
-  primary: "bg-ts-primary/10 text-ts-primary dark:text-brand-400",
-  success: "bg-emerald-100 text-emerald-700",
-  warning: "bg-amber-100 text-amber-700",
-  danger: "bg-rose-100 text-rose-600",
-  muted: "bg-ts-low text-ts-muted dark:bg-surface-high dark:text-slate-300",
+  primary: "bg-surface-muted text-ink border border-line-strong",
+  accent: "bg-accent-subtle text-accent border border-accent/30",
+  gold: "bg-status-warning-bg text-status-warning-text border border-status-warning-border",
+  success: "bg-status-success-bg text-status-success-text border border-status-success-border",
+  warning: "bg-status-warning-bg text-status-warning-text border border-status-warning-border",
+  danger: "bg-status-danger-bg text-status-danger-text border border-status-danger-border",
+  info: "bg-status-info-bg text-status-info-text border border-status-info-border",
+  muted: "bg-surface-muted text-ink-secondary border border-line",
 };
 
-/** Peta status backend -> tampilan badge. */
+/** Peta status backend -> tampilan badge dengan teks jelas (Aturan E & G). */
 const STATUS_MAP = {
   approved: ["success", "Disetujui"],
   pending: ["warning", "Menunggu"],
   rejected: ["danger", "Ditolak"],
   paid: ["success", "Lunas"],
+  completed: ["success", "Selesai"],
+  shipped: ["info", "Dikirim"],
+  ready_for_pickup: ["info", "Siap Diambil"],
+  processing: ["warning", "Diproses"],
+  cancelled: ["danger", "Dibatalkan"],
   failed: ["danger", "Ditolak"],
-  menunggu_verifikasi: ["warning", "Menunggu verifikasi"],
+  menunggu_verifikasi: ["warning", "Menunggu Verifikasi"],
 };
 
-export default function Badge({ children, tone = "primary", status }) {
+export default function Badge({ children, tone = "primary", status, className = "" }) {
   const [mappedTone, label] = STATUS_MAP[status] || [];
+  const activeTone = mappedTone || tone;
   return (
     <span
-      className={`inline-block rounded-full px-3 py-1 text-[11px] font-extrabold ${TONES[mappedTone || tone] || TONES.primary}`}
+      className={`inline-flex items-center gap-1.5 rounded-xs px-2.5 py-0.5 text-[11px] font-bold tracking-wide whitespace-nowrap ${TONES[activeTone] || TONES.primary
+        } ${className}`}
     >
-      {children || label || status || "-"}
+      <span
+        className="h-1.5 w-1.5 rounded-full bg-current opacity-80 shrink-0"
+        aria-hidden="true"
+      />
+      <span>{children || label || status || "-"}</span>
     </span>
   );
 }

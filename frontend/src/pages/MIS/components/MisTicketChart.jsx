@@ -1,9 +1,5 @@
 /**
- * MisTicketChart – Bar chart perkembangan penjualan tiket menggunakan Recharts.
- *
- * Props:
- *   data    – array { date, tickets_sold, daily_revenue }
- *   loading – skeleton state
+ * MisTicketChart – Bar chart perkembangan penjualan kategori gear / unit instrumen.
  */
 import {
   Bar,
@@ -15,18 +11,33 @@ import {
   YAxis,
   Cell,
 } from "recharts";
+import { formatRupiah } from "../../../utils/format";
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
-  const d = new Date(label);
-  const formatted = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  let formatted = label;
+  const parsed = new Date(label);
+  if (!isNaN(parsed.getTime()) && label.includes("-")) {
+    formatted = parsed.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
   return (
-    <div className="rounded-xl border border-ts-subtle bg-white px-4 py-3 shadow-lg dark:border-white/10 dark:bg-surface-container">
-      <p className="mb-1 text-xs font-semibold text-ts-muted dark:text-slate-400">{formatted}</p>
+    <div className="rounded-sm border border-line bg-surface px-4 py-3 shadow-md tabular-nums">
+      <p className="mb-1 text-xs font-bold text-ink-muted">{formatted}</p>
       {payload.map((entry) => (
-        <p key={entry.dataKey} className="text-sm font-bold text-ts-primary dark:text-brand-400">
-          {entry.value.toLocaleString("id-ID")} tiket
-        </p>
+        <div key={entry.dataKey} className="space-y-0.5">
+          <p className="text-sm font-bold text-ink">
+            {entry.value.toLocaleString("id-ID")} Unit Terjual
+          </p>
+          {entry.payload?.daily_revenue ? (
+            <p className="text-xs font-semibold text-accent">
+              Omset: {formatRupiah(entry.payload.daily_revenue)}
+            </p>
+          ) : null}
+        </div>
       ))}
     </div>
   );
@@ -34,49 +45,51 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function MisTicketChart({ data = [], loading = false }) {
   if (loading) {
-    return (
-      <div className="h-64 animate-pulse rounded-2xl bg-slate-100 dark:bg-surface-high/40" />
-    );
+    return <div className="h-64 skeleton rounded-md border border-line" />;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-2xl bg-slate-50 dark:bg-surface-container/50">
-        <p className="text-sm text-slate-400">Belum ada data penjualan tiket</p>
+      <div className="flex h-64 items-center justify-center rounded-md bg-surface-muted border border-line">
+        <p className="text-xs font-semibold text-ink-muted">
+          Belum ada data penjualan kategori gear
+        </p>
       </div>
     );
   }
 
-  const max = Math.max(...data.map((d) => d.tickets_sold || 0));
+  const max = Math.max(...data.map((d) => d.tickets_sold || 0), 1);
 
   return (
     <ResponsiveContainer width="100%" height={256}>
-      <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }} barSize={14}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200 dark:stroke-slate-700" />
+      <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }} barSize={18}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DDD7CA" />
         <XAxis
           dataKey="date"
           tickFormatter={(v) => {
+            if (!v) return "";
             const d = new Date(v);
-            return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+            if (!isNaN(d.getTime()) && v.includes("-")) {
+              return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+            }
+            return String(v).slice(0, 14);
           }}
-          tick={{ fontSize: 11, fill: "currentColor" }}
-          className="text-ts-muted dark:text-slate-400"
+          tick={{ fontSize: 11, fill: "#645E57" }}
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "currentColor" }}
-          className="text-ts-muted dark:text-slate-400"
+          tick={{ fontSize: 11, fill: "#645E57" }}
           width={40}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(139,92,246,0.08)" }} />
-        <Bar dataKey="tickets_sold" name="Tiket Terjual" radius={[4, 4, 0, 0]}>
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(184, 58, 20, 0.06)" }} />
+        <Bar dataKey="tickets_sold" name="Unit Terjual" radius={[2, 2, 0, 0]}>
           {data.map((entry, i) => (
             <Cell
               key={i}
               fill={
                 entry.tickets_sold === max
-                  ? "#8b5cf6"
-                  : `rgba(139,92,246,${0.35 + (entry.tickets_sold / max) * 0.55})`
+                  ? "#B83A14"
+                  : `rgba(24, 22, 20, ${Math.max(0.35, entry.tickets_sold / max)})`
               }
             />
           ))}

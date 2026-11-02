@@ -1,18 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Bookmark, LogOut, Package, Search, User, ChevronDown, Sparkles } from "lucide-react";
+import {
+  Bookmark,
+  LogOut,
+  Package,
+  Search,
+  User,
+  ChevronDown,
+  Menu,
+  X,
+} from "lucide-react";
 import { useAuth, homeForRole } from "../../auth/AuthContext";
 import NotificationBell from "./NotificationBell";
 import ProfileModal from "../profile/ProfileModal";
 
-const linkCls =
-  "text-xs uppercase font-bold tracking-wider text-gray-700 transition hover:text-black";
+const navLinkClass = ({ isActive }) =>
+  `text-xs font-bold tracking-wide transition-all duration-fast px-3.5 py-1.5 rounded-full ${
+    isActive
+      ? "bg-[#0F1B2D] text-white shadow-sm"
+      : "text-[#2C3D52] hover:bg-[#0F1B2D]/[0.07] hover:text-[#0F1B2D]"
+  }`;
 
 export default function Navbar() {
   const { isAuthenticated, user, role, logout } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -24,154 +38,225 @@ export default function Navbar() {
   function handleSearch(e) {
     e.preventDefault();
     const term = q.trim();
+    setMobileMenuOpen(false);
     navigate(`/products${term ? `?q=${encodeURIComponent(term)}` : ""}`);
   }
 
-  // Click outside to close dropdown
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setDropdownOpen(false);
+        setMobileMenuOpen(false);
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const displayName = user?.name || user?.username || "Akun Saya";
   const initial = displayName.charAt(0).toUpperCase() || "U";
-  const isInternalStaff = ["super_admin", "admin", "manager", "finance", "warehouse_staff", "warehouse", "store_staff", "promoter", "staff"].includes(role);
+  const isInternalStaff = [
+    "super_admin",
+    "admin",
+    "manager",
+    "finance",
+    "warehouse_staff",
+    "warehouse",
+    "store_staff",
+    "promoter",
+    "staff",
+  ].includes(role);
 
   return (
     <>
-      <header className="sticky top-0 z-40 h-[72px] w-full border-b border-gray-200 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-6 px-6 lg:px-12">
-          {/* Brand Overtone Music Store - Text Wordmark */}
-          <Link to="/" className="flex flex-col flex-shrink-0 group" aria-label="Overtone Music Store">
-            <span className="font-jakarta text-[22px] font-black tracking-tight text-gray-900 leading-none group-hover:text-black transition">
-              OVERTONE
-            </span>
-            <span className="text-[9px] font-bold tracking-[0.24em] uppercase text-gray-500 mt-0.5">
-              MUSIC STORE
-            </span>
-          </Link>
+      <header className="sticky top-0 z-40 h-[72px] w-full fp-glass-bar">
+        <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-12">
+          {/* Brand Focalpoint Pro */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-expanded={mobileMenuOpen}
+              aria-label={mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
+              className="inline-flex lg:hidden h-9 w-9 items-center justify-center rounded-full border border-[#0F1B2D]/15 bg-white/80 text-[#0F1B2D] hover:bg-white transition-colors duration-fast"
+            >
+              {mobileMenuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+            </button>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="hidden max-w-xs md:max-w-sm xl:max-w-md flex-1 md:block">
+            <Link
+              to="/"
+              className="flex flex-col flex-shrink-0 group leading-none select-none"
+              aria-label="Beranda Focalpoint Pro — Cinema. Broadcast. Pro."
+            >
+              <span className="font-display text-[21px] sm:text-[22px] font-bold tracking-[-0.035em] text-[#0F1B2D] leading-none group-hover:opacity-90 transition-opacity">
+                Focalpoint<span className="text-[#E8622C] font-extrabold">.pro</span>
+              </span>
+              <span className="text-[8.5px] font-bold uppercase tracking-[0.18em] text-[#3A4A63] mt-1 leading-none">
+                CINEMA · BROADCAST · PRO
+              </span>
+            </Link>
+          </div>
+
+          {/* Pencarian Glass Pill */}
+          <form
+            onSubmit={handleSearch}
+            role="search"
+            className="hidden max-w-xs md:max-w-sm xl:max-w-md flex-1 md:block"
+          >
             <div className="relative flex w-full items-center">
-              <Search size={15} className="pointer-events-none absolute left-3.5 text-gray-400" />
+              <Search
+                size={15}
+                className="pointer-events-none absolute left-4 text-[#3A4A63]"
+                aria-hidden="true"
+              />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="h-9.5 w-full rounded-full border border-gray-200 bg-[#F5F5F5] pl-10 pr-4 text-xs font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-black focus:bg-white focus:ring-1 focus:ring-black"
-                placeholder="Cari alat musik atau brand (Fender, Gibson, Yamaha)..."
-                type="text"
-                aria-label="Cari instrumen"
+                className="h-9 w-full rounded-full border border-[#0F1B2D]/15 bg-white/75 backdrop-blur-md pl-10 pr-4 text-xs font-medium text-[#0F1B2D] placeholder:text-[#3A4A63] focus:border-[#E8622C] focus:bg-white transition-all"
+                placeholder="Cari kamera cinema, lensa, gimbal, atau merek (Sony, RED, Canon)..."
+                type="search"
+                aria-label="Cari kamera cinema atau brand"
               />
             </div>
           </form>
 
-          <nav className="hidden items-center gap-5 lg:flex">
-            <NavLink to="/products" className={linkCls}>Katalog</NavLink>
-            <NavLink to="/showrooms" className={linkCls}>Showroom</NavLink>
-            <NavLink to="/help" className={linkCls}>Bantuan</NavLink>
+          {/* Navigasi Utama Glass Pill */}
+          <nav aria-label="Navigasi utama" className="hidden items-center gap-1 rounded-full border border-[#0F1B2D]/12 bg-white/65 backdrop-blur-md p-1 lg:flex">
+            <NavLink to="/products" className={navLinkClass}>
+              Katalog
+            </NavLink>
+            <NavLink to="/offline-stores" className={navLinkClass}>
+              Showroom
+            </NavLink>
+            <NavLink to="/track" className={navLinkClass}>
+              Lacak Pesanan
+            </NavLink>
+            <NavLink to="/help" className={navLinkClass}>
+              Panduan &amp; KMS
+            </NavLink>
             {isAuthenticated && isInternalStaff && (
               <Link
                 to={homeForRole(role)}
-                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-900 transition hover:bg-gray-200"
+                className="rounded-full bg-[#E8622C]/15 border border-[#E8622C]/30 px-3.5 py-1.5 text-xs font-bold text-[#E8622C] transition-colors hover:bg-[#E8622C] hover:text-white"
               >
-                Dashboard Staff
+                Workspace
               </Link>
             )}
           </nav>
 
-          {/* Actions */}
-          <div className="flex flex-shrink-0 items-center gap-3">
+          {/* Aksi Pengguna */}
+          <div className="flex flex-shrink-0 items-center gap-2.5">
             {isAuthenticated && (
               <Link
                 to="/tickets"
-                className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 sm:inline-flex"
+                className="hidden items-center gap-2 rounded-sm border border-line bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-colors duration-fast hover:border-line-strong hover:bg-surface-muted sm:inline-flex"
               >
-                <Package size={15} className="text-gray-700" />
-                Pesanan Saya
+                <Package size={15} className="text-accent" aria-hidden="true" />
+                <span>Pesanan Saya</span>
               </Link>
             )}
 
             <NotificationBell />
 
             {isAuthenticated ? (
-              /* User Pill Dropdown Menu (Seperti Referensi Gambar) */
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-2.5 rounded-full border border-gray-200 bg-[#F5F5F5] py-1 pl-1 pr-3 text-xs font-semibold text-gray-800 transition hover:bg-gray-200 hover:border-gray-300 shadow-xs focus:outline-none"
+                  className="flex items-center gap-2 rounded-sm border border-line bg-surface-muted py-1 pl-1.5 pr-2.5 text-xs font-bold text-ink transition-colors duration-fast hover:border-line-strong hover:bg-surface-subtle"
                   aria-expanded={dropdownOpen}
+                  aria-haspopup="menu"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111111] text-xs font-bold text-white shadow-xs">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-xs bg-ink text-xs font-bold text-surface">
                     {initial}
                   </span>
-                  <span className="max-w-[130px] truncate text-xs font-bold text-gray-900">
+                  <span className="max-w-[120px] truncate text-xs font-bold text-ink">
                     {displayName}
                   </span>
                   <ChevronDown
                     size={14}
-                    className={`text-gray-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                    aria-hidden="true"
+                    className={`text-ink-muted transition-transform duration-fast ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
                   />
                 </button>
 
-                {/* Dropdown Container */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-gray-200 bg-white py-2 shadow-xl z-50 animate-fadeIn">
-                    {/* User Info Header */}
-                    <div className="px-4 py-2.5 border-b border-gray-100">
-                      <p className="text-xs font-bold text-gray-900 truncate">{displayName}</p>
-                      <p className="text-[11px] text-gray-500 truncate">{user?.email || ""}</p>
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-60 rounded-md border border-line-strong bg-surface py-1.5 shadow-lg z-50"
+                  >
+                    <div className="px-4 py-2.5 border-b border-line bg-surface-muted">
+                      <p className="text-xs font-bold text-ink truncate">{displayName}</p>
+                      <p className="text-[11px] text-ink-muted truncate">{user?.email || ""}</p>
                     </div>
 
                     <div className="py-1">
-                      {/* 1. Profil Saya (Bisa Isi Alamat) */}
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => {
                           setDropdownOpen(false);
                           setProfileModalOpen(true);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 hover:text-black transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-ink-secondary hover:bg-surface-muted hover:text-ink transition-colors duration-fast text-left"
                       >
-                        <User size={15} className="text-gray-500" />
+                        <User size={15} className="text-ink-muted shrink-0" aria-hidden="true" />
                         <div>
-                          <p className="font-semibold text-gray-900">Profil Saya</p>
-                          <p className="text-[10px] text-gray-500">Kelola info akun &amp; alamat</p>
+                          <p className="font-bold text-ink">Profil Saya</p>
+                          <p className="text-[11px] text-ink-muted">Identitas, alamat, &amp; notifikasi</p>
                         </div>
                       </button>
 
-                      {/* 2. Wishlist (Dipindah ke dalam Dropdown) */}
                       <Link
                         to="/saved-events"
+                        role="menuitem"
                         onClick={() => setDropdownOpen(false)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-ink-secondary hover:bg-surface-muted hover:text-ink transition-colors duration-fast"
                       >
-                        <Bookmark size={15} className="text-gray-500" />
+                        <Bookmark size={15} className="text-ink-muted shrink-0" aria-hidden="true" />
                         <div>
-                          <p className="font-semibold text-gray-900">Wishlist</p>
-                          <p className="text-[10px] text-gray-500">Gear musik yang disimpan</p>
+                          <p className="font-bold text-ink">Wishlist Cinema Gear</p>
+                          <p className="text-[11px] text-ink-muted">Daftar gear yang disimpan</p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        to="/tickets"
+                        role="menuitem"
+                        onClick={() => setDropdownOpen(false)}
+                        className="w-full flex sm:hidden items-center gap-3 px-4 py-2.5 text-xs text-ink-secondary hover:bg-surface-muted hover:text-ink transition-colors duration-fast"
+                      >
+                        <Package size={15} className="text-ink-muted shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="font-bold text-ink">Pesanan Saya</p>
+                          <p className="text-[11px] text-ink-muted">Riwayat pembelian &amp; resi</p>
                         </div>
                       </Link>
                     </div>
 
-                    {/* Divider & 3. Log Out (Highlight Merah) */}
-                    <div className="border-t border-gray-100 pt-1">
+                    <div className="border-t border-line pt-1">
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => {
                           setDropdownOpen(false);
                           handleLogout();
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-status-danger-text hover:bg-status-danger-bg transition-colors duration-fast text-left"
                       >
-                        <LogOut size={15} className="text-red-500" />
-                        <span>Keluar (Log Out)</span>
+                        <LogOut size={15} className="shrink-0" aria-hidden="true" />
+                        <span>Keluar Akun</span>
                       </button>
                     </div>
                   </div>
@@ -180,20 +265,78 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1 rounded-full bg-[#111111] hover:bg-black px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition"
+                className="inline-flex items-center gap-1.5 rounded-sm bg-accent hover:bg-accent-hover px-4 py-2 text-xs font-bold text-accent-on transition-colors duration-fast"
               >
-                Masuk
+                Masuk Akun
               </Link>
             )}
           </div>
         </div>
+
+        {/* Panel Navigasi Mobile */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-b border-line bg-surface px-4 py-4 shadow-md space-y-4">
+            <form onSubmit={handleSearch} role="search">
+              <div className="relative flex w-full items-center">
+                <Search
+                  size={15}
+                  className="pointer-events-none absolute left-3.5 text-ink-muted"
+                  aria-hidden="true"
+                />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="h-9 w-full rounded-sm border border-line bg-canvas pl-10 pr-4 text-xs font-medium text-ink"
+                  placeholder="Cari kamera cinema atau brand..."
+                  type="search"
+                  aria-label="Cari kamera cinema atau brand"
+                />
+              </div>
+            </form>
+            <nav aria-label="Navigasi seluler" className="flex flex-col space-y-2">
+              <NavLink
+                to="/products"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-muted rounded-sm"
+              >
+                Katalog Cinema Gear
+              </NavLink>
+              <NavLink
+                to="/offline-stores"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-muted rounded-sm"
+              >
+                Offline Stores
+              </NavLink>
+              <NavLink
+                to="/track"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-muted rounded-sm"
+              >
+                Lacak Pesanan
+              </NavLink>
+              <NavLink
+                to="/help"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-muted rounded-sm"
+              >
+                Panduan &amp; KMS
+              </NavLink>
+              {isAuthenticated && isInternalStaff && (
+                <Link
+                  to={homeForRole(role)}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-accent hover:bg-surface-muted rounded-sm"
+                >
+                  Ruang Kerja Staf
+                </Link>
+              )}
+            </nav>
+          </div>
+        )}
       </header>
 
-      {/* Modal Profil Saya (Isi Alamat) */}
-      <ProfileModal
-        isOpen={profileModalOpen}
-        onClose={() => setProfileModalOpen(false)}
-      />
+      <ProfileModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
     </>
   );
 }

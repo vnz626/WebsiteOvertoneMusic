@@ -1,17 +1,17 @@
 """
-Model database MIS (Management Information System) – Swee Lee Music Retail.
-Menyimpan ringkasan metrik eksekutif toko alat musik untuk akses cepat Dashboard Manager & Finance:
+Model database MIS (Management Information System) – Overtone Pro Cinema Store.
+Menyimpan ringkasan metrik eksekutif toko cinema & broadcast gear untuk akses cepat Dashboard Manager & Finance:
 - MisDashboardSummary: KPI omzet, COGS/HPP, unit terjual, pending PO
-- MisProductPerformance: Performa penjualan per instrumen & brand
+- MisProductPerformance: Performa penjualan per cinema gear & brand
 - MisRevenueSummary: Rekapitulasi pendapatan dan margin bulanan
-- MisSalesSummary: Penjualan per kategori gear (Guitars, Drums, Keyboards, Audio)
+- MisSalesSummary: Penjualan per kategori gear (Cinema Cameras, Cine Lenses, Gimbals, Lighting, Audio)
 """
 from datetime import datetime
 from ..extensions import db
 
 
 class MisDashboardSummary(db.Model):
-    """Kartu KPI utama Executive MIS Dashboard Toko Alat Musik."""
+    """Kartu KPI utama Executive MIS Dashboard Toko Cinema Gear."""
     __tablename__ = "mis__daily_metrics"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -181,7 +181,7 @@ class MisRevenueSummary(db.Model):
 
 
 class MisSalesSummary(db.Model):
-    """Penjualan instrumen per kategori gear (Guitars, Drums, Audio, Keys)."""
+    """Penjualan hardware per kategori gear (Cameras, Lenses, Lighting, Audio, Gimbals)."""
     __tablename__ = "mis__sales_summary"
 
     id = db.Column(db.Integer, primary_key=True)

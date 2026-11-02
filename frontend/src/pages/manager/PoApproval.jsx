@@ -1,230 +1,325 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
+  FileCheck2,
   CheckCircle2,
-  FileCheck,
-  Package,
-  RefreshCw,
-  Search,
-  Truck,
   XCircle,
+  Clock,
+  Truck,
+  Building2,
+  Eye,
+  X,
+  Printer,
 } from "lucide-react";
 import api from "../../api";
-import Sidebar from "../../components/layout/Sidebar";
+import { formatRupiah, formatDate, errorMessage } from "../../utils/format";
 import Badge from "../../components/ui/Badge";
-import { formatRupiah } from "../../utils/format";
+import Button from "../../components/ui/Button";
+import Modal from "../../components/ui/Modal";
 
-export default function ManagerPoApproval() {
-  const [orders, setOrders] = useState([]);
+export default function PoApproval() {
+  const [pos, setPos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState("submitted");
-  const [submittingId, setSubmittingId] = useState(null);
-  const [msg, setMsg] = useState("");
-
-  function loadOrders() {
-    setLoading(true);
-    api
-      .get("/po")
-      .then((res) => setOrders(res.data.data || []))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selectedPo, setSelectedPo] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    loadOrders();
+    loadPurchaseOrders();
   }, []);
 
-  const filtered = orders.filter((o) => {
-    if (filterStatus === "all") return true;
-    return o.status === filterStatus;
-  });
-
-  function handleApprove(id) {
-    if (!confirm("Setujui Purchase Order ini untuk diteruskan ke tim Finance?")) return;
-    setSubmittingId(id);
-    api
-      .post(`/po/${id}/approve`)
-      .then(() => {
-        setMsg(`PO #${id} berhasil disetujui! Diteruskan ke Finance untuk pembayaran.`);
-        loadOrders();
-        setTimeout(() => setMsg(""), 3000);
-      })
-      .catch((err) => alert(err.response?.data?.message || "Gagal menyetujui PO"))
-      .finally(() => setSubmittingId(null));
+  async function loadPurchaseOrders() {
+    setLoading(true);
+    try {
+      const res = await api.get("/po");
+      const rawList = res.data?.data || [];
+      const mapped = rawList.map((po) => ({
+        ...po,
+        supplier_name: po.supplier?.name || po.supplier_name || "Official Supplier",
+        created_by: po.requester?.name || po.created_by || "Warehouse Staff",
+        items_count: po.items?.length || 1,
+        total_amount: Number(po.total_cost || po.total_amount || 0),
+        payment_status:
+          po.status === "paid" || po.status === "received" ? "paid" : "unpaid",
+        items: po.items || [
+          {
+            id: po.id,
+            product_name: po.product?.name || "Cinema Hardware",
+            sku: po.tier?.sku_code || po.tier?.tier_name || "-",
+            variant_name: po.tier?.variant_name || po.tier?.tier_name || "Standard",
+            qty_ordered: po.quantity || 1,
+            unit_cost: Number(po.unit_cost || 0),
+            subtotal: Number(po.total_cost || 0),
+          },
+        ],
+      }));
+      setPos(mapped);
+    } catch (err) {
+      toast.error(errorMessage(err, "Gagal memuat daftar Purchase Order"));
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleReject(id) {
-    const reason = prompt("Masukkan alasan penolakan PO:");
-    if (!reason) return;
-    setSubmittingId(id);
-    api
-      .post(`/po/${id}/reject`, { reason })
-      .then(() => {
-        setMsg(`PO #${id} ditolak.`);
-        loadOrders();
-        setTimeout(() => setMsg(""), 3000);
-      })
-      .catch((err) => alert(err.response?.data?.message || "Gagal menolak PO"))
-      .finally(() => setSubmittingId(null));
+  function handleViewDetail(po) {
+    setSelectedPo(po);
+  }
+
+  async function handleApproveOrReject(poId, action) {
+    setProcessing(true);
+    try {
+      const res =
+        action === "approve"
+          ? await api.post(`/po/${poId}/approve`)
+          : await api.post(`/po/${poId}/reject`, {
+              reason: "Ditolak oleh Retail General Manager",
+            });
+      toast.success(res.data?.message || "Purchase Order berhasil diproses");
+      setSelectedPo(null);
+      await loadPurchaseOrders();
+    } catch (err) {
+      toast.error(errorMessage(err, "Gagal memproses persetujuan PO"));
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  const filteredPos = pos.filter((p) => {
+    if (statusFilter === "ALL") return true;
+    if (statusFilter === "draft")
+      return ["draft", "pending_approval", "pending"].includes(p.status);
+    return p.status === statusFilter;
+  });
+
+  function getStatusVariant(status) {
+    switch (status) {
+      case "draft":
+      case "pending":
+      case "pending_approval":
+        return "warning";
+      case "approved":
+      case "paid":
+      case "sent_to_supplier":
+        return "info";
+      case "received":
+        return "success";
+      case "rejected":
+      case "cancelled":
+        return "danger";
+      default:
+        return "neutral";
+    }
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      <Sidebar />
-      <main className="flex-1 p-6 md:p-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ts-primary/10 text-ts-primary dark:bg-brand-400/10 dark:text-brand-400">
-                  <FileCheck size={20} />
-                </span>
-                <h1 className="font-jakarta text-2xl font-extrabold text-ts-ink dark:text-white">
-                  Approval Purchase Order (Restock Barang)
-                </h1>
-              </div>
-              <p className="mt-1 text-sm text-ts-muted dark:text-slate-400">
-                Persetujuan pengadaan instrumen musik dari Brand/Supplier resmi sebelum diteruskan ke Finance untuk pelunasan.
-              </p>
-            </div>
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
+      {/* HEADER */}
+      <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-accent">
+            Procurement Approval Gate
+          </span>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            Otorisasi &amp; Persetujuan Purchase Order (PO)
+          </h1>
+          <p className="mt-1 text-xs text-ink-secondary sm:text-sm">
+            Tinjau dan setujui pengajuan restock cinema gear dari staf gudang maupun hasil
+            simulasi DSS TOPSIS.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { id: "ALL", label: "Semua PO" },
+            { id: "draft", label: "Menunggu Persetujuan" },
+            { id: "approved", label: "Disetujui (Siap Kirim)" },
+            { id: "received", label: "Barang Diterima" },
+          ].map((tab) => (
             <button
-              onClick={loadOrders}
-              className="inline-flex items-center gap-2 rounded-xl border border-ts-subtle bg-white px-4 py-2 text-xs font-bold text-ts-ink shadow-sm hover:bg-ts-low dark:border-white/10 dark:bg-surface-container dark:text-white"
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id)}
+              className={`rounded-sm px-3.5 py-2 text-xs font-semibold transition-colors ${
+                statusFilter === tab.id
+                  ? "bg-ink text-canvas"
+                  : "border border-line bg-surface text-ink-secondary hover:border-line-strong hover:text-ink"
+              }`}
             >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
+              {tab.label}
             </button>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {msg && (
-            <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 p-3.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 size={16} /> {msg}
-            </div>
-          )}
-
-          {/* Filter Pills */}
-          <div className="mt-6 flex items-center gap-2">
-            {[
-              { id: "submitted", label: "Menunggu Persetujuan Manager" },
-              { id: "approved", label: "Disetujui (Menunggu Finance)" },
-              { id: "paid", label: "Lunas (Menunggu Gudang)" },
-              { id: "received", label: "Selesai Diterima" },
-              { id: "all", label: "Semua PO" },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilterStatus(f.id)}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
-                  filterStatus === f.id
-                    ? "bg-ts-primary text-white shadow-sm dark:bg-brand-500"
-                    : "bg-white text-ts-muted border border-ts-subtle hover:bg-ts-low dark:bg-surface-container dark:border-white/10 dark:text-slate-300"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Table */}
-          <div className="mt-4 overflow-hidden rounded-2xl border border-ts-subtle bg-white shadow-sm dark:border-white/10 dark:bg-surface-container">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-ts-subtle bg-ts-low/60 font-bold uppercase tracking-wider text-ts-muted dark:border-white/10 dark:bg-surface-high">
+      {/* TABEL PO */}
+      <div className="overflow-hidden rounded-md border border-line bg-surface">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-line bg-surface-muted text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              <tr>
+                <th className="px-4 py-3.5">Nomor PO</th>
+                <th className="px-4 py-3.5">Supplier / Brand</th>
+                <th className="px-4 py-3.5">Tanggal</th>
+                <th className="px-4 py-3.5 text-center">Jumlah Item</th>
+                <th className="px-4 py-3.5 text-right">Total Nilai PO</th>
+                <th className="px-4 py-3.5 text-center">Status Pembayaran</th>
+                <th className="px-4 py-3.5 text-center">Status PO</th>
+                <th className="px-4 py-3.5 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {loading ? (
                 <tr>
-                  <th className="py-3.5 px-4">No. PO & Tanggal</th>
-                  <th className="py-3.5 px-4">Brand Supplier & Tujuan</th>
-                  <th className="py-3.5 px-4">Produk Instrumen</th>
-                  <th className="py-3.5 px-4 text-center">Jumlah</th>
-                  <th className="py-3.5 px-4 text-right">Nilai Tagihan</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-right">Keputusan Manager</th>
+                  <td colSpan={8} className="p-8 text-center text-ink-muted">
+                    Memuat dokumen Purchase Order...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-ts-subtle dark:divide-white/5 font-medium">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-ts-muted">
-                      Memuat Purchase Orders...
+              ) : filteredPos.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-ink-muted">
+                    Tidak ada dokumen Purchase Order pada filter ini.
+                  </td>
+                </tr>
+              ) : (
+                filteredPos.map((po) => (
+                  <tr key={po.id} className="hover:bg-surface-muted/50">
+                    <td className="px-4 py-3.5 font-mono font-bold text-ink tabular-nums">
+                      {po.po_number}
+                    </td>
+                    <td className="px-4 py-3.5 font-bold text-ink">{po.supplier_name}</td>
+                    <td className="px-4 py-3.5 text-ink-secondary tabular-nums">
+                      {formatDate(po.created_at)}
+                    </td>
+                    <td className="px-4 py-3.5 text-center font-bold text-ink tabular-nums">
+                      {po.quantity || po.items_count} unit
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-mono font-bold text-ink tabular-nums">
+                      {formatRupiah(po.total_amount)}
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <Badge variant={po.payment_status === "paid" ? "success" : "warning"}>
+                        {po.payment_status === "paid" ? "LUNAS" : "BELUM DIBAYAR"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <Badge variant={getStatusVariant(po.status)}>
+                        {po.status.toUpperCase()}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <Button
+                        variant="secondary"
+                        size="xs"
+                        onClick={() => handleViewDetail(po)}
+                      >
+                        <Eye size={13} aria-hidden="true" />
+                        Periksa &amp; Otorisasi
+                      </Button>
                     </td>
                   </tr>
-                ) : filtered.length === 0 ? (
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* MODAL DETAIL & APPROVAL PO */}
+      <Modal
+        open={Boolean(selectedPo)}
+        onClose={() => setSelectedPo(null)}
+        title={selectedPo ? selectedPo.po_number : "Detail Purchase Order"}
+        size="lg"
+      >
+        {selectedPo && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3 text-xs text-ink-secondary">
+              <span>
+                Supplier: <b className="text-ink">{selectedPo.supplier_name}</b>
+              </span>
+              <span>
+                Diajukan oleh: <b className="text-ink">{selectedPo.created_by}</b>
+              </span>
+            </div>
+
+            {selectedPo.notes && (
+              <div className="rounded-sm border border-line bg-surface-muted p-3 text-xs text-ink-secondary">
+                <b className="text-ink">Catatan Pengajuan:</b> {selectedPo.notes}
+              </div>
+            )}
+
+            <div className="max-h-72 overflow-y-auto rounded-sm border border-line">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-line bg-surface-muted text-[11px] font-bold text-ink-muted">
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-ts-muted">
-                      Tidak ada pengajuan PO dengan filter ini.
-                    </td>
+                    <th className="p-3">SKU &amp; Cinema Hardware</th>
+                    <th className="p-3 text-center">Qty Pesan</th>
+                    <th className="p-3 text-right">Harga Beli Unit</th>
+                    <th className="p-3 text-right">Subtotal</th>
                   </tr>
-                ) : (
-                  filtered.map((po) => (
-                    <tr key={po.id} className="hover:bg-ts-low/30 transition dark:hover:bg-white/5">
-                      <td className="py-3.5 px-4">
-                        <p className="font-mono font-bold text-ts-ink dark:text-white">{po.po_number}</p>
-                        <span className="text-[11px] text-ts-muted">
-                          Diajukan oleh: {po.requester?.name || "Staff Gudang"}
-                        </span>
+                </thead>
+                <tbody className="divide-y divide-line tabular-nums">
+                  {(selectedPo.items || []).map((item) => (
+                    <tr key={item.id}>
+                      <td className="p-3">
+                        <p className="font-bold text-ink">{item.product_name}</p>
+                        <p className="font-mono text-[11px] text-ink-muted">
+                          {item.sku} • {item.variant_name}
+                        </p>
                       </td>
-                      <td className="py-3.5 px-4">
-                        <p className="font-bold text-ts-ink dark:text-white">{po.supplier?.name || "Supplier"}</p>
-                        <span className="text-[11px] text-ts-muted flex items-center gap-1">
-                          <Truck size={12} /> {po.venue?.name || "Gudang Pusat"}
-                        </span>
+                      <td className="p-3 text-center font-bold text-ink">
+                        {item.qty_ordered} unit
                       </td>
-                      <td className="py-3.5 px-4">
-                        <p className="font-bold text-ts-ink dark:text-white">{po.product?.name}</p>
-                        {po.tier && (
-                          <span className="text-[11px] text-emerald-600 font-bold">
-                            Varian: {po.tier.tier_name}
-                          </span>
-                        )}
+                      <td className="p-3 text-right font-mono text-ink-secondary">
+                        {formatRupiah(item.unit_cost)}
                       </td>
-                      <td className="py-3.5 px-4 text-center font-extrabold text-sm">{po.quantity} unit</td>
-                      <td className="py-3.5 px-4 text-right">
-                        <p className="font-bold text-ts-ink dark:text-white">{formatRupiah(po.total_cost)}</p>
-                        <span className="text-[10px] text-ts-muted">@ {formatRupiah(po.unit_cost)}</span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <Badge
-                          variant={
-                            po.status === "approved"
-                              ? "blue"
-                              : po.status === "paid"
-                              ? "purple"
-                              : po.status === "received"
-                              ? "teal"
-                              : po.status === "rejected"
-                              ? "rose"
-                              : "amber"
-                          }
-                        >
-                          {po.status.toUpperCase()}
-                        </Badge>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {po.status === "submitted" ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => handleApprove(po.id)}
-                              disabled={submittingId === po.id}
-                              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(po.id)}
-                              disabled={submittingId === po.id}
-                              className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-700 transition"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-ts-muted">Telah Diproses</span>
-                        )}
+                      <td className="p-3 text-right font-mono font-bold text-ink">
+                        {formatRupiah(item.subtotal)}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="tabular-nums">
+                <span className="text-xs text-ink-muted">Total Nilai Otorisasi PO:</span>
+                <p className="font-display text-xl font-bold text-ink">
+                  {formatRupiah(selectedPo.total_amount)}
+                </p>
+              </div>
+
+              {["draft", "pending", "pending_approval"].includes(selectedPo.status) ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={processing}
+                    onClick={() => handleApproveOrReject(selectedPo.id, "reject")}
+                  >
+                    <XCircle size={15} aria-hidden="true" />
+                    Tolak PO
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={processing}
+                    onClick={() => handleApproveOrReject(selectedPo.id, "approve")}
+                  >
+                    <CheckCircle2 size={15} aria-hidden="true" />
+                    Setujui &amp; Teruskan ke Finance
+                  </Button>
+                </div>
+              ) : (
+                <Badge variant="info">
+                  Status Saat Ini: {selectedPo.status.toUpperCase()}
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        )}
+      </Modal>
     </div>
   );
 }

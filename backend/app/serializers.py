@@ -1,4 +1,4 @@
-"""Ubah objek model database Swee Lee Music Store jadi dictionary JSON yang rapi untuk Frontend."""
+"""Ubah objek model database Overtone Pro Cinema Store jadi dictionary JSON yang rapi untuk Frontend."""
 
 
 def branch_to_dict(b):
@@ -94,15 +94,15 @@ def product_to_dict(p, detail=False):
     brand_name = brand_obj.name if brand_obj else getattr(p, "organizer", "Official Store")
 
     branch_obj = getattr(p, "branch", getattr(p, "venue_rel", None))
-    location_name = branch_obj.name if branch_obj else getattr(p, "location", "Showroom Swee Lee")
+    location_name = branch_obj.name if branch_obj else getattr(p, "location", "Showroom Flagship Senayan City")
     city_name = branch_obj.city if branch_obj else getattr(p, "city", "Jakarta")
 
     data = {
         "id": p.id,
         "name": p.name,
         "sku_prefix": getattr(p, "sku_prefix", None),
-        "instrument_type": getattr(p, "instrument_type", "Electric Guitar"),
-        "category": p.category or "Guitars",
+        "instrument_type": getattr(p, "instrument_type", "Cinema Camera Body"),
+        "category": p.category or "Cinema & Mirrorless Cameras",
         "warranty_months": getattr(p, "warranty_months", 12),
         "brand_id": getattr(p, "brand_id", getattr(p, "organizer_id", None)),
         "brand": brand_to_dict(brand_obj),
@@ -129,6 +129,22 @@ def product_to_dict(p, detail=False):
         "variants": variants_list,
         "tiers": variants_list,  # compatibility fallback for frontend
     }
+
+    # Hitung rata-rata rating bintang & jumlah ulasan filmmaker
+    try:
+        from .models.models import TPSProductReview
+        reviews = TPSProductReview.query.filter_by(product_id=p.id).order_by(TPSProductReview.created_at.desc()).all()
+        review_count = len(reviews)
+        avg_rating = round(sum(r.rating for r in reviews) / review_count, 1) if review_count > 0 else 5.0
+        data["avg_rating"] = avg_rating
+        data["review_count"] = review_count
+        if detail:
+            data["reviews"] = [r.to_dict() for r in reviews]
+    except Exception:
+        data["avg_rating"] = 5.0
+        data["review_count"] = 0
+        if detail:
+            data["reviews"] = []
 
     if detail:
         data.update(

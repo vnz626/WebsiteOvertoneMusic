@@ -1,7 +1,7 @@
 """
 KMS (Knowledge Management System) API:
 Dual-Scope Knowledge Management System:
-1. Customer Knowledge Base: Panduan publik musisi, FAQ, dan tips gear (audience_type='customer').
+1. Customer Knowledge Base: Panduan publik filmmaker, FAQ, dan tips cinema gear (audience_type='customer').
 2. Internal Staff SOP: Dokumen SOP operasional khusus divisi internal OAS (audience_type='internal').
 """
 import uuid
@@ -13,6 +13,7 @@ from ..extensions import db
 from ..models.models import (
     KMSCategory,
     KMSArticle,
+    KMSSopAcknowledgement,
     KMSFAQ,
     OASAnnouncement,
     OASSupportTicket,
@@ -29,11 +30,13 @@ from ..security import (
     current_user,
     roles_required,
 )
+from ..audit import log_action
 
 kms_bp = Blueprint("kms", __name__)
 
 
-def _article_dict(a: KMSArticle, detail: bool = False) -> dict:
+def _article_dict(a: KMSArticle, detail: bool = False, staff_id: int = None) -> dict:
+    current_version = getattr(a, "version", 1) or 1
     d = {
         "id": a.id,
         "title": a.title,
@@ -41,6 +44,7 @@ def _article_dict(a: KMSArticle, detail: bool = False) -> dict:
         "category_id": a.category_id,
         "category_name": a.category_rel.name if a.category_rel else None,
         "audience_type": getattr(a, "audience_type", "customer") or "customer",
+        "version": current_version,
         "target_role": getattr(a, "target_role", "public") or "public",
         "sop_code": getattr(a, "sop_code", None),
         "priority_level": getattr(a, "priority_level", "standard") or "standard",
@@ -54,6 +58,26 @@ def _article_dict(a: KMSArticle, detail: bool = False) -> dict:
         "author_staff_id": a.author_staff_id,
         "author_name": a.author.name if a.author else "Overtone Gear Specialist",
     }
+    if staff_id and d["audience_type"] == "internal":
+        ack = KMSSopAcknowledgement.query.filter_by(
+            staff_id=staff_id,
+            article_id=a.id,
+            article_version=current_version,
+        ).first()
+        d["acknowledged"] = ack is not None
+        d["acknowledged_at"] = ack.acknowledged_at.isoformat() if ack else None
+
+        if not ack:
+            prev_ack = KMSSopAcknowledgement.query.filter_by(
+                staff_id=staff_id,
+                article_id=a.id,
+            ).filter(KMSSopAcknowledgement.article_version < current_version).order_by(KMSSopAcknowledgement.article_version.desc()).first()
+            d["needs_reack"] = prev_ack is not None
+            d["previous_ack_version"] = prev_ack.article_version if prev_ack else None
+        else:
+            d["needs_reack"] = False
+            d["previous_ack_version"] = None
+
     if detail:
         d["content"] = a.content or ""
     return d
@@ -95,7 +119,7 @@ def categories():
 @kms_bp.get("/public-articles")
 def public_articles():
     """
-    Katalog artikel publik untuk musisi dan pelanggan.
+    Katalog artikel publik untuk filmmaker dan pelanggan.
     HANYA mengembalikan artikel dengan audience_type == 'customer' dan is_published == True.
     SOP internal staf dilarang keras tampil di sini!
     """
@@ -229,10 +253,64 @@ def get_internal_sops():
         KMSArticle.created_at.desc(),
     ).all()
 
+    staff_id = user.id if isinstance(user, OASStaff) else None
     return jsonify({
-        "data": [_article_dict(a, detail=True) for a in rows],
+        "data": [_article_dict(a, detail=True, staff_id=staff_id) for a in rows],
         "total": len(rows),
         "user_role": role,
+    })
+
+
+@kms_bp.post("/internal-sops/<int:article_id>/acknowledge")
+def acknowledge_internal_sop(article_id):
+    """Staf OAS menandatangani/mengonfirmasi bahwa telah membaca & memahami SOP versi saat ini."""
+    try:
+        verify_jwt_in_request()
+        user = current_user()
+        if not isinstance(user, OASStaff):
+            return jsonify({"message": "Hanya staf internal OAS yang dapat mengonfirmasi SOP"}), 403
+    except Exception:
+        return jsonify({"message": "Diperlukan autentikasi sesi staf"}), 401
+
+    a = KMSArticle.query.get_or_404(article_id)
+    if a.audience_type != "internal":
+        return jsonify({"message": "Dokumen ini bukan SOP internal"}), 400
+
+    cur_version = getattr(a, "version", 1) or 1
+    existing = KMSSopAcknowledgement.query.filter_by(
+        staff_id=user.id,
+        article_id=a.id,
+        article_version=cur_version,
+    ).first()
+
+    if not existing:
+        ack = KMSSopAcknowledgement(
+            staff_id=user.id,
+            article_id=a.id,
+            article_version=cur_version,
+            acknowledged_at=datetime.utcnow(),
+        )
+        db.session.add(ack)
+        db.session.commit()
+    else:
+        ack = existing
+
+    log_action(
+        action="ACKNOWLEDGE_SOP",
+        entity_type="kms_sop",
+        entity_id=str(a.id),
+        after={
+            "sop_code": a.sop_code,
+            "version": cur_version,
+            "staff_name": user.name,
+            "staff_id": user.id,
+            "acknowledged_at": ack.acknowledged_at.isoformat(),
+        },
+    )
+
+    return jsonify({
+        "message": f"SOP {a.sop_code or a.title} (v{cur_version}) berhasil dikonfirmasi dan tersimpan di database.",
+        "data": _article_dict(a, detail=True, staff_id=user.id),
     })
 
 
@@ -343,9 +421,24 @@ def admin_create_article():
 @kms_bp.put("/admin/articles/<int:id>")
 @roles_required(ROLE_SUPER_ADMIN, "admin")
 def admin_update_article(id):
-    """Memperbarui dokumen artikel publik atau SOP internal."""
+    """Memperbarui dokumen artikel publik atau SOP internal. Jika SOP internal diubah, versi dinaikkan."""
     a = KMSArticle.query.get_or_404(id)
     data = request.json or {}
+
+    version_bumped = False
+    old_version = getattr(a, "version", 1) or 1
+
+    # Deteksi perubahan materi jika artikel adalah SOP internal
+    if a.audience_type == "internal":
+        content_changed = "content" in data and (data["content"] or "").strip() != (a.content or "").strip()
+        title_changed = "title" in data and (data["title"] or "").strip() != (a.title or "").strip()
+        excerpt_changed = "excerpt" in data and (data["excerpt"] or "").strip() != (a.excerpt or "").strip()
+        role_changed = "target_role" in data and data["target_role"] != a.target_role
+        prio_changed = "priority_level" in data and data["priority_level"] != a.priority_level
+
+        if content_changed or title_changed or excerpt_changed or role_changed or prio_changed:
+            a.version = old_version + 1
+            version_bumped = True
 
     if "title" in data:
         a.title = data["title"]
@@ -370,7 +463,149 @@ def admin_update_article(id):
 
     a.updated_at = datetime.utcnow()
     db.session.commit()
-    return jsonify({"message": "Dokumen KMS berhasil diperbarui", "data": _article_dict(a, detail=True)})
+
+    if version_bumped:
+        user = current_user()
+        log_action(
+            action="UPDATE_SOP_VERSION",
+            entity_type="kms_sop",
+            entity_id=str(a.id),
+            before={"version": old_version},
+            after={"version": a.version, "title": a.title, "updater": user.name if user else "Admin"},
+        )
+
+    msg = f"Dokumen KMS diperbarui{' (Versi dinaikkan ke v' + str(a.version) + ')' if version_bumped else ''}."
+    return jsonify({"message": msg, "data": _article_dict(a, detail=True), "version_bumped": version_bumped})
+
+
+@kms_bp.get("/admin/kms/sop-compliance")
+@kms_bp.get("/admin/sop-compliance")
+@roles_required(ROLE_SUPER_ADMIN, "admin", ROLE_MANAGER)
+def get_sop_compliance_report():
+    """Laporan matriks kepatuhan pembacaan SOP staf internal (Fitur 1.6)."""
+    all_staff = OASStaff.query.filter_by(is_active=True).all()
+    all_sops = KMSArticle.query.filter(
+        KMSArticle.audience_type == "internal",
+        KMSArticle.is_published == True,
+    ).all()
+
+    def _role_matches(staff_role, target_role):
+        if target_role in ("all_internal", "all", "public"):
+            return True
+        if "warehouse" in staff_role and target_role in ("warehouse_staff", "warehouse"):
+            return True
+        if "store" in staff_role and target_role in ("store_staff", "staff", "promoter"):
+            return True
+        if "finance" in staff_role and target_role == "finance":
+            return True
+        if "manager" in staff_role and target_role == "manager":
+            return True
+        return staff_role == target_role
+
+    staff_matrix = []
+    total_required_all = 0
+    total_ack_all = 0
+
+    for s in all_staff:
+        # SOP yang relevan untuk role staf ini
+        required_sops = [sop for sop in all_sops if _role_matches(s.role, sop.target_role)]
+        req_count = len(required_sops)
+
+        acks = KMSSopAcknowledgement.query.filter_by(staff_id=s.id).all()
+        # map article_id -> set of acknowledged versions
+        ack_versions = {}
+        for ack in acks:
+            if ack.article_id not in ack_versions:
+                ack_versions[ack.article_id] = []
+            ack_versions[ack.article_id].append(ack.article_version)
+
+        ack_count = 0
+        missing_sops = []
+        outdated_sops = []
+
+        for sop in required_sops:
+            cur_ver = getattr(sop, "version", 1) or 1
+            user_vers = ack_versions.get(sop.id, [])
+            if cur_ver in user_vers:
+                ack_count += 1
+            elif user_vers:
+                outdated_sops.append({
+                    "id": sop.id,
+                    "sop_code": sop.sop_code,
+                    "title": sop.title,
+                    "current_version": cur_ver,
+                    "ack_version": max(user_vers),
+                })
+            else:
+                missing_sops.append({
+                    "id": sop.id,
+                    "sop_code": sop.sop_code,
+                    "title": sop.title,
+                    "current_version": cur_ver,
+                    "priority_level": sop.priority_level,
+                })
+
+        compliance_rate = round((ack_count / req_count * 100), 1) if req_count > 0 else 100.0
+        total_required_all += req_count
+        total_ack_all += ack_count
+
+        staff_matrix.append({
+            "staff_id": s.id,
+            "name": s.name,
+            "email": s.email,
+            "role": s.role,
+            "branch_id": s.branch_id,
+            "branch_name": s.branch.name if s.branch else "Headquarters",
+            "required_count": req_count,
+            "acknowledged_count": ack_count,
+            "compliance_rate": compliance_rate,
+            "missing_sops": missing_sops,
+            "outdated_sops": outdated_sops,
+        })
+
+    # Analisis per dokumen SOP
+    sop_matrix = []
+    for sop in all_sops:
+        cur_ver = getattr(sop, "version", 1) or 1
+        eligible_staff = [s for s in all_staff if _role_matches(s.role, sop.target_role)]
+        eligible_count = len(eligible_staff)
+
+        acks_cur = KMSSopAcknowledgement.query.filter_by(
+            article_id=sop.id,
+            article_version=cur_ver,
+        ).all()
+        acked_staff_ids = {a.staff_id for a in acks_cur}
+
+        sop_ack_count = sum(1 for s in eligible_staff if s.id in acked_staff_ids)
+        sop_rate = round((sop_ack_count / eligible_count * 100), 1) if eligible_count > 0 else 100.0
+
+        sop_matrix.append({
+            "id": sop.id,
+            "sop_code": sop.sop_code,
+            "title": sop.title,
+            "version": cur_ver,
+            "priority_level": sop.priority_level,
+            "target_role": sop.target_role,
+            "eligible_staff_count": eligible_count,
+            "acknowledged_count": sop_ack_count,
+            "compliance_rate": sop_rate,
+        })
+
+    overall_rate = round((total_ack_all / total_required_all * 100), 1) if total_required_all > 0 else 100.0
+
+    return jsonify({
+        "data": {
+            "summary": {
+                "total_staff": len(all_staff),
+                "total_sops": len(all_sops),
+                "overall_compliance_rate": overall_rate,
+                "total_required": total_required_all,
+                "total_acknowledged": total_ack_all,
+            },
+            "staff_matrix": staff_matrix,
+            "sop_matrix": sop_matrix,
+        }
+    })
 
 
 @kms_bp.delete("/admin/articles/<int:id>")
