@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0d12"/>
+      <stop offset="50%" stop-color="#0e131b"/>
+      <stop offset="100%" stop-color="#07090d"/>
+    </linearGradient>
+
+    <!-- Glass Card Gradient -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161e2a" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0b1017" stop-opacity="0.92"/>
+    </linearGradient>
+
+    <!-- Accent Brand Gradient -->
+    <linearGradient id="brandAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF7A3D"/>
+      <stop offset="50%" stop-color="#E8622C"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+
+    <!-- Shimmer Gradient -->
+    <linearGradient id="shimmer" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="white" stop-opacity="0"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Ambient Glow Orbs -->
+    <radialGradient id="orbOrange" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8622C" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#E8622C" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orbCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+
+    <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255, 255, 255, 0.035)" stroke-width="1"/>
+      <circle cx="0" cy="0" r="1" fill="rgba(255, 255, 255, 0.08)"/>
+    </pattern>
+
+    <clipPath id="cardClip">
+      <rect x="30" y="24" width="1140" height="312" rx="20"/>
+    </clipPath>
+  </defs>
+
+  <style>
+    @keyframes recPulse {
+      0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px #ef4444); }
+      50% { opacity: 0.25; filter: none; }
+    }
+    @keyframes focusBreath {
+      0%, 100% { opacity: 0.65; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+    @keyframes sweepLine {
+      0% { transform: translateX(-300px); }
+      100% { transform: translateX(1300px); }
+    }
+    @keyframes floatTag {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    @keyframes borderGlow {
+      0%, 100% { stroke: rgba(232, 98, 44, 0.4); }
+      50% { stroke: rgba(232, 98, 44, 0.85); filter: drop-shadow(0 0 8px rgba(232, 98, 44, 0.5)); }
+    }
+
+    .rec-dot { animation: recPulse 1.8s infinite ease-in-out; }
+    .focus-hud { transform-origin: 600px 180px; animation: focusBreath 4s infinite ease-in-out; }
+    .shimmer-anim { animation: sweepLine 5s infinite linear; }
+    .tag-float-1 { animation: floatTag 3s infinite ease-in-out; }
+    .tag-float-2 { animation: floatTag 3.6s infinite ease-in-out 0.4s; }
+    .tag-float-3 { animation: floatTag 3.2s infinite ease-in-out 0.8s; }
+    .card-border { animation: borderGlow 4s infinite ease-in-out; }
+    
+    text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Plus Jakarta Sans", Roboto, Helvetica, Arial, sans-serif;
+    }
+  </style>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="360" rx="24" fill="url(#bgGrad)"/>
+  <rect width="1200" height="360" fill="url(#gridPattern)"/>
+
+  <!-- Ambient Cinematic Glows -->
+  <circle cx="200" cy="80" r="180" fill="url(#orbOrange)"/>
+  <circle cx="1020" cy="280" r="220" fill="url(#orbCyan)"/>
+  <circle cx="600" cy="180" r="260" fill="url(#orbOrange)"/>
+
+  <!-- Glass HUD Container Card -->
+  <g clip-path="url(#cardClip)">
+    <rect x="30" y="24" width="1140" height="312" rx="20" fill="url(#cardGrad)"/>
+    <rect x="30" y="24" width="1140" height="312" rx="20" fill="none" class="card-border" stroke-width="1.5"/>
+
+    <!-- Light Sweep Animation inside Card -->
+    <rect y="24" width="120" height="312" fill="url(#shimmer)" class="shimmer-anim" opacity="0.3" transform="skewX(-20)"/>
+
+    <!-- Viewfinder HUD Corner Brackets -->
+    <g class="focus-hud" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" fill="none">
+      <!-- Top Left -->
+      <path d="M 60 70 L 60 50 L 80 50" />
+      <!-- Top Right -->
+      <path d="M 1120 50 L 1140 50 L 1140 70" />
+      <!-- Bottom Left -->
+      <path d="M 60 290 L 60 310 L 80 310" />
+      <!-- Bottom Right -->
+      <path d="M 1120 310 L 1140 310 L 1140 290" />
+      <!-- Center Focus Reticle -->
+      <circle cx="600" cy="155" r="48" stroke="rgba(232, 98, 44, 0.2)" stroke-dasharray="4 6" stroke-width="1.5"/>
+      <path d="M 600 143 L 600 167 M 588 155 L 612 155" stroke="rgba(232, 98, 44, 0.5)" stroke-width="1.5"/>
+    </g>
+
+    <!-- Top Status Bar: Cinema Viewfinder Style -->
+    <g transform="translate(64, 52)">
+      <!-- REC Indicator -->
+      <circle cx="8" cy="8" r="5" fill="#EF4444" class="rec-dot"/>
+      <text x="22" y="12" fill="#F87171" font-size="11" font-weight="800" letter-spacing="0.16em">REC ● 24 FPS</text>
+
+      <!-- Shutter & ISO Specs -->
+      <text x="170" y="12" fill="rgba(255, 255, 255, 0.55)" font-size="11" font-weight="600" letter-spacing="0.08em">SHUTTER 180° · 4K DCI · PRORES RAW HQ</text>
+
+      <!-- Battery / ISO right aligned -->
+      <text x="960" y="12" fill="#38BDF8" font-size="11" font-weight="700" letter-spacing="0.1em">ISO 800 (DUAL BASE) · TC 01:24:19:08</text>
+    </g>
+
+    <!-- Center Brand Showcase -->
+    <g transform="translate(600, 150)" text-anchor="middle">
+      <!-- Focalpoint.pro Main Brand Title -->
+      <text y="0" font-size="52" font-weight="800" letter-spacing="-0.03em" fill="#FFFFFF">
+        Focalpoint<tspan fill="url(#brandAccent)" font-weight="900">.pro</tspan>
+      </text>
+
+      <!-- Subtitle Tagline -->
+      <text y="32" font-size="13" font-weight="700" fill="rgba(255, 255, 255, 0.78)" letter-spacing="0.28em">
+        CINEMA · BROADCAST · PRO GEAR ENTERPRISE
+      </text>
+
+      <!-- Description / Value Prop -->
+      <text y="62" font-size="14" font-weight="500" fill="rgba(255, 255, 255, 0.62)" letter-spacing="0.02em">
+        "Window to the Set" Glassmorphism UI &amp; Omnichannel Retail ERP (TPS · OAS · KMS · MIS · DSS)
+      </text>
+    </g>
+
+    <!-- Floating Interactive Feature Pills -->
+    <g transform="translate(100, 260)">
+      <!-- Pill 1: Glass Hero -->
+      <g class="tag-float-1" transform="translate(0, 0)">
+        <rect width="215" height="34" rx="17" fill="rgba(232, 98, 44, 0.12)" stroke="rgba(232, 98, 44, 0.45)" stroke-width="1"/>
+        <text x="107" y="21" text-anchor="middle" fill="#FFA07A" font-size="11.5" font-weight="700" letter-spacing="0.04em">✨ Window to the Set Hero</text>
+      </g>
+
+      <!-- Pill 2: 5 Enterprise Subsystems -->
+      <g class="tag-float-2" transform="translate(235, 0)">
+        <rect width="245" height="34" rx="17" fill="rgba(56, 189, 248, 0.1)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1"/>
+        <text x="122" y="21" text-anchor="middle" fill="#7DD3FC" font-size="11.5" font-weight="700" letter-spacing="0.04em">⚡ 5 Enterprise Subsystems</text>
+      </g>
+
+      <!-- Pill 3: Hybrid AHP-TOPSIS -->
+      <g class="tag-float-3" transform="translate(500, 0)">
+        <rect width="240" height="34" rx="17" fill="rgba(168, 85, 247, 0.1)" stroke="rgba(168, 85, 247, 0.35)" stroke-width="1"/>
+        <text x="120" y="21" text-anchor="middle" fill="#C084FC" font-size="11.5" font-weight="700" letter-spacing="0.04em">🎯 Hybrid AHP-TOPSIS DSS</text>
+      </g>
+
+      <!-- Pill 4: Dual-Scope KMS -->
+      <g class="tag-float-1" transform="translate(760, 0)">
+        <rect width="235" height="34" rx="17" fill="rgba(52, 211, 153, 0.1)" stroke="rgba(52, 211, 153, 0.35)" stroke-width="1"/>
+        <text x="117" y="21" text-anchor="middle" fill="#6EE7B7" font-size="11.5" font-weight="700" letter-spacing="0.04em">🛡️ Dual-Scope KMS &amp; SOP</text>
+      </g>
+    </g>
+  </g>
+</svg>
