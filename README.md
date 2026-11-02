@@ -1,21 +1,21 @@
 <div align="center">
 
 <!-- Animated Cinema Viewfinder Banner -->
-<img src="assets/focalpoint-banner-animated.svg" alt="Focalpoint.pro Cinema &amp; Broadcast Pro Store" width="100%" />
+<img src="assets/focalpoint-banner-animated.svg" alt="Focalpoint.pro Omnichannel Retail ERP" width="100%" />
 
 <br/>
 
 <!-- Realtime Animated Typing Headline -->
 <a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Plus+Jakarta+Sans&weight=700&size=19&duration=3200&pause=1100&color=E8622C&center=true&vCenter=true&width=780&lines=Focalpoint.pro+%E2%80%94+Cinema+%26+Broadcast+Pro+Gear+Enterprise;Signature+%22Window+to+the+Set%22+Glassmorphism+Hero+UI;5+Enterprise+Subsystems%3A+TPS+%C2%B7+OAS+%C2%B7+KMS+%C2%B7+MIS+%C2%B7+DSS;Dual-Scope+KMS+%26+Staff+SOP+Compliance+Matrix;Hybrid+AHP-TOPSIS+Smart+Restock+Decision+Support+System;10-Point+Sensor+QC%2C+Showroom+POS+%26+End-to-End+RMA" alt="Focalpoint.pro Typing Animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Plus+Jakarta+Sans&weight=700&size=19&duration=3200&pause=1100&color=E8622C&center=true&vCenter=true&width=780&lines=Focalpoint.pro+%E2%80%94+Omnichannel+Retail+ERP+Cinema+%26+Broadcast+Gear;5+Enterprise+Subsystems%3A+TPS+%C2%B7+OAS+%C2%B7+KMS+%C2%B7+MIS+%C2%B7+DSS;Dual-Scope+KMS+%26+Internal+Staff+SOP+Compliance+Matrix;Hybrid+AHP-TOPSIS+Smart+Restock+Decision+Support+System;Showroom+POS+Kasir%2C+Click+%26+Collect+%26+Serial+Number+Tracking;End-to-End+RMA+Warranty+Claims+%26+Deadstock+Clearance+Simulator" alt="Focalpoint.pro Typing Animation" />
 </a>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Release-v4.0.0--Pro-E8622C?style=for-the-badge&logo=target&logoColor=white" alt="Release v4.0.0" />
   <img src="https://img.shields.io/badge/Frontend-React_18_+_Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18 + Vite" />
-  <img src="https://img.shields.io/badge/Styling-Tailwind_CSS_+_Glass-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Styling-Tailwind_CSS-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
   <img src="https://img.shields.io/badge/Backend-Python_Flask_REST_API-4B8BBE?style=for-the-badge&logo=python&logoColor=white" alt="Python Flask" />
-  <img src="https://img.shields.io/badge/Database-MySQL_Double_Underscore_(__)-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
   <img src="https://img.shields.io/badge/Decision_Engine-Hybrid_AHP--TOPSIS-A855F7?style=for-the-badge&logo=graphql&logoColor=white" alt="AHP-TOPSIS" />
 </p>
 
@@ -25,48 +25,22 @@
 
 ## 🎬 Tentang Focalpoint.pro
 
-**Focalpoint.pro** adalah platform enterprise e-commerce dan sistem informasi manajemen ritel peralatan sinematografi, kamera bioskop profesional, lensa *prime cine*, stabilizer 4-axis, pencahayaan panggung/studio, serta perangkat audio *broadcast* multi-brand (terinspirasi dari standar industri kelas dunia seperti *B&H Photo Video* dan *Focus Nusantara*).
+**Focalpoint.pro** adalah sistem **Omnichannel Retail ERP (Enterprise Resource Planning)** dan platform e-commerce terpadu untuk industri peralatan sinematografi, kamera bioskop, lensa *prime cine*, stabilizer 4-axis, tata cahaya studio, dan perangkat audio *broadcast* profesional.
 
-Sistem ini menghubungkan seluruh siklus operasional bisnis kamera sinema:
-1. **Pengadaan Resmi (B2B Purchase Order)** dari distributor prinsipal internasional (Sony Cinema Line, RED Digital Cinema, Canon Professional, ARRI, DJI Enterprise, Aputure, RØDE, Atomos).
+Sistem ini mengintegrasikan seluruh mata rantai operasional ritel kamera:
+1. **Pengadaan Resmi (B2B Purchase Order)** dari distributor prinsipal (Sony Cinema Line, RED Digital Cinema, Canon Professional, ARRI, DJI Enterprise, Aputure, RØDE, Atomos).
 2. **Manajemen Inventaris Fisik & Nomor Seri**: Pelacakan nomor seri unik sensor (*Camera Body S/N*) dan optik (*Lens S/N*).
 3. **Showroom Experience & Click & Collect**: Serah-terima unit langsung di fasilitas *Studio Camera Test Bay* dan pengujian *10-Point Sensor Calibration & Cleanroom QC*.
-4. **Kasir Showroom POS**: Transaksi offline dengan auto-deduct komponen paket rig/bundling dan struk transaksi resmi.
+4. **Kasir Showroom POS**: Transaksi offline dengan auto-deduct komponen paket rig/bundling dan cetak struk transaksi resmi.
 5. **Simulasi Likuidasi Deadstock**: Analisis *aging inventory* berkawal batas margin aman (*Margin Guardrail*).
 6. **Notifikasi Terpadu (WhatsApp & In-App Bell)** dengan antrean *Outbox Asinkron* yang tahan gangguan koneksi.
 7. **Sistem Pendukung Keputusan Pengadaan (Smart Restock DSS)** berbasis algoritma ilmiah *Hybrid AHP-TOPSIS*.
 
 ---
 
-## 🪟 Inovasi Desain: "Window to the Set" Glassmorphism Hero
-
-Halaman utama Focalpoint.pro mengadopsi konsep visual **"Window to the Set"** yang menempatkan pengguna seolah-olah sedang berada di dalam *production control trailer* di lokasi syuting:
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [Top Layer]  Fixed Glass Navbar (Wordmark "Focalpoint.pro" + Menu)   │
-├────────────────────────────────────────────────────────────────────────┤
-│  [HUD Layer]  Everything in Focus · Frosted Glass HUD Search Bar      │
-│               Interactive Category Pills (Cinema, Primes, Gimbals...)  │
-├────────────────────────────────────────────────────────────────────────┤
-│  [Interior]   Trailer Window Frame (Matte Aluminum Bezel & Rivets)     │
-├────────────────────────────────────────────────────────────────────────┤
-│  [Exterior]   Active Film Production Set in 4K:                        │
-│               • Camera Dolly Tracks & Cinema Rig                       │
-│               • Aputure Softbox on C-Stand, Boom Mic Operator          │
-│               • Gimbal Stabilizer Crew & Actors in Frame               │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-- **Clean Typography Wordmark**: Menggunakan tipografi display *Inter Tight* dan *Plus Jakarta Sans* dengan aksen oranye fokus `#E8622C` pada `.pro`.
-- **Pure Frosted Glass Search HUD**: Search bar semi-transparan dengan efek blur `backdrop-filter: blur(16px)` tanpa kotak putih solid, terintegrasi tombol pencarian instan dan filter kategori cepat 1-klik.
-- **Glassmorphism Design System**: Seluruh kartu produk, navigasi, dan dialog modal mengadaptasi estetika kaca studio sinematografi bernuansa modern, kontras tinggi, dan responsif di semua resolusi layar.
-
----
-
 ## 🏛️ Arsitektur 5 Subsistem Enterprise
 
-Seluruh tabel database menggunakan standar pengelompokan **Double Underscore (`__`)** sehingga tersusun otomatis ke dalam direktori pohon subfolder di phpMyAdmin:
+Arsitektur basis data relasional dikelompokkan secara terstruktur ke dalam 5 subsistem enterprise:
 
 | Subsistem | Tabel Database Fisik | Ruang Lingkup & Tanggung Jawab Operasional |
 |:---|:---|:---|
@@ -81,8 +55,8 @@ Seluruh tabel database menggunakan standar pengelompokan **Double Underscore (`_
 ## ⚡ Fitur Utama Berdasarkan Modul
 
 ### 1. Etalase Publik & Pengalaman Belanja Filmmaker (TPS)
-- **Signature Hero Section**: Desain "Window to the Set" dengan HUD Search Bar dan tag kategori instan (*Cinema Cameras, Prime Lenses, Gimbals, Studio Lighting, Broadcast Audio, Field Monitors*).
-- **Brand Partner Infinite Marquee**: Ticker animasi berjalan tanpa jeda logo-logo prinsipal distributor kamera sinema internasional (Sony Cinema Line, RED, Canon Pro, DJI, Aputure, RØDE, Atomos, Sennheiser, ARRI, Blackmagic Design).
+- **Katalog Terstruktur & Pencarian Cepat**: Pencarian perlengkapan sinema dengan filter kategori instan (*Cinema Cameras, Prime Lenses, Gimbals, Studio Lighting, Broadcast Audio, Field Monitors*), sensor format (Full-Frame, Super 35), lens mount (PL, EF, RF, E-Mount), dan rentang harga.
+- **Brand Partner Marquee**: Ticker berjalan logo-logo prinsipal distributor kamera sinema internasional (Sony Cinema Line, RED, Canon Pro, DJI, Aputure, RØDE, Atomos, Sennheiser, ARRI, Blackmagic Design).
 - **Showcase Kamera Flagship & Rig Bundling**: Paket rakitan siap syuting (*Run & Gun Indie Kit, Commercial 6K Narrative Kit, Broadcast Audio Kit*) dengan pengurangan stok multi-komponen otomatis.
 - **Dual Fulfillment Option**:
   - *Click & Collect*: Mengambil pesanan di showroom resmi terdekat dengan verifikasi kode unik *Pickup Pass* dan fasilitas gratis uji di *Studio Camera Test Bay*.
@@ -211,7 +185,7 @@ Ticksy V4/
 ├── backend/
 │   ├── app/
 │   │   ├── api/                       # REST API (admin, auth, clearance, dss, finance, kms, manager, orders, returns, store, warehouse)
-│   │   ├── models/                    # ORM 5 subsistem ber-prefix ganda (__): OAS, KMS, TPS, MIS, DSS
+│   │   ├── models/                    # Definisi model ORM 5 subsistem (OAS, KMS, TPS, MIS, DSS)
 │   │   ├── providers/                 # WhatsApp API provider & mock simulator
 │   │   ├── services/                  # Outbox service worker & email/WA templates
 │   │   ├── audit.py                   # Append-only audit logger ke oas__audit_logs
@@ -224,11 +198,11 @@ Ticksy V4/
 │
 ├── frontend/
 │   ├── public/
-│   │   └── hero/                      # Asset Hero "Window to the Set" (interior-frame, exterior-set, logo)
+│   │   └── hero/                      # Asset Hero foto set & frame
 │   ├── src/
 │   │   ├── auth/                      # AuthContext, Token Storage & ProtectedRoute
 │   │   ├── components/
-│   │   │   ├── hero/                  # Hero, HeroContent, HeroNavbar, hero.css ("Window to the Set")
+│   │   │   ├── hero/                  # Hero, HeroContent, HeroNavbar, hero.css
 │   │   │   ├── home/                  # BrandTicker infinite marquee, Editorial
 │   │   │   ├── kms/                   # QuickSopWidget divisi staf
 │   │   │   ├── layout/                # Navbar publik, Footer, InternalLayout (Off-Canvas Drawer)
@@ -247,7 +221,7 @@ Ticksy V4/
 │   │   ├── utils/
 │   │   │   ├── printInvoice.js        # Generator Cetak PDF E-Invoice Resmi Pelanggan (S/N & Sensor QC)
 │   │   │   └── printPurchaseOrder.js  # Generator Cetak PDF B2B Purchase Order Supplier
-│   │   ├── styles/                    # globals.css & theme.css (Glassmorphism & typography tokens)
+│   │   ├── styles/                    # globals.css & theme.css
 │   │   ├── App.jsx                    # Routing aplikasi
 │   │   └── main.jsx                   # React DOM Entry Point
 │   ├── package.json                   # Dependensi Node.js frontend
@@ -256,10 +230,3 @@ Ticksy V4/
 ├── .gitignore                         # Git exclusion (.agents/, design rules, caches, env)
 └── README.md                          # Dokumentasi komprehensif sistem Focalpoint.pro
 ```
-
----
-
-## ⚖️ Lisensi & Atribusi
-
-Hak Cipta © 2026 **Focalpoint.pro** (PT Focalpoint Sinema Nusantara).  
-Seluruh merek dagang, nama produk, dan logo brand kamera sinema/broadcast (*Sony Cinema Line, RED Digital Cinema, Canon Professional, ARRI, DJI Enterprise, Aputure, RØDE, Atomos, Sennheiser*) merupakan hak cipta milik masing-masing prinsipal distributor resmi terkait.
