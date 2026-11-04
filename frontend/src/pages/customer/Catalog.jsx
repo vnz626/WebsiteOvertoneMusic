@@ -118,9 +118,9 @@ export default function Catalog() {
   }
 
   function handleAvailabilityChange(val) {
-    const nextVal = availability === val ? "all" : val;
-    setAvailability(nextVal);
-    updateParams({ availability: nextVal });
+    const next = availability === val ? "all" : val;
+    setAvailability(next);
+    updateParams({ availability: next === "all" ? null : next });
   }
 
   function resetAllFilters() {
@@ -130,92 +130,99 @@ export default function Catalog() {
     setMinPrice("");
     setMaxPrice("");
     setSortBy("relevance");
-    setSearchParams(new URLSearchParams());
+    setSearchParams({});
   }
 
   const categoryList = useMemo(() => {
-    const catsFromData = Array.from(
-      new Set(allProducts.map((p) => p.category).filter(Boolean))
+    const fromApi = Array.from(
+      new Set(allProducts.map((p) => p.category || p.instrument_type).filter(Boolean))
     );
-    if (catsFromData.length > 0) {
-      const ordered = OFFICIAL_CINEMA_CATEGORIES.filter((c) =>
-        catsFromData.some((pCat) => pCat.toLowerCase() === c.toLowerCase())
-      );
-      catsFromData.forEach((c) => {
-        if (!ordered.some((o) => o.toLowerCase() === c.toLowerCase())) {
-          ordered.push(c);
-        }
-      });
-      return ordered;
-    }
-    return OFFICIAL_CINEMA_CATEGORIES;
+    return fromApi.length > 0 ? fromApi : OFFICIAL_CINEMA_CATEGORIES;
   }, [allProducts]);
 
   const dynamicBrands = useMemo(() => {
-    const productsInCat =
+    const scoped =
       selectedCategory === "all"
         ? allProducts
         : allProducts.filter(
-            (p) => (p.category || "").toLowerCase() === selectedCategory.toLowerCase()
+            (p) =>
+              (p.category || p.instrument_type || "").toLowerCase() ===
+              selectedCategory.toLowerCase()
           );
 
-    const brandCounts = new Map();
-    productsInCat.forEach((p) => {
-      const bName = p.brand?.name || p.brand || p.organizer;
-      if (bName) {
-        brandCounts.set(bName, (brandCounts.get(bName) || 0) + 1);
+    const map = new Map();
+    scoped.forEach((p) => {
+      const b = p.brand?.name || p.brand || p.organizer;
+      if (b) {
+        map.set(b, (map.get(b) || 0) + 1);
       }
     });
 
-    return Array.from(brandCounts.entries())
+    return Array.from(map.entries())
       .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => b.count - a.count);
   }, [allProducts, selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+      const q = searchQuery.toLowerCase();
       result = result.filter(
         (p) =>
           p.name?.toLowerCase().includes(q) ||
+          p.brand?.name?.toLowerCase().includes(q) ||
+          p.organizer?.toLowerCase().includes(q) ||
           p.sku_prefix?.toLowerCase().includes(q) ||
-          (p.brand?.name && p.brand.name.toLowerCase().includes(q)) ||
-          (p.instrument_type && p.instrument_type.toLowerCase().includes(q))
+          p.description?.toLowerCase().includes(q)
       );
     }
 
     if (selectedCategory !== "all") {
       result = result.filter(
-        (p) => (p.category || "").toLowerCase() === selectedCategory.toLowerCase()
+        (p) =>
+          (p.category || p.instrument_type || "").toLowerCase() ===
+          selectedCategory.toLowerCase()
       );
     }
 
     if (selectedBrands.length > 0) {
       result = result.filter((p) => {
-        const bName = p.brand?.name || p.brand || p.organizer;
-        return selectedBrands.includes(bName);
+        const b = p.brand?.name || p.brand || p.organizer;
+        return selectedBrands.includes(b);
       });
     }
 
     if (availability === "in_stock") {
-      result = result.filter((p) => (p.remaining_quota || p.stock || 0) > 0);
+      result = result.filter((p) => (p.remaining_quota ?? p.stock ?? 0) > 0);
     } else if (availability === "out_of_stock") {
-      result = result.filter((p) => (p.remaining_quota || p.stock || 0) <= 0);
+      result = result.filter((p) => (p.remaining_quota ?? p.stock ?? 0) <= 0);
     }
 
     if (minPrice) {
-      result = result.filter((p) => (p.price || p.min_price || 0) >= Number(minPrice));
+      const min = Number(minPrice);
+      if (!isNaN(min)) {
+        result = result.filter((p) => {
+          const price = p.min_price || p.price || 0;
+          return price >= min;
+        });
+      }
     }
+
     if (maxPrice) {
-      result = result.filter((p) => (p.price || p.min_price || 0) <= Number(maxPrice));
+      const max = Number(maxPrice);
+      if (!isNaN(max)) {
+        result = result.filter((p) => {
+          const price = p.min_price || p.price || 0;
+          return price <= max;
+        });
+      }
     }
 
     if (sortBy === "price_asc") {
-      result.sort((a, b) => (a.price || a.min_price || 0) - (b.price || b.min_price || 0));
+      result.sort((a, b) => (a.min_price || a.price || 0) - (b.min_price || b.price || 0));
     } else if (sortBy === "price_desc") {
-      result.sort((a, b) => (b.price || b.min_price || 0) - (a.price || a.min_price || 0));
+      result.sort((a, b) => (b.min_price || b.price || 0) - (a.min_price || a.price || 0));
     } else if (sortBy === "newest") {
       result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     }
@@ -241,39 +248,37 @@ export default function Catalog() {
     Boolean(searchQuery);
 
   return (
-    <div className="min-h-screen bg-canvas text-ink pb-20">
-      {/* Header Katalog */}
-      <div className="border-b border-line bg-surface">
-        <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-12">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-ink-muted mb-2">
-            <Link to="/" className="hover:text-ink transition-colors duration-fast">
-              Beranda
-            </Link>
-            <span aria-hidden="true">/</span>
-            <span className="text-ink font-bold">Katalog Cinema Gear</span>
+    <div className="min-h-screen fp-home-canvas pb-24">
+      {/* Header Frosted Glass Bar */}
+      <div className="fp-glass-bar py-7 mb-8">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="fp-section-pill">
+              <span className="fp-section-pill-dot" aria-hidden="true" />
+              <span>Katalog Resmi Focalpoint Pro</span>
+            </div>
             {selectedCategory !== "all" && (
-              <>
-                <span aria-hidden="true">/</span>
-                <span className="text-accent font-bold">{selectedCategory}</span>
-              </>
+              <span className="rounded-full bg-[#0F1B2D]/[0.06] border border-[#0F1B2D]/10 px-3 py-1 text-[11px] font-bold text-[#E8622C]">
+                {selectedCategory}
+              </span>
             )}
-          </nav>
+          </div>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-5">
             <div>
-              <h1 className="font-display text-2xl sm:text-4xl font-extrabold text-ink tracking-tight">
+              <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-[#0F1B2D] tracking-tight">
                 {selectedCategory === "all" ? "Katalog Cinema Cameras & Broadcast Gear" : selectedCategory}
               </h1>
-              <p className="mt-1 text-xs sm:text-sm text-ink-secondary">
-                Unit orisinal bergaransi distributor resmi dengan inspeksi 10-point sensor calibration &amp; firmware QC.
+              <p className="mt-1.5 text-xs sm:text-sm text-[#3A4A63] max-w-2xl leading-relaxed">
+                Unit 100% orisinal bergaransi resmi distributor internasional dengan kalibrasi sensor 10-point &amp; sertifikasi QC studio.
               </p>
             </div>
 
-            {/* Pencarian Katalog */}
-            <div className="relative w-full md:w-80">
+            {/* Pencarian Glass Pill */}
+            <div className="relative w-full md:w-84">
               <Search
                 size={15}
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#3A4A63]"
                 aria-hidden="true"
               />
               <input
@@ -285,7 +290,7 @@ export default function Catalog() {
                   updateParams({ q: e.target.value });
                 }}
                 placeholder="Cari seri kamera, merek, atau SKU..."
-                className="ot-input pl-10 pr-8"
+                className="h-10 w-full rounded-full border border-white/80 bg-white/70 backdrop-blur-md pl-10 pr-8 text-xs font-medium text-[#0F1B2D] placeholder:text-[#3A4A63]/80 focus:border-[#E8622C] focus:bg-white focus:outline-none transition-all shadow-xs"
               />
               {searchQuery && (
                 <button
@@ -295,7 +300,7 @@ export default function Catalog() {
                     setSearchQuery("");
                     updateParams({ q: null });
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3A4A63] hover:text-[#0F1B2D] p-1 cursor-pointer"
                 >
                   <X size={14} aria-hidden="true" />
                 </button>
@@ -305,20 +310,20 @@ export default function Catalog() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1440px] px-4 pt-8 sm:px-6 lg:px-12">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* 1. SIDEBAR FILTER KIRI */}
           <aside aria-label="Filter katalog produk" className="lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between pb-2.5 border-b border-line">
-              <span className="font-display text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-2">
-                <SlidersHorizontal size={14} className="text-accent" aria-hidden="true" />
+            <div className="flex items-center justify-between pb-3 border-b border-[#0F1B2D]/10">
+              <span className="font-display text-xs font-bold uppercase tracking-wider text-[#0F1B2D] flex items-center gap-2">
+                <SlidersHorizontal size={14} className="text-[#E8622C]" aria-hidden="true" />
                 <span>Filter Katalog</span>
               </span>
               {hasActiveFilters && (
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="text-[11px] font-bold text-accent hover:underline flex items-center gap-1"
+                  className="text-[11px] font-bold text-[#E8622C] hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw size={12} aria-hidden="true" />
                   <span>Reset Filter</span>
@@ -327,12 +332,12 @@ export default function Catalog() {
             </div>
 
             {/* ACCORDION 1: KATEGORI */}
-            <div className="rounded-md border border-line bg-surface overflow-hidden">
+            <div className="fp-glass-card !p-0 !rounded-2xl overflow-hidden">
               <button
                 type="button"
                 aria-expanded={accordionOpen.category}
                 onClick={() => toggleAccordion("category")}
-                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
+                className="w-full px-4 py-3.5 bg-white/50 backdrop-blur-md flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-[#0F1B2D] hover:bg-white/80 transition-colors cursor-pointer"
               >
                 <span>Kategori Cinema &amp; Broadcast</span>
                 {accordionOpen.category ? (
@@ -343,18 +348,18 @@ export default function Catalog() {
               </button>
 
               {accordionOpen.category && (
-                <div className="p-3 space-y-1 border-t border-line">
+                <div className="p-2 space-y-1 border-t border-[#0F1B2D]/10 bg-white/40">
                   <button
                     type="button"
                     onClick={() => handleCategoryChange("all")}
-                    className={`w-full text-left rounded-sm px-2.5 py-1.5 text-xs transition-colors duration-fast flex items-center justify-between ${
+                    className={`w-full text-left px-3 py-2 text-xs transition-all flex items-center justify-between cursor-pointer rounded-xl ${
                       selectedCategory === "all"
-                        ? "font-bold text-accent bg-accent-subtle"
-                        : "text-ink-secondary hover:bg-surface-muted hover:text-ink"
+                        ? "font-bold text-white bg-[#0F1B2D] shadow-xs"
+                        : "text-[#3A4A63] hover:bg-[#0F1B2D]/[0.05] hover:text-[#0F1B2D]"
                     }`}
                   >
                     <span>Semua Kategori</span>
-                    <span className="text-[11px] text-ink-muted tabular-nums">
+                    <span className={`text-[11px] tabular-nums ${selectedCategory === "all" ? "text-white/70" : "text-[#3A4A63]"}`}>
                       ({allProducts.length})
                     </span>
                   </button>
@@ -362,21 +367,23 @@ export default function Catalog() {
                   {categoryList.map((c) => {
                     const isSelected = selectedCategory.toLowerCase() === c.toLowerCase();
                     const count = allProducts.filter(
-                      (p) => (p.category || "").toLowerCase() === c.toLowerCase()
+                      (p) => (p.category || p.instrument_type || "").toLowerCase() === c.toLowerCase()
                     ).length;
                     return (
                       <button
                         key={c}
                         type="button"
                         onClick={() => handleCategoryChange(c)}
-                        className={`w-full text-left rounded-sm px-2.5 py-1.5 text-xs transition-colors duration-fast flex items-center justify-between ${
+                        className={`w-full text-left px-3 py-2 text-xs transition-all flex items-center justify-between cursor-pointer rounded-xl ${
                           isSelected
-                            ? "font-bold text-accent bg-accent-subtle"
-                            : "text-ink-secondary hover:bg-surface-muted hover:text-ink"
+                            ? "font-bold text-white bg-[#0F1B2D] shadow-xs"
+                            : "text-[#3A4A63] hover:bg-[#0F1B2D]/[0.05] hover:text-[#0F1B2D]"
                         }`}
                       >
                         <span className="truncate">{c}</span>
-                        <span className="text-[11px] text-ink-muted tabular-nums">({count})</span>
+                        <span className={`text-[11px] tabular-nums ${isSelected ? "text-white/70" : "text-[#3A4A63]"}`}>
+                          ({count})
+                        </span>
                       </button>
                     );
                   })}
@@ -385,12 +392,12 @@ export default function Catalog() {
             </div>
 
             {/* ACCORDION 2: MEREK */}
-            <div className="rounded-md border border-line bg-surface overflow-hidden">
+            <div className="fp-glass-card !p-0 !rounded-2xl overflow-hidden">
               <button
                 type="button"
                 aria-expanded={accordionOpen.brand}
                 onClick={() => toggleAccordion("brand")}
-                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
+                className="w-full px-4 py-3.5 bg-white/50 backdrop-blur-md flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-[#0F1B2D] hover:bg-white/80 transition-colors cursor-pointer"
               >
                 <span>Merek Resmi (Brand)</span>
                 {accordionOpen.brand ? (
@@ -401,9 +408,9 @@ export default function Catalog() {
               </button>
 
               {accordionOpen.brand && (
-                <div className="p-3.5 space-y-2 border-t border-line max-h-60 overflow-y-auto">
+                <div className="p-3.5 space-y-2 border-t border-[#0F1B2D]/10 max-h-60 overflow-y-auto bg-white/40">
                   {dynamicBrands.length === 0 ? (
-                    <p className="text-xs text-ink-muted py-1">
+                    <p className="text-xs text-[#3A4A63] py-1">
                       Tidak ada merek di kategori ini.
                     </p>
                   ) : (
@@ -412,20 +419,20 @@ export default function Catalog() {
                       return (
                         <label
                           key={b.name}
-                          className="flex items-center justify-between cursor-pointer text-xs text-ink-secondary hover:text-ink py-0.5"
+                          className="flex items-center justify-between cursor-pointer text-xs text-[#3A4A63] hover:text-[#0F1B2D] py-1 px-1 rounded-lg hover:bg-white/60 transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => handleBrandToggle(b.name)}
-                              className="h-4 w-4 rounded-xs accent-[var(--color-accent)] cursor-pointer"
+                              className="h-4 w-4 rounded-xs accent-[#E8622C] cursor-pointer"
                             />
-                            <span className={isChecked ? "font-bold text-ink" : "font-normal"}>
+                            <span className={isChecked ? "font-bold text-[#0F1B2D]" : "font-medium"}>
                               {b.name}
                             </span>
                           </div>
-                          <span className="text-[11px] text-ink-muted tabular-nums">
+                          <span className="text-[11px] text-[#3A4A63] tabular-nums">
                             ({b.count})
                           </span>
                         </label>
@@ -437,12 +444,12 @@ export default function Catalog() {
             </div>
 
             {/* ACCORDION 3: KETERSEDIAAN */}
-            <div className="rounded-md border border-line bg-surface overflow-hidden">
+            <div className="fp-glass-card !p-0 !rounded-2xl overflow-hidden">
               <button
                 type="button"
                 aria-expanded={accordionOpen.availability}
                 onClick={() => toggleAccordion("availability")}
-                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
+                className="w-full px-4 py-3.5 bg-white/50 backdrop-blur-md flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-[#0F1B2D] hover:bg-white/80 transition-colors cursor-pointer"
               >
                 <span>Ketersediaan Stok</span>
                 {accordionOpen.availability ? (
@@ -453,46 +460,43 @@ export default function Catalog() {
               </button>
 
               {accordionOpen.availability && (
-                <div className="p-3.5 space-y-2.5 border-t border-line">
-                  <label className="flex items-center justify-between cursor-pointer text-xs text-ink-secondary hover:text-ink">
+                <div className="p-3.5 space-y-2.5 border-t border-[#0F1B2D]/10 bg-white/40">
+                  <label className="flex items-center justify-between cursor-pointer text-xs text-[#3A4A63] hover:text-[#0F1B2D] py-0.5">
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={availability === "in_stock"}
                         onChange={() => handleAvailabilityChange("in_stock")}
-                        className="h-4 w-4 rounded-xs accent-[var(--color-accent)] cursor-pointer"
+                        className="h-4 w-4 rounded-xs accent-[#E8622C] cursor-pointer"
                       />
                       <span>Stok Tersedia (Siap Kirim)</span>
                     </div>
-                    <span
-                      className="h-2 w-2 rounded-full bg-status-success-text"
-                      aria-hidden="true"
-                    />
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-xs" aria-hidden="true" />
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer text-xs text-ink-secondary hover:text-ink">
+                  <label className="flex items-center justify-between cursor-pointer text-xs text-[#3A4A63] hover:text-[#0F1B2D] py-0.5">
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={availability === "out_of_stock"}
                         onChange={() => handleAvailabilityChange("out_of_stock")}
-                        className="h-4 w-4 rounded-xs accent-[var(--color-accent)] cursor-pointer"
+                        className="h-4 w-4 rounded-xs accent-[#E8622C] cursor-pointer"
                       />
                       <span>Stok Habis</span>
                     </div>
-                    <span className="h-2 w-2 rounded-full bg-ink-muted" aria-hidden="true" />
+                    <span className="h-2 w-2 rounded-full bg-[#3A4A63]/50" aria-hidden="true" />
                   </label>
                 </div>
               )}
             </div>
 
             {/* ACCORDION 4: KISARAN HARGA */}
-            <div className="rounded-md border border-line bg-surface overflow-hidden">
+            <div className="fp-glass-card !p-0 !rounded-2xl overflow-hidden">
               <button
                 type="button"
                 aria-expanded={accordionOpen.price}
                 onClick={() => toggleAccordion("price")}
-                className="w-full px-4 py-3 bg-surface-muted flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-ink hover:bg-surface-subtle transition-colors duration-fast"
+                className="w-full px-4 py-3.5 bg-white/50 backdrop-blur-md flex items-center justify-between text-left text-xs font-bold uppercase tracking-wider text-[#0F1B2D] hover:bg-white/80 transition-colors cursor-pointer"
               >
                 <span>Rentang Harga (Rp)</span>
                 {accordionOpen.price ? (
@@ -503,12 +507,12 @@ export default function Catalog() {
               </button>
 
               {accordionOpen.price && (
-                <div className="p-3.5 border-t border-line space-y-3">
+                <div className="p-3.5 border-t border-[#0F1B2D]/10 space-y-3 bg-white/40">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label
                         htmlFor="catalog-min-price"
-                        className="block text-[10px] font-bold text-ink-muted uppercase mb-1"
+                        className="block text-[10px] font-bold text-[#3A4A63] uppercase mb-1"
                       >
                         Minimum (Rp)
                       </label>
@@ -521,13 +525,13 @@ export default function Catalog() {
                           setMinPrice(e.target.value);
                           updateParams({ min_price: e.target.value });
                         }}
-                        className="ot-input py-1.5 px-2.5 text-xs tabular-nums"
+                        className="w-full rounded-xl border border-white/80 bg-white/70 py-1.5 px-2.5 text-xs tabular-nums text-[#0F1B2D] focus:border-[#E8622C] focus:bg-white focus:outline-none"
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="catalog-max-price"
-                        className="block text-[10px] font-bold text-ink-muted uppercase mb-1"
+                        className="block text-[10px] font-bold text-[#3A4A63] uppercase mb-1"
                       >
                         Maksimum (Rp)
                       </label>
@@ -540,12 +544,12 @@ export default function Catalog() {
                           setMaxPrice(e.target.value);
                           updateParams({ max_price: e.target.value });
                         }}
-                        className="ot-input py-1.5 px-2.5 text-xs tabular-nums"
+                        className="w-full rounded-xl border border-white/80 bg-white/70 py-1.5 px-2.5 text-xs tabular-nums text-[#0F1B2D] focus:border-[#E8622C] focus:bg-white focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1 pt-1 border-t border-line">
+                  <div className="space-y-1 pt-1.5 border-t border-[#0F1B2D]/10">
                     {PRICE_PRESETS.map((p, idx) => (
                       <button
                         key={idx}
@@ -558,7 +562,7 @@ export default function Catalog() {
                             max_price: p.max !== null ? String(p.max) : null,
                           });
                         }}
-                        className="block w-full text-left text-[11px] font-medium text-ink-secondary hover:text-accent py-1 truncate tabular-nums"
+                        className="block w-full text-left text-[11px] font-medium text-[#3A4A63] hover:text-[#E8622C] py-1 truncate tabular-nums cursor-pointer"
                       >
                         • {p.label}
                       </button>
@@ -575,19 +579,19 @@ export default function Catalog() {
             {bundles.length > 0 && selectedCategory === "all" && !searchQuery && (
               <section
                 aria-label="Paket Bundling Kurasi"
-                className="mb-8 rounded-md border border-line-strong bg-surface p-5 sm:p-6"
+                className="mb-8 fp-dark-glass-section !rounded-3xl p-6 sm:p-7 border border-white/10"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-line mb-5 gap-2">
+                <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-white/10 mb-5 gap-2">
                   <div>
-                    <div className="flex items-center gap-1.5 text-accent text-[11px] font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 text-[#E8622C] text-[11px] font-bold uppercase tracking-wider">
                       <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Curated Indie Filmmaker Production Kits</span>
                     </div>
-                    <h2 className="text-xl font-display font-extrabold text-ink tracking-tight mt-0.5">
-                      Paket Rig Lengkap Pilihan Overtone
+                    <h2 className="text-xl font-display font-extrabold text-white tracking-tight mt-0.5">
+                      Paket Rig Lengkap Pilihan Focalpoint Pro
                     </h2>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-accent-subtle text-accent border border-accent/30 rounded-xs self-start md:self-auto">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 bg-[#E8622C]/20 text-[#E8622C] border border-[#E8622C]/40 rounded-full self-start md:self-auto">
                     Alokasi Rig Terbatas
                   </span>
                 </div>
@@ -596,10 +600,10 @@ export default function Catalog() {
                   {bundles.map((bundle) => (
                     <article
                       key={bundle.id}
-                      className="rounded-sm border border-line bg-canvas p-4 flex flex-col justify-between hover:border-line-strong transition-colors duration-fast"
+                      className="fp-glass-card-dark p-4 flex flex-col justify-between"
                     >
                       <div>
-                        <div className="relative h-32 bg-surface-muted overflow-hidden mb-3 border border-line rounded-xs">
+                        <div className="relative aspect-[16/10] bg-black/40 overflow-hidden mb-3 border border-white/15 rounded-xl">
                           <img
                             src={
                               bundle.image_url ||
@@ -610,33 +614,33 @@ export default function Catalog() {
                             className="w-full h-full object-cover"
                           />
                           {bundle.savings_amount > 0 && (
-                            <span className="absolute top-2 right-2 bg-accent text-accent-on text-[10px] font-bold px-2 py-0.5 rounded-xs tabular-nums">
+                            <span className="absolute top-2 right-2 bg-[#E8622C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums">
                               Hemat {formatRupiah(bundle.savings_amount)}
                             </span>
                           )}
-                          <span className="absolute bottom-2 left-2 bg-surface/95 border border-line px-2 py-0.5 text-[10px] font-bold text-ink rounded-xs tabular-nums">
+                          <span className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md border border-white/20 px-2 py-0.5 text-[10px] font-bold text-white rounded-md tabular-nums">
                             {bundle.bundle_code}
                           </span>
                         </div>
 
-                        <h3 className="font-display font-bold text-sm text-ink line-clamp-1">
+                        <h3 className="font-display font-bold text-sm text-white line-clamp-1">
                           {bundle.name}
                         </h3>
-                        <p className="text-[11px] text-ink-secondary mt-1 line-clamp-2">
+                        <p className="text-[11px] text-white/70 mt-1 line-clamp-2">
                           {bundle.description}
                         </p>
 
-                        <div className="mt-3 pt-2.5 border-t border-line space-y-1">
-                          <p className="text-[10px] uppercase tracking-wider text-ink-muted font-bold">
+                        <div className="mt-3 pt-2.5 border-t border-white/10 space-y-1">
+                          <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">
                             Isi Paket:
                           </p>
                           {(bundle.items || []).slice(0, 3).map((item, idx) => (
                             <div
                               key={idx}
-                              className="text-[11px] text-ink-secondary flex items-center gap-1.5 truncate tabular-nums"
+                              className="text-[11px] text-white/80 flex items-center gap-1.5 truncate tabular-nums"
                             >
                               <span
-                                className="w-1 h-1 rounded-full bg-accent shrink-0"
+                                className="w-1.5 h-1.5 rounded-full bg-[#E8622C] shrink-0"
                                 aria-hidden="true"
                               />
                               <span className="truncate">
@@ -647,15 +651,15 @@ export default function Catalog() {
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-line">
-                        <div className="text-[11px] text-ink-muted line-through tabular-nums">
+                      <div className="mt-4 pt-3 border-t border-white/10">
+                        <div className="text-[11px] text-white/50 line-through tabular-nums">
                           {formatRupiah(bundle.normal_total_price)}
                         </div>
-                        <div className="text-base font-display font-extrabold text-ink flex items-baseline justify-between tabular-nums">
+                        <div className="text-base font-display font-extrabold text-white flex items-baseline justify-between tabular-nums">
                           <span>{formatRupiah(bundle.bundle_price)}</span>
                           <Link
                             to="/offline-stores"
-                            className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-bold text-accent hover:underline"
+                            className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-bold text-[#E8622C] hover:underline"
                           >
                             <span>Cek di Cabang</span>
                             <ArrowRight className="w-3 h-3" aria-hidden="true" />
@@ -668,16 +672,16 @@ export default function Catalog() {
               </section>
             )}
 
-            {/* Bar Pengurutan & Chip Filter Aktif (Aturan G) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4 mb-4">
-              <div className="text-xs text-ink-secondary font-medium tabular-nums">
-                Menampilkan <strong className="font-bold text-ink">{filteredProducts.length}</strong>{" "}
-                dari <strong className="font-bold text-ink">{allProducts.length}</strong> unit produk cinema
+            {/* Toolbar Pengurutan & Filter Aktif */}
+            <div className="fp-glass-card !p-3 !rounded-2xl mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="text-xs text-[#3A4A63] font-medium tabular-nums pl-1">
+                Menampilkan <strong className="font-extrabold text-[#0F1B2D]">{filteredProducts.length}</strong>{" "}
+                dari <strong className="font-extrabold text-[#0F1B2D]">{allProducts.length}</strong> unit gear produksi
               </div>
 
               <div className="flex items-center gap-3 self-end sm:self-auto">
                 <div className="flex items-center gap-2 text-xs">
-                  <label htmlFor="catalog-sort" className="text-ink-secondary font-bold">
+                  <label htmlFor="catalog-sort" className="text-[#3A4A63] font-bold">
                     Urutkan:
                   </label>
                   <select
@@ -687,7 +691,7 @@ export default function Catalog() {
                       setSortBy(e.target.value);
                       updateParams({ sort: e.target.value });
                     }}
-                    className="rounded-sm border border-line-strong bg-surface px-3 py-1.5 text-xs font-bold text-ink cursor-pointer"
+                    className="rounded-full border border-white/80 bg-white/70 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-[#0F1B2D] cursor-pointer focus:outline-none focus:border-[#E8622C] shadow-xs"
                   >
                     <option value="relevance">Relevansi Kurasi</option>
                     <option value="price_asc">Harga: Rendah ke Tinggi</option>
@@ -696,17 +700,17 @@ export default function Catalog() {
                   </select>
                 </div>
 
-                <div className="flex items-center rounded-sm border border-line-strong bg-surface p-0.5">
+                <div className="flex items-center rounded-full border border-[#0F1B2D]/10 bg-white/60 p-0.5 shadow-xs">
                   <button
                     type="button"
                     onClick={() => setViewMode("grid")}
                     aria-pressed={viewMode === "grid"}
                     aria-label="Tampilan Grid"
                     title="Tampilan Grid"
-                    className={`rounded-xs p-1.5 transition-colors duration-fast ${
+                    className={`rounded-full p-1.5 transition-all cursor-pointer ${
                       viewMode === "grid"
-                        ? "bg-ink text-surface"
-                        : "text-ink-muted hover:text-ink"
+                        ? "bg-[#0F1B2D] text-white shadow-xs"
+                        : "text-[#3A4A63] hover:text-[#0F1B2D]"
                     }`}
                   >
                     <LayoutGrid size={15} aria-hidden="true" />
@@ -717,10 +721,10 @@ export default function Catalog() {
                     aria-pressed={viewMode === "list"}
                     aria-label="Tampilan Daftar"
                     title="Tampilan Daftar"
-                    className={`rounded-xs p-1.5 transition-colors duration-fast ${
+                    className={`rounded-full p-1.5 transition-all cursor-pointer ${
                       viewMode === "list"
-                        ? "bg-ink text-surface"
-                        : "text-ink-muted hover:text-ink"
+                        ? "bg-[#0F1B2D] text-white shadow-xs"
+                        : "text-[#3A4A63] hover:text-[#0F1B2D]"
                     }`}
                   >
                     <List size={15} aria-hidden="true" />
@@ -729,17 +733,17 @@ export default function Catalog() {
               </div>
             </div>
 
-            {/* Baris Filter Aktif yang Selalu Terlihat (Aturan G) */}
+            {/* Baris Filter Aktif */}
             {hasActiveFilters && (
               <div className="mb-6 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#3A4A63]">
                   Filter Aktif:
                 </span>
                 {selectedCategory !== "all" && (
                   <button
                     type="button"
                     onClick={() => handleCategoryChange("all")}
-                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 backdrop-blur-md px-3 py-1 text-xs font-bold text-[#0F1B2D] hover:border-[#E8622C] shadow-xs cursor-pointer"
                   >
                     <span>Kategori: {selectedCategory}</span>
                     <X size={12} aria-hidden="true" />
@@ -750,7 +754,7 @@ export default function Catalog() {
                     key={b}
                     type="button"
                     onClick={() => handleBrandToggle(b)}
-                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 backdrop-blur-md px-3 py-1 text-xs font-bold text-[#0F1B2D] hover:border-[#E8622C] shadow-xs cursor-pointer"
                   >
                     <span>Merek: {b}</span>
                     <X size={12} aria-hidden="true" />
@@ -760,7 +764,7 @@ export default function Catalog() {
                   <button
                     type="button"
                     onClick={() => handleAvailabilityChange(availability)}
-                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 backdrop-blur-md px-3 py-1 text-xs font-bold text-[#0F1B2D] hover:border-[#E8622C] shadow-xs cursor-pointer"
                   >
                     <span>{availability === "in_stock" ? "Stok Tersedia" : "Stok Habis"}</span>
                     <X size={12} aria-hidden="true" />
@@ -774,7 +778,7 @@ export default function Catalog() {
                       setMaxPrice("");
                       updateParams({ min_price: null, max_price: null });
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xs border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:border-accent tabular-nums"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 backdrop-blur-md px-3 py-1 text-xs font-bold text-[#0F1B2D] hover:border-[#E8622C] shadow-xs cursor-pointer tabular-nums"
                   >
                     <span>
                       Harga: {minPrice ? formatRupiah(minPrice) : "Rp 0"} –{" "}
@@ -786,7 +790,7 @@ export default function Catalog() {
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="text-xs font-bold text-accent hover:underline ml-1"
+                  className="text-xs font-bold text-[#E8622C] hover:underline ml-1 cursor-pointer"
                 >
                   Hapus Semua
                 </button>
@@ -797,51 +801,51 @@ export default function Catalog() {
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                  <Skeleton key={n} className="h-80 w-full" />
+                  <Skeleton key={n} className="h-80 w-full rounded-3xl" />
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="rounded-md border border-dashed border-line-strong bg-surface p-10 text-center my-4">
+              <div className="fp-glass-card !p-12 text-center my-4">
                 <Package
                   size={44}
-                  className="mx-auto text-ink-muted mb-3"
+                  className="mx-auto text-[#3A4A63] mb-3"
                   aria-hidden="true"
                 />
-                <h2 className="font-display text-lg font-bold text-ink">
+                <h2 className="font-display text-lg font-bold text-[#0F1B2D]">
                   Tidak Ada Cinema Gear yang Sesuai Filter
                 </h2>
-                <p className="mt-1 text-xs text-ink-secondary max-w-md mx-auto leading-relaxed">
+                <p className="mt-1 text-xs text-[#3A4A63] max-w-md mx-auto leading-relaxed">
                   Longgarkan batas harga, hapus filter merek, atau kembali ke seluruh kategori untuk melihat kamera dan lensa yang tersedia.
                 </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="inline-flex items-center gap-1.5 rounded-sm bg-accent px-5 py-2.5 text-xs font-bold text-accent-on hover:bg-accent-hover transition-colors duration-fast"
+                    className="fp-btn-glass-primary !py-2.5 !px-5"
                   >
                     <RotateCcw size={13} aria-hidden="true" />
                     <span>Reset Semua Filter</span>
                   </button>
                   <Link
                     to="/offline-stores"
-                    className="inline-flex items-center gap-1.5 rounded-sm border border-line-strong bg-canvas px-4 py-2.5 text-xs font-bold text-ink hover:bg-surface-muted transition-colors duration-fast"
+                    className="fp-btn-glass-secondary !py-2.5 !px-5"
                   >
                     <span>Tanyakan Stok di Cabang</span>
                   </Link>
                 </div>
               </div>
             ) : viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
                 {filteredProducts.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
               </div>
             ) : (
-              <div className="space-y-3.5">
+              <div className="space-y-4">
                 {filteredProducts.map((p) => {
                   const stock = p.remaining_quota ?? p.stock ?? 0;
                   const isAvailable = stock > 0;
-                  const brandName = p.brand?.name || p.brand || p.organizer || "Overtone";
+                  const brandName = p.brand?.name || p.brand || p.organizer || "Focalpoint Pro";
                   const hasClearance = Boolean(p.has_clearance || p.is_clearance_active);
                   const clearanceDiscount = p.max_discount_percent || p.discount_percent || 0;
                   const originalPrice = p.min_price || p.price || 0;
@@ -856,75 +860,75 @@ export default function Catalog() {
                     <Link
                       key={p.id}
                       to={`/products/${p.id}`}
-                      className="group relative rounded-md border border-line bg-surface p-4 sm:p-5 hover:border-ink transition-colors duration-fast flex flex-col sm:flex-row gap-5 items-center"
+                      className="group fp-glass-card !p-4 sm:!p-5 flex flex-col sm:flex-row gap-5 items-center cursor-pointer"
                     >
-                      <div className="h-28 w-28 aspect-square shrink-0 rounded-sm bg-surface-muted border border-line p-2 flex items-center justify-center overflow-hidden">
+                      <div className="h-28 w-28 aspect-square shrink-0 fp-glass-stage p-2 flex items-center justify-center overflow-hidden">
                         {p.image_url ? (
                           <img
                             src={fileUrl(p.image_url)}
                             alt={`Foto ${p.name} oleh ${brandName}`}
                             loading="lazy"
-                            className="h-full w-full object-contain"
+                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
                           />
                         ) : (
-                          <Package size={32} className="text-ink-muted" aria-hidden="true" />
+                          <Package size={32} className="text-[#3A4A63]" aria-hidden="true" />
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8622C]">
                             {brandName}
                           </span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A4A63]">
                             • {p.instrument_type || p.category || "Cinema Gear"}
                           </span>
                           {hasClearance && clearanceDiscount > 0 && (
-                            <span className="rounded-xs bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-on">
+                            <span className="rounded-full bg-[#E8622C] text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                               Diskon -{clearanceDiscount}%
                             </span>
                           )}
                         </div>
-                        <h3 className="font-display text-base font-bold text-ink mt-0.5 truncate group-hover:text-accent transition-colors duration-fast">
+                        <h3 className="font-display text-base font-bold text-[#0F1B2D] mt-1 truncate group-hover:text-[#E8622C] transition-colors">
                           {p.name}
                         </h3>
                         {avgRating && reviewCount > 0 && (
                           <div className="flex items-center gap-1.5 mt-1 text-xs">
-                            <span className="text-accent font-bold" aria-hidden="true">
+                            <span className="text-[#E8622C] font-bold" aria-hidden="true">
                               ★
                             </span>
-                            <span className="tabular-nums font-bold text-ink">{avgRating}</span>
-                            <span className="tabular-nums text-[11px] text-ink-muted">
+                            <span className="tabular-nums font-bold text-[#0F1B2D]">{avgRating}</span>
+                            <span className="tabular-nums text-[11px] text-[#3A4A63]">
                               ({reviewCount} ulasan)
                             </span>
                           </div>
                         )}
-                        <p className="text-xs text-ink-secondary line-clamp-2 mt-1 leading-relaxed">
+                        <p className="text-xs text-[#3A4A63] line-clamp-2 mt-1 leading-relaxed">
                           {p.description ||
-                            "Peralatan cinema & broadcast bergaransi distributor resmi Overtone Pro Cinema Store."}
+                            "Peralatan cinema & broadcast bergaransi distributor resmi Focalpoint Pro."}
                         </p>
                       </div>
 
-                      <div className="sm:text-right shrink-0 w-full sm:w-auto border-t sm:border-t-0 border-line pt-3 sm:pt-0 flex sm:block items-center justify-between">
+                      <div className="sm:text-right shrink-0 w-full sm:w-auto border-t sm:border-t-0 border-[#0F1B2D]/10 pt-3 sm:pt-0 flex sm:block items-center justify-between">
                         {hasClearance && activeDisplayPrice < originalPrice ? (
                           <div>
-                            <span className="block text-xs text-ink-muted line-through tabular-nums">
+                            <span className="block text-xs text-[#3A4A63] line-through tabular-nums">
                               {formatRupiah(originalPrice)}
                             </span>
-                            <p className="font-display text-base font-extrabold text-accent tabular-nums">
+                            <p className="font-display text-base font-extrabold text-[#E8622C] tabular-nums">
                               {formatRupiah(activeDisplayPrice)}
                             </p>
                           </div>
                         ) : (
-                          <p className="font-display text-base font-extrabold text-ink tabular-nums">
+                          <p className="font-display text-base font-extrabold text-[#0F1B2D] tabular-nums">
                             {formatRupiah(originalPrice)}
                           </p>
                         )}
                         <p className="mt-1 text-xs font-bold tabular-nums">
                           {isAvailable ? (
-                            <span className="text-status-success-text">Stok: {stock} unit</span>
+                            <span className="text-emerald-700">Stok: {stock} unit</span>
                           ) : (
-                            <span className="text-ink-muted">Stok Habis</span>
+                            <span className="text-[#3A4A63]">Stok Habis</span>
                           )}
                         </p>
                       </div>

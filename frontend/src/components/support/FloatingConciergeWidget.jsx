@@ -22,19 +22,19 @@ import { useConfirm } from "../ui/ConfirmDialog";
 const QUICK_TOPICS = [
   {
     key: "pengiriman",
-    label: "Pengiriman & Packing Kayu",
+    label: "Pengiriman & Flightcase",
   },
   {
     key: "click_collect",
-    label: "Click & Collect Offline Store",
+    label: "Click & Collect Showroom",
   },
   {
     key: "garansi",
-    label: "Garansi & Setup Luthier",
+    label: "Garansi & Sensor QC",
   },
   {
     key: "konsultasi",
-    label: "Konsultasi Spesifikasi Gear",
+    label: "Konsultasi Rig Cinema",
   },
 ];
 
@@ -66,7 +66,7 @@ export default function FloatingConciergeWidget() {
       sender_type: "bot",
       sender_name: "KMS Auto-Assistant",
       message:
-        "Halo! Selamat datang di Overtone Music Store. Pilih topik bantuan cepat di bawah atau tanyakan spesifikasi instrumen, garansi setup luthier, ketersediaan stok cabang, maupun pengiriman.",
+        "Halo! Selamat datang di Focalpoint Pro. Pilih topik bantuan cepat di bawah atau tanyakan spesifikasi kamera sinema, lensa prime, sensor calibration QC, ketersediaan unit showroom, maupun pengiriman ekspedisi.",
       created_at: new Date().toISOString(),
     },
   ]);
@@ -298,7 +298,7 @@ export default function FloatingConciergeWidget() {
         sender_type: "bot",
         sender_name: "KMS Auto-Assistant",
         message:
-          "Sesi baru dimulai. Silakan pilih topik panduan atau ajukan pertanyaan seputar instrumen dan pesanan Anda.",
+          "Sesi baru dimulai. Silakan pilih topik panduan atau ajukan pertanyaan seputar gear produksi dan pesanan Anda.",
         created_at: new Date().toISOString(),
       },
     ]);
@@ -330,17 +330,17 @@ export default function FloatingConciergeWidget() {
     <div className="fixed bottom-5 right-5 z-50">
       {isOpen && (
         <section
-          aria-label="Konsultasi Gear & Pelacakan Pesanan Overtone"
-          className="mb-3 flex flex-col justify-between overflow-hidden rounded-lg w-[350px] sm:w-[380px] h-[530px] bg-surface text-ink border border-line-strong shadow-lg"
+          aria-label="Konsultasi Gear & Pelacakan Pesanan Focalpoint Pro"
+          className="mb-3 flex flex-col justify-between overflow-hidden rounded-3xl w-[350px] sm:w-[390px] h-[550px] fp-glass-card !bg-white/95 !border-white/90 shadow-2xl text-[#0F1B2D]"
         >
           {/* Header Atas */}
-          <div className="pt-3.5 px-4 pb-3 bg-ink text-surface border-b border-line">
+          <div className="pt-4 px-4 pb-3.5 bg-gradient-to-r from-[#0F1B2D] to-[#1A2D4A] text-white border-b border-white/10">
             <div className="flex items-center justify-between">
               {view === "tracker" ? (
                 <button
                   type="button"
                   onClick={() => setView("chat")}
-                  className="flex h-8 w-8 items-center justify-center rounded-sm bg-surface text-ink hover:bg-surface-muted transition-colors duration-fast"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition-colors duration-fast"
                   title="Kembali ke Ruang Percakapan"
                   aria-label="Kembali ke Ruang Percakapan"
                 >
@@ -349,21 +349,21 @@ export default function FloatingConciergeWidget() {
               ) : (
                 <div className="flex items-center gap-1.5">
                   {sessionStatus === "live_chat" ? (
-                    <div className="flex items-center gap-1.5 rounded-xs bg-status-success-bg px-2.5 py-1 text-[10px] font-bold tracking-wide text-status-success-text border border-status-success-border">
-                      <span className="w-2 h-2 rounded-full bg-status-success-text" aria-hidden="true" />
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-bold tracking-wide text-emerald-300 border border-emerald-500/40">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true" />
                       <span className="uppercase">
-                        LIVE AGENT: {assignedStaff?.name || "Spesialis Instrumen"}
+                        LIVE: {assignedStaff?.name || "Gear Specialist"}
                       </span>
                     </div>
                   ) : sessionStatus === "waiting_agent" ? (
-                    <div className="flex items-center gap-1.5 rounded-xs bg-status-warning-bg px-2.5 py-1 text-[10px] font-bold tracking-wide text-status-warning-text border border-status-warning-border">
+                    <div className="flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-[10px] font-bold tracking-wide text-amber-300 border border-amber-500/40">
                       <Clock size={11} className="animate-spin" aria-hidden="true" />
-                      <span>MENUNGGU RESPON STAF...</span>
+                      <span>MENUNGGU STAF...</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-surface">
-                      <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
-                      <span>OVERTONE CONCIERGE</span>
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                      <span className="w-2 h-2 rounded-full bg-[#E8622C]" aria-hidden="true" />
+                      <span>FOCALPOINT CONCIERGE</span>
                     </div>
                   )}
                 </div>
@@ -375,10 +375,10 @@ export default function FloatingConciergeWidget() {
                   type="button"
                   onClick={() => setView((prev) => (prev === "tracker" ? "chat" : "tracker"))}
                   aria-pressed={view === "tracker"}
-                  className={`flex h-8 w-8 items-center justify-center rounded-sm transition-colors duration-fast ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-fast ${
                     view === "tracker"
-                      ? "bg-accent text-accent-on"
-                      : "bg-surface/15 text-surface hover:bg-surface/25"
+                      ? "bg-[#E8622C] text-white"
+                      : "bg-white/15 text-white hover:bg-white/25"
                   }`}
                   title="Lacak Status Pesanan / Resi"
                   aria-label="Lacak Status Pesanan"
@@ -389,7 +389,7 @@ export default function FloatingConciergeWidget() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-sm bg-surface/15 text-surface hover:bg-surface/25 transition-colors duration-fast"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition-colors duration-fast"
                   title="Tutup Jendela Konsultasi"
                   aria-label="Tutup Jendela Konsultasi"
                 >
@@ -398,20 +398,20 @@ export default function FloatingConciergeWidget() {
               </div>
             </div>
 
-            <div className="mt-2 flex items-center justify-between">
-              <h2 className="font-display text-sm font-bold text-surface tracking-tight">
+            <div className="mt-2.5 flex items-center justify-between">
+              <h2 className="font-display text-sm font-bold text-white tracking-tight">
                 {view === "tracker"
                   ? "Lacak Status Pesanan & Resi"
                   : sessionStatus === "live_chat"
                   ? "Sesi Konsultasi Langsung"
-                  : "Konsultasi Instrumen & Layanan"}
+                  : "Konsultasi Cinema Gear & QC"}
               </h2>
 
               {sessionStatus === "live_chat" && (
                 <button
                   type="button"
                   onClick={handleResolveSession}
-                  className="text-[11px] font-bold text-surface underline hover:opacity-80 transition-opacity duration-fast"
+                  className="text-[11px] font-bold text-white/80 underline hover:text-white transition-opacity duration-fast"
                 >
                   Akhiri Sesi
                 </button>
@@ -518,21 +518,21 @@ export default function FloatingConciergeWidget() {
               </div>
 
               {/* Area Bawah: Handover + Topik Cepat + Input */}
-              <div className="p-3 bg-surface border-t border-line space-y-2">
+              <div className="p-3 bg-white/90 border-t border-[#0F1B2D]/10 space-y-2">
                 {sessionStatus === "bot_active" && (
                   <div className="space-y-2">
                     <button
                       type="button"
                       onClick={handleRequestLiveAgent}
                       disabled={requestingAgent}
-                      className="w-full flex items-center justify-center gap-2 rounded-sm bg-accent hover:bg-accent-hover py-2 px-3.5 text-xs font-bold text-accent-on transition-colors duration-fast disabled:opacity-55"
+                      className="w-full flex items-center justify-center gap-2 rounded-full bg-[#E8622C] hover:bg-[#d45522] py-2 px-3.5 text-xs font-bold text-white transition-all shadow-md disabled:opacity-55"
                     >
                       {requestingAgent ? (
                         <Loader2 size={14} className="animate-spin" aria-hidden="true" />
                       ) : (
                         <Headphones size={14} aria-hidden="true" />
                       )}
-                      <span>Hubungi Live Agent (Staf Toko)</span>
+                      <span>Hubungi Live Agent (Spesialis Kamera)</span>
                     </button>
 
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
@@ -542,7 +542,7 @@ export default function FloatingConciergeWidget() {
                           type="button"
                           onClick={() => handleQuickTopic(topic)}
                           disabled={sending}
-                          className="shrink-0 rounded-sm border border-line-strong bg-surface-muted px-3 py-1 text-[11px] font-bold text-ink hover:border-ink hover:bg-surface-subtle transition-colors duration-fast disabled:opacity-55"
+                          className="shrink-0 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-bold text-[#0F1B2D] hover:border-[#E8622C] hover:bg-white transition-all shadow-xs disabled:opacity-55"
                         >
                           {topic.label}
                         </button>
@@ -552,12 +552,12 @@ export default function FloatingConciergeWidget() {
                 )}
 
                 {sessionStatus === "resolved" && (
-                  <div className="rounded-sm bg-surface-muted border border-line p-2.5 text-center text-xs">
-                    <p className="text-ink font-bold mb-1.5">Sesi konsultasi telah selesai.</p>
+                  <div className="rounded-2xl bg-white/70 border border-[#0F1B2D]/10 p-2.5 text-center text-xs">
+                    <p className="text-[#0F1B2D] font-bold mb-1.5">Sesi konsultasi telah selesai.</p>
                     <button
                       type="button"
                       onClick={handleStartNewSession}
-                      className="inline-flex items-center gap-1.5 rounded-sm bg-ink px-3 py-1.5 text-[11px] font-bold text-surface hover:opacity-90 transition-opacity duration-fast"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#0F1B2D] px-3.5 py-1.5 text-[11px] font-bold text-white hover:bg-black transition-all shadow-xs"
                     >
                       <RotateCcw size={12} aria-hidden="true" />
                       <span>Mulai Pertanyaan Baru</span>
@@ -566,17 +566,17 @@ export default function FloatingConciergeWidget() {
                 )}
 
                 {attachmentUrl && (
-                  <div className="relative inline-block rounded-sm border border-line-strong bg-surface-muted p-1">
+                  <div className="relative inline-block rounded-xl border border-white/80 bg-white/80 p-1">
                     <img
                       src={attachmentUrl}
                       alt="Pratinjau lampiran"
-                      className="h-11 w-11 rounded-xs object-cover"
+                      className="h-11 w-11 rounded-lg object-cover"
                     />
                     <button
                       type="button"
                       onClick={() => setAttachmentUrl(null)}
                       aria-label="Hapus lampiran gambar"
-                      className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-status-danger-text text-surface"
+                      className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-white"
                     >
                       <X size={10} aria-hidden="true" />
                     </button>
@@ -585,7 +585,7 @@ export default function FloatingConciergeWidget() {
 
                 <form
                   onSubmit={handleSendMessage}
-                  className="flex items-center gap-2 rounded-sm border border-line-strong bg-canvas px-3 py-1.5"
+                  className="flex items-center gap-2 rounded-full border border-[#0F1B2D]/15 bg-white/90 px-3.5 py-1.5 shadow-xs"
                 >
                   <input
                     type="text"
@@ -594,13 +594,13 @@ export default function FloatingConciergeWidget() {
                     aria-label="Tulis pesan konsultasi"
                     placeholder={
                       sessionStatus === "live_chat"
-                        ? "Tulis pesan ke Spesialis Toko..."
+                        ? "Tulis pesan ke Spesialis..."
                         : sessionStatus === "waiting_agent"
                         ? "Tulis detail pertanyaan Anda..."
-                        : "Tanyakan spesifikasi atau stok..."
+                        : "Tanyakan kamera, lensa, atau stok..."
                     }
                     disabled={sending}
-                    className="flex-1 border-0 bg-transparent p-0 text-xs text-ink placeholder:text-ink-muted focus:outline-none focus:ring-0"
+                    className="flex-1 border-0 bg-transparent p-0 text-xs text-[#0F1B2D] placeholder:text-[#94A3B8] focus:outline-none focus:ring-0"
                   />
 
                   <input
@@ -615,12 +615,12 @@ export default function FloatingConciergeWidget() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="shrink-0 text-ink-secondary hover:text-ink transition-colors duration-fast p-1"
+                    className="shrink-0 text-[#64748B] hover:text-[#0F1B2D] transition-colors p-1"
                     title="Lampirkan Foto"
                     aria-label="Lampirkan Foto"
                   >
                     {uploading ? (
-                      <Loader2 size={16} className="animate-spin text-accent" aria-hidden="true" />
+                      <Loader2 size={16} className="animate-spin text-[#E8622C]" aria-hidden="true" />
                     ) : (
                       <ImagePlus size={16} aria-hidden="true" />
                     )}
@@ -629,7 +629,7 @@ export default function FloatingConciergeWidget() {
                   <button
                     type="submit"
                     disabled={sending || (!inputText.trim() && !attachmentUrl)}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-accent text-accent-on hover:bg-accent-hover transition-colors duration-fast disabled:opacity-40"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E8622C] text-white hover:bg-[#d45522] transition-colors disabled:opacity-40"
                     aria-label="Kirim Pesan"
                   >
                     {sending ? (
@@ -777,36 +777,27 @@ export default function FloatingConciergeWidget() {
         </section>
       )}
 
-      {/* Tombol Pemicu Mengambang (Bebas Pergeseran Layout) */}
+      {/* Tombol Pemicu Mengambang Glassmorphism */}
       <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-expanded={isOpen}
-          className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-md shadow-md transition-colors duration-fast border-2 ${
+          className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-xl transition-all duration-300 border ${
             isOpen
-              ? "bg-accent text-accent-on border-surface"
-              : "border-surface overflow-hidden bg-ink text-surface hover:border-accent"
+              ? "bg-[#E8622C] text-white border-white/60 rotate-90"
+              : "bg-[#0F1B2D]/90 backdrop-blur-md text-white border-white/40 hover:bg-[#E8622C] hover:scale-105"
           }`}
-          aria-label={isOpen ? "Tutup konsultasi concierge" : "Buka konsultasi spesialis instrumen"}
-          title={isOpen ? "Tutup konsultasi" : "Konsultasi dengan Spesialis Instrumen Overtone"}
+          aria-label={isOpen ? "Tutup konsultasi concierge" : "Buka konsultasi spesialis cinema gear"}
+          title={isOpen ? "Tutup konsultasi" : "Konsultasi Gear & Sensor Calibration"}
         >
           {isOpen ? (
             <X size={22} aria-hidden="true" />
           ) : (
             <>
-              <img
-                src="/concierge_avatar.jpg"
-                alt=""
-                aria-hidden="true"
-                className="h-14 w-14 object-cover object-top"
-                onError={(e) => {
-                  e.target.style.display = "none";
-                }}
-              />
-              <Headphones size={20} className="absolute -z-10" aria-hidden="true" />
+              <Headphones size={22} aria-hidden="true" />
               <span
-                className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-status-success-text"
+                className="absolute top-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500"
                 aria-hidden="true"
               />
             </>

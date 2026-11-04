@@ -8,7 +8,7 @@ import {
 const SHOWROOMS_DATA = [
   {
     id: "jkt-senayan",
-    name: "Overtone Pro Cinema Store — Senayan City (Jakarta Pusat)",
+    name: "Focalpoint.pro Flagship — Senayan City (Jakarta Pusat)",
     city: "Jakarta Pusat",
     address: "Senayan City Mall, Ground Floor #G-18, Jl. Asia Afrika No. 19, Gelora, Tanah Abang, Jakarta Pusat 10270",
     hours: "Setiap Hari (10:00 - 22:00 WIB)",
@@ -27,7 +27,7 @@ const SHOWROOMS_DATA = [
   },
   {
     id: "jkt-pik",
-    name: "Overtone Pro Cinema Store — PIK Avenue (Jakarta Utara)",
+    name: "Focalpoint.pro Experience Hub — PIK Avenue (Jakarta Utara)",
     city: "Jakarta Utara",
     address: "PIK Avenue Mall, Lantai 1 Unit 1F-02, Jl. Pantai Indah Kapuk, Penjaringan, Jakarta Utara 14470",
     hours: "Setiap Hari (10:00 - 22:00 WIB)",
@@ -45,7 +45,7 @@ const SHOWROOMS_DATA = [
   },
   {
     id: "bdg-dago",
-    name: "Overtone Pro Cinema Store — Dago (Bandung)",
+    name: "Focalpoint.pro Boutique Store — Dago (Bandung)",
     city: "Bandung",
     address: "Jl. Ir. H. Juanda (Dago) No. 88, Coblong, Kota Bandung, Jawa Barat 40135",
     hours: "Senin - Minggu (09:30 - 21:00 WIB)",
@@ -60,11 +60,11 @@ const SHOWROOMS_DATA = [
       { name: "Garden Community Terrace", icon: Coffee },
       { name: "Click & Collect Pickup Pass", icon: CheckCircle2 },
     ],
-    highlight: "Toko Offline butik dengan Cleanroom sensor bench dan workshop kalibrasi optik bergaransi resmi",
+    highlight: "Toko butik sinematografi dengan Cleanroom sensor bench dan workshop kalibrasi optik bergaransi resmi",
   },
   {
     id: "sby-tp6",
-    name: "Overtone Pro Cinema Store — Tunjungan Plaza 6 (Surabaya)",
+    name: "Focalpoint.pro Cinema Store — Tunjungan Plaza 6 (Surabaya)",
     city: "Surabaya",
     address: "Tunjungan Plaza 6, Level 2 Unit TP6-202, Jl. Embong Malang No. 32-36, Surabaya, Jawa Timur 60261",
     hours: "Setiap Hari (10:00 - 22:00 WIB)",
@@ -82,7 +82,7 @@ const SHOWROOMS_DATA = [
   },
   {
     id: "bali-sunset",
-    name: "Overtone Pro Cinema Store — Seminyak (Bali)",
+    name: "Focalpoint.pro Production Hub — Seminyak (Bali)",
     city: "Bali",
     address: "Sunset Point Shopping Centre Lt. 1, Jl. Sunset Road No. 88, Seminyak, Kuta, Kabupaten Badung, Bali 80361",
     hours: "Setiap Hari (10:00 - 21:30 WITA)",
@@ -117,19 +117,20 @@ export default function Showrooms() {
   });
 
   return (
-    <div className="min-h-screen bg-canvas text-ink pb-20">
-      {/* Hero Header */}
-      <section className="border-b border-line bg-surface py-12 lg:py-16">
-        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+    <div className="min-h-screen fp-home-canvas pb-24">
+      {/* Header Frosted Glass Bar */}
+      <section className="fp-glass-bar py-10 lg:py-14">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
           <div className="max-w-3xl">
-            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent flex items-center gap-1.5">
-              <MapPin size={13} aria-hidden="true" /> Jaringan Toko Fisik Resmi (5 Cabang)
-            </span>
-            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl lg:text-5xl">
-              Overtone Pro Cinema Stores
+            <div className="fp-section-pill mb-3">
+              <MapPin size={13} className="text-[#E8622C]" aria-hidden="true" />
+              <span>Jaringan Showroom Resmi (5 Cabang)</span>
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0F1B2D]">
+              Focalpoint.pro Experience Showrooms
             </h1>
-            <p className="mt-3 text-sm sm:text-base text-ink-secondary leading-relaxed max-w-[65ch]">
-              Rasakan pengalaman langsung menguji puluhan kamera bioskop dan lensa autentik di studio test bay kami. Konsultasikan setup gear Anda bersama teknisi spesialis in-house, atau ambil pesanan online via layanan <strong className="text-ink">Click &amp; Collect</strong>.
+            <p className="mt-3 text-sm sm:text-base text-[#3A4A63] leading-relaxed max-w-2xl">
+              Rasakan pengalaman langsung menguji puluhan kamera bioskop dan lensa autentik di studio test bay kami. Konsultasikan setup gear Anda bersama teknisi spesialis in-house, atau ambil pesanan online via layanan <strong className="text-[#0F1B2D]">Click &amp; Collect</strong>.
             </p>
           </div>
 
@@ -143,10 +144,11 @@ export default function Showrooms() {
                   role="tab"
                   aria-selected={selectedCity === city}
                   onClick={() => setSelectedCity(city)}
-                  className={`rounded-sm px-3.5 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${selectedCity === city
-                    ? "bg-ink text-canvas"
-                    : "bg-surface-muted border border-line text-ink-secondary hover:border-line-strong hover:text-ink"
-                    }`}
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                    selectedCity === city
+                      ? "bg-[#0F1B2D] text-white shadow-xs"
+                      : "bg-white/70 border border-white/80 text-[#3A4A63] hover:bg-white hover:text-[#0F1B2D]"
+                  }`}
                 >
                   {city}
                 </button>
@@ -155,14 +157,14 @@ export default function Showrooms() {
 
             <div className="relative w-full sm:max-w-xs">
               <label htmlFor="showroom-search" className="sr-only">Cari lokasi cabang</label>
-              <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" aria-hidden="true" />
+              <Search size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#3A4A63]" aria-hidden="true" />
               <input
                 id="showroom-search"
                 type="search"
                 placeholder="Cari lokasi cabang atau alamat..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="ot-input pl-9"
+                className="h-10 w-full rounded-full border border-white/80 bg-white/70 backdrop-blur-md pl-10 pr-4 text-xs font-medium text-[#0F1B2D] placeholder:text-[#3A4A63]/80 focus:border-[#E8622C] focus:bg-white focus:outline-none transition-all shadow-xs"
               />
             </div>
           </div>
@@ -170,66 +172,66 @@ export default function Showrooms() {
       </section>
 
       {/* Showroom Cards List */}
-      <section className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 mt-10">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <section className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12 mt-10">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {filteredShowrooms.map((showroom) => (
             <article
               key={showroom.id}
-              className="flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface transition-colors hover:border-line-strong"
+              className="fp-glass-card !p-0 overflow-hidden flex flex-col justify-between"
             >
               <div>
-                {/* Photo & Badge */}
-                <div className="relative h-56 sm:h-64 w-full overflow-hidden bg-surface-muted border-b border-line">
+                {/* Photo & City Pill */}
+                <div className="relative h-60 sm:h-72 w-full overflow-hidden bg-black/10 border-b border-[#0F1B2D]/10">
                   <img
                     src={showroom.image}
-                    alt={`Suasana ruang pamer ${showroom.name}`}
+                    alt={`Suasana showroom ${showroom.name}`}
                     loading="lazy"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                   />
-                  <div className="absolute top-3 left-3 rounded-xs bg-ink px-2.5 py-1 text-[11px] font-bold text-canvas uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 rounded-full bg-[#0F1B2D]/90 backdrop-blur-md border border-white/20 px-3.5 py-1 text-[11px] font-bold text-white uppercase tracking-wider shadow-sm">
                     {showroom.city}
                   </div>
                 </div>
 
                 {/* Content Details */}
-                <div className="p-6 sm:p-7">
-                  <h2 className="font-display text-xl font-bold text-ink tracking-tight">
+                <div className="p-6 sm:p-8">
+                  <h2 className="font-display text-2xl font-bold text-[#0F1B2D] tracking-tight">
                     {showroom.name}
                   </h2>
-                  <p className="mt-1.5 text-xs font-semibold text-accent">
+                  <p className="mt-2 text-xs sm:text-sm font-semibold text-[#E8622C]">
                     {showroom.highlight}
                   </p>
 
-                  <div className="mt-5 space-y-2.5 text-xs text-ink-secondary tabular-nums">
-                    <div className="flex items-start gap-3">
-                      <MapPin size={15} className="text-ink shrink-0 mt-0.5" aria-hidden="true" />
-                      <span>{showroom.address}</span>
+                  <div className="mt-5 space-y-3 text-xs text-[#3A4A63]">
+                    <div className="flex items-start gap-2.5">
+                      <MapPin size={16} className="text-[#0F1B2D] shrink-0 mt-0.5" aria-hidden="true" />
+                      <span className="leading-relaxed">{showroom.address}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Clock size={15} className="text-ink shrink-0" aria-hidden="true" />
+                    <div className="flex items-center gap-2.5">
+                      <Clock size={16} className="text-[#0F1B2D] shrink-0" aria-hidden="true" />
                       <span>{showroom.hours}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Phone size={15} className="text-ink shrink-0" aria-hidden="true" />
-                      <span>{showroom.phone} &bull; WhatsApp: {showroom.whatsapp}</span>
+                    <div className="flex items-center gap-2.5">
+                      <Phone size={16} className="text-[#0F1B2D] shrink-0" aria-hidden="true" />
+                      <span className="font-semibold text-[#0F1B2D]">{showroom.phone}</span>
                     </div>
                   </div>
 
-                  {/* Facilities */}
-                  <div className="mt-6 border-t border-line pt-4">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-2.5">
-                      Fasilitas &amp; Layanan Unggulan:
-                    </p>
+                  {/* Facilities Grid */}
+                  <div className="mt-6 pt-5 border-t border-[#0F1B2D]/10">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#3A4A63] block mb-3">
+                      Fasilitas Showroom &amp; Studio QC:
+                    </span>
                     <div className="flex flex-wrap gap-2">
                       {showroom.facilities.map((fac, idx) => {
                         const Icon = fac.icon;
                         return (
                           <span
                             key={idx}
-                            className="inline-flex items-center gap-1.5 rounded-xs border border-line bg-surface-muted px-2.5 py-1 text-[11px] font-medium text-ink"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 backdrop-blur-md px-3 py-1 text-xs font-semibold text-[#0F1B2D] shadow-2xs"
                           >
-                            <Icon size={12} className="text-accent" aria-hidden="true" />
-                            {fac.name}
+                            <Icon size={13} className="text-[#E8622C]" aria-hidden="true" />
+                            <span>{fac.name}</span>
                           </span>
                         );
                       })}
@@ -238,57 +240,29 @@ export default function Showrooms() {
                 </div>
               </div>
 
-              {/* Action Buttons Footer */}
-              <div className="border-t border-line bg-surface-muted p-4 sm:px-7 flex flex-wrap items-center justify-between gap-3">
+              {/* Action Buttons */}
+              <div className="p-6 sm:p-8 pt-0 flex flex-wrap items-center gap-3">
+                <a
+                  href={`https://wa.me/${showroom.whatsapp.replace(/[^0-9]/g, "")}?text=Halo%20Focalpoint.pro,%20saya%20ingin%20konsultasi%20cinema%20gear%20di%20cabang%20${encodeURIComponent(showroom.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="fp-btn-glass-primary !py-2.5 !px-5 !text-xs flex-1 sm:flex-initial"
+                >
+                  <MessageCircle size={14} aria-hidden="true" />
+                  <span>Chat WhatsApp Teknisi</span>
+                </a>
                 <a
                   href={showroom.googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-sm border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-ink hover:border-line-strong transition-colors"
+                  className="fp-btn-glass-secondary !py-2.5 !px-5 !text-xs flex-1 sm:flex-initial"
                 >
-                  <ExternalLink size={13} aria-hidden="true" /> Buka Google Maps
+                  <ExternalLink size={14} aria-hidden="true" />
+                  <span>Petunjuk Arah Google Maps</span>
                 </a>
-
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`https://wa.me/${showroom.whatsapp.replace(/[^0-9]/g, "")}?text=Halo%20Overtone%20Music%20Store%2C%20saya%20ingin%20bertanya%20mengenai%20koleksi%20alat%20musik%20di%20showroom%20${encodeURIComponent(showroom.name)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-sm border border-status-success/40 bg-status-success-bg px-3 py-2 text-xs font-semibold text-status-success hover:opacity-90 transition-opacity"
-                  >
-                    <MessageCircle size={14} aria-hidden="true" /> Tanya via WhatsApp
-                  </a>
-                  <Link
-                    to="/products"
-                    className="inline-flex items-center gap-1.5 rounded-sm bg-ink px-4 py-2 text-xs font-semibold text-canvas hover:bg-ink-secondary transition-colors"
-                  >
-                    Beli &amp; Ambil di Sini <ArrowRight size={13} aria-hidden="true" />
-                  </Link>
-                </div>
               </div>
             </article>
           ))}
-        </div>
-
-        {/* Info Banner Click & Collect */}
-        <div className="mt-12 rounded-md border border-line bg-surface p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-status-success">
-              <ShieldCheck size={16} aria-hidden="true" /> Layanan Prioritas Click &amp; Collect
-            </span>
-            <h2 className="mt-2 font-display text-xl sm:text-2xl font-bold text-ink tracking-tight">
-              Belanja Online, Ambil Langsung di Pro Cinema Store Terdekat
-            </h2>
-            <p className="mt-2 text-xs sm:text-sm text-ink-secondary leading-relaxed">
-              Ingin segera menggunakan kamera cinema impian Anda tanpa menunggu ekspedisi? Pilih metode pemenuhan <strong className="text-ink">Click &amp; Collect</strong> saat checkout. Tim teknisi sensor kami akan menyiapkan unit dan menguji kalibrasi sebelum Anda tiba di toko.
-            </p>
-          </div>
-          <Link
-            to="/products"
-            className="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-3 text-xs font-semibold text-[#FAF8F5] hover:bg-accent-hover transition-colors whitespace-nowrap shrink-0"
-          >
-            Lihat Katalog Cinema Gear <ArrowRight size={14} aria-hidden="true" />
-          </Link>
         </div>
       </section>
     </div>

@@ -88,7 +88,7 @@ export default function App() {
   const isHomeRoute = location.pathname === "/";
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas text-ink antialiased font-sans">
+    <div className={`flex min-h-screen flex-col antialiased font-sans ${isInternalRoute ? "bg-canvas text-ink" : "fp-home-canvas text-[#0F1B2D]"}`}>
       {!isInternalRoute && !isHomeRoute && <Navbar />}
       <main id="main-content" className="flex-1">
         <Routes>

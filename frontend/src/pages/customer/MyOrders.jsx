@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Package, Truck, Store, CreditCard, Copy,
-  Clock, RotateCcw, Printer
+  Clock, RotateCcw, Printer, ArrowRight
 } from "lucide-react";
 import api from "../../api";
 import Badge from "../../components/ui/Badge";
@@ -57,50 +57,52 @@ export default function MyOrders() {
   });
 
   return (
-    <div className="min-h-screen bg-canvas text-ink py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen fp-home-canvas pb-24 px-4 sm:px-6 lg:px-12 pt-8">
       <div className="mx-auto max-w-6xl space-y-6">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-line pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#0F1B2D]/10 pb-6">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent block mb-1">
-              Riwayat Pembelian &amp; Garansi
-            </span>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
-              Riwayat Pesanan Instrumen
+            <div className="fp-section-pill mb-2">
+              <span className="fp-section-pill-dot" aria-hidden="true" />
+              <span>Riwayat Transaksi &amp; Garansi</span>
+            </div>
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#0F1B2D] tracking-tight">
+              Pesanan Saya &amp; E-Invoice Resmi
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-ink-secondary max-w-[65ch]">
-              Pantau status pengiriman ekspedisi, cetak e-invoice resmi, dan simpan kode ambil barang (Click &amp; Collect) di Offline Store Overtone.
+            <p className="mt-1 text-xs sm:text-sm text-[#3A4A63] max-w-2xl">
+              Pantau status pengiriman ekspedisi, cetak e-invoice resmi ber-serial number, dan simpan kode ambil unit (Click &amp; Collect) di Showroom Focalpoint Pro.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
               to="/returns"
-              className="inline-flex items-center gap-1.5 rounded-sm border border-line bg-surface px-4 py-2.5 text-xs font-semibold text-ink hover:border-line-strong transition-colors"
+              className="fp-btn-glass-secondary !py-2.5 !px-4 !text-xs"
             >
-              <RotateCcw size={14} className="text-accent" aria-hidden="true" /> Klaim Retur / Garansi
+              <RotateCcw size={14} className="text-[#E8622C]" aria-hidden="true" />
+              <span>Klaim Retur / Garansi</span>
             </Link>
-            <Button
-              onClick={() => navigate("/products")}
-              variant="primary"
-              size="md"
+            <Link
+              to="/products"
+              className="fp-btn-glass-primary !py-2.5 !px-4 !text-xs"
             >
-              Belanja Instrumen Lain
-            </Button>
+              <span>Belanja Gear Lain</span>
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-line pb-3" role="tablist" aria-label="Filter metode pesanan">
+        <div className="flex flex-wrap gap-2 border-b border-[#0F1B2D]/10 pb-4" role="tablist" aria-label="Filter metode pesanan">
           <button
             type="button"
             role="tab"
             aria-selected={filterMethod === "all"}
             onClick={() => setFilterMethod("all")}
-            className={`rounded-sm px-4 py-2 text-xs font-semibold transition-colors tabular-nums ${
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-all tabular-nums cursor-pointer ${
               filterMethod === "all"
-                ? "bg-ink text-canvas"
-                : "bg-surface border border-line text-ink-secondary hover:border-line-strong hover:text-ink"
+                ? "bg-[#0F1B2D] text-white shadow-xs"
+                : "bg-white/70 border border-white/80 text-[#3A4A63] hover:bg-white hover:text-[#0F1B2D]"
             }`}
           >
             Semua Pesanan ({orders.length})
@@ -110,10 +112,10 @@ export default function MyOrders() {
             role="tab"
             aria-selected={filterMethod === "delivery"}
             onClick={() => setFilterMethod("delivery")}
-            className={`rounded-sm px-4 py-2 text-xs font-semibold transition-colors flex items-center gap-1.5 tabular-nums ${
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 tabular-nums cursor-pointer ${
               filterMethod === "delivery"
-                ? "bg-ink text-canvas"
-                : "bg-surface border border-line text-ink-secondary hover:border-line-strong hover:text-ink"
+                ? "bg-[#0F1B2D] text-white shadow-xs"
+                : "bg-white/70 border border-white/80 text-[#3A4A63] hover:bg-white hover:text-[#0F1B2D]"
             }`}
           >
             <Truck size={14} aria-hidden="true" /> Dikirim Ekspedisi ({orders.filter(o => o.fulfillment_method === "delivery").length})
@@ -123,13 +125,13 @@ export default function MyOrders() {
             role="tab"
             aria-selected={filterMethod === "click_and_collect"}
             onClick={() => setFilterMethod("click_and_collect")}
-            className={`rounded-sm px-4 py-2 text-xs font-semibold transition-colors flex items-center gap-1.5 tabular-nums ${
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 tabular-nums cursor-pointer ${
               filterMethod === "click_and_collect"
-                ? "bg-ink text-canvas"
-                : "bg-surface border border-line text-ink-secondary hover:border-line-strong hover:text-ink"
+                ? "bg-[#0F1B2D] text-white shadow-xs"
+                : "bg-white/70 border border-white/80 text-[#3A4A63] hover:bg-white hover:text-[#0F1B2D]"
             }`}
           >
-            <Store size={14} aria-hidden="true" /> Offline Store Pickup ({orders.filter(o => o.fulfillment_method === "click_and_collect").length})
+            <Store size={14} aria-hidden="true" /> Showroom Pickup ({orders.filter(o => o.fulfillment_method === "click_and_collect").length})
           </button>
         </div>
 
@@ -138,15 +140,17 @@ export default function MyOrders() {
           {loading ? (
             <SkeletonGrid />
           ) : filteredOrders.length === 0 ? (
-            <EmptyState
-              title="Belum Ada Pesanan"
-              description="Anda belum memiliki riwayat pesanan instrumen musik pada kategori pemenuhan ini."
-              action={
-                <Button onClick={() => navigate("/products")} variant="primary" size="sm">
-                  Buka Katalog Overtone
-                </Button>
-              }
-            />
+            <div className="fp-glass-card !p-12 text-center">
+              <EmptyState
+                title="Belum Ada Pesanan"
+                description="Anda belum memiliki riwayat pesanan cinema gear pada kategori pemenuhan ini."
+                action={
+                  <Link to="/products" className="fp-btn-glass-primary !py-2.5 !px-5 mt-4">
+                    Buka Katalog Focalpoint Pro
+                  </Link>
+                }
+              />
+            </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {filteredOrders.map((o) => {
@@ -158,134 +162,134 @@ export default function MyOrders() {
                 return (
                   <article
                     key={o.id}
-                    className="relative overflow-hidden rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong flex flex-col justify-between"
+                    className="fp-glass-card p-6 flex flex-col justify-between"
                   >
                     <div>
                       {/* Header Card */}
-                      <div className="flex items-start justify-between gap-3 border-b border-line pb-3">
+                      <div className="flex items-start justify-between gap-3 border-b border-[#0F1B2D]/10 pb-3">
                         <div>
                           <div className="flex items-center gap-2 tabular-nums">
-                            <span className="font-mono text-xs font-bold text-ink">
+                            <span className="font-mono text-xs font-bold text-[#0F1B2D]">
                               {o.invoice_code}
                             </span>
-                            <span className="text-[11px] text-ink-muted">&bull; {formatDate(o.created_at)}</span>
+                            <span className="text-[11px] text-[#3A4A63]">&bull; {formatDate(o.created_at)}</span>
                           </div>
-                          <p className="text-[11px] text-ink-secondary mt-0.5">
-                            Pembeli: <span className="font-semibold text-ink">{o.buyer_name || o.buyer_email}</span>
+                          <p className="text-[11px] text-[#3A4A63] mt-0.5">
+                            Pembeli: <span className="font-semibold text-[#0F1B2D]">{o.buyer_name || o.buyer_email}</span>
                           </p>
                         </div>
-                        <Badge status={isPaid ? "paid" : "pending"}>
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                            isPaid
+                              ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-800"
+                              : "bg-amber-500/15 border border-amber-500/30 text-amber-800"
+                          }`}
+                        >
                           {isPaid ? "Lunas / Paid" : "Menunggu Pembayaran"}
-                        </Badge>
+                        </span>
                       </div>
 
                       {/* Product Preview */}
-                      <div className="py-4 border-b border-line flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {o.product?.image_url ? (
+                      <div className="py-4 flex gap-3.5 border-b border-[#0F1B2D]/10">
+                        <div className="h-16 w-16 shrink-0 fp-glass-stage flex items-center justify-center p-1 overflow-hidden">
+                          {o.product?.image_url || o.event?.image_url ? (
                             <img
-                              src={fileUrl(o.product.image_url)}
-                              alt={o.product?.name || "Instrumen"}
-                              loading="lazy"
-                              className="h-14 w-14 rounded-sm object-contain border border-line shrink-0 bg-surface-muted p-1"
+                              src={fileUrl(o.product?.image_url || o.event?.image_url)}
+                              alt={o.product_name || o.event_title || "Hardware"}
+                              className="h-full w-full object-contain"
                             />
                           ) : (
-                            <div className="h-14 w-14 rounded-sm bg-surface-muted border border-line flex items-center justify-center shrink-0 text-ink-muted">
-                              <Package size={20} aria-hidden="true" />
-                            </div>
+                            <Package size={22} className="text-[#3A4A63]" aria-hidden="true" />
                           )}
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-bold text-ink-muted uppercase tracking-wider">
-                              {o.product?.brand?.name || o.product?.organizer || "Overtone Official"}
-                            </p>
-                            <h2 className="font-display font-bold text-sm text-ink truncate">
-                              {o.product?.name || "Instrumen Musik"}
-                            </h2>
-                            <p className="text-xs text-ink-secondary tabular-nums">
-                              Varian: <span className="font-semibold text-ink">{o.variant?.variant_name || o.tier_name || o.variant_name || "Standard Model"}</span> &bull; {o.quantity || 1} Unit
-                            </p>
-                          </div>
                         </div>
-                        <div className="text-right shrink-0 tabular-nums">
-                          <p className="text-[10px] text-ink-muted font-bold uppercase tracking-wider">Total Tagihan</p>
-                          <p className="text-sm font-bold text-ink">
-                            {formatRupiah(o.total_price)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#E8622C]">
+                            {o.product?.brand?.name || o.product?.brand || "Focalpoint Pro Authorized"}
                           </p>
+                          <h3 className="text-sm font-bold text-[#0F1B2D] truncate mt-0.5">
+                            {o.product_name || o.event_title || "Cinema Gear"}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#3A4A63]">
+                            <span>Varian: <strong className="text-[#0F1B2D]">{o.variant_name || o.tier_name || "Standar"}</strong></span>
+                            <span>&bull;</span>
+                            <span className="tabular-nums font-semibold text-[#0F1B2D]">{o.quantity} unit</span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Fulfillment Details */}
-                      <div className="py-3">
+                      {/* Fulfillment Method Box */}
+                      <div className="py-3 text-xs">
                         {isClickAndCollect ? (
-                          <div className="rounded-sm border border-line bg-surface-muted p-3.5 space-y-2.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-1.5 font-bold text-ink text-xs">
-                                <Store size={14} className="text-accent" aria-hidden="true" /> Ambil di Offline Store Overtone
+                          <div className="rounded-2xl border border-white/80 bg-white/60 p-3.5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold flex items-center gap-1.5 text-[#0F1B2D]">
+                                <Store size={14} className="text-[#E8622C]" aria-hidden="true" />
+                                Click &amp; Collect di Showroom
                               </span>
-                              <Badge status={isHandedOver ? "completed" : "info"}>
-                                {isHandedOver ? "Sudah Diambil" : "Siap Diambil"}
-                              </Badge>
+                              <span
+                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                                  isHandedOver
+                                    ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-800"
+                                    : "bg-blue-500/15 border border-blue-500/30 text-blue-800"
+                                }`}
+                              >
+                                {isHandedOver ? "Unit Sudah Diambil" : "Siap Diambil di Showroom"}
+                              </span>
                             </div>
-
-                            <div className="text-xs text-ink-secondary font-medium">
-                              Lokasi: <strong className="text-ink">{o.pickup_branch?.name || "Overtone Offline Store — Senayan City"}</strong>
-                            </div>
-
-                            {/* Pickup Code Display (Tactile Pass Card) */}
-                            {(o.pickup_code || o.ticket_code) && (
-                              <div className="flex items-center justify-between bg-surface rounded-sm p-3 border border-line-strong">
-                                <div>
-                                  <p className="text-[10px] text-accent font-bold uppercase tracking-wider">OFFLINE STORE PICKUP PASS</p>
-                                  <p className="font-mono text-sm font-bold text-ink tracking-widest tabular-nums mt-0.5">
-                                    {o.pickup_code || o.ticket_code}
-                                  </p>
+                            <p className="text-[11px] text-[#3A4A63]">
+                              Lokasi: <strong className="text-[#0F1B2D]">{o.store_branch?.name || o.venue?.name || "Showroom Resmi"}</strong> ({o.store_branch?.city || o.venue?.city || "Kota Showroom"})
+                            </p>
+                            {o.pickup_code && (
+                              <div className="flex items-center justify-between rounded-xl bg-white/80 border border-white px-3 py-1.5 mt-1">
+                                <span className="text-[11px] text-[#3A4A63]">Kode Pickup:</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-extrabold text-[#0F1B2D] text-xs tracking-wider">
+                                    {o.pickup_code}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => copyText(o.pickup_code, "Kode Pickup")}
+                                    className="text-[#3A4A63] hover:text-[#0F1B2D] p-1 cursor-pointer"
+                                    title="Salin Kode Pickup"
+                                  >
+                                    <Copy size={12} aria-hidden="true" />
+                                  </button>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => copyText(o.pickup_code || o.ticket_code, "Kode Pickup")}
-                                  className="inline-flex items-center gap-1.5 text-xs text-ink font-semibold hover:bg-surface-muted bg-canvas border border-line px-2.5 py-1.5 rounded-xs transition-colors"
-                                >
-                                  <Copy size={12} aria-hidden="true" /> Salin Kode
-                                </button>
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="rounded-sm border border-line bg-surface-muted p-3.5 space-y-2.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-1.5 font-bold text-ink text-xs">
-                                <Truck size={14} className="text-accent" aria-hidden="true" /> Ekspedisi: {o.shipping_courier || "JNE Trucking"}
+                          <div className="rounded-2xl border border-white/80 bg-white/60 p-3.5 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold flex items-center gap-1.5 text-[#0F1B2D]">
+                                <Truck size={14} className="text-[#E8622C]" aria-hidden="true" />
+                                Ekspedisi {o.courier_name || "Kargo Berasuransi"}
                               </span>
-                              <Badge status={hasTracking ? "shipped" : "processing"}>
-                                {hasTracking ? "Sedang Dikirim" : "Inspeksi & Packing"}
-                              </Badge>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/80 border border-white text-[#3A4A63]">
+                                Packing Kayu Aman
+                              </span>
                             </div>
-
+                            <p className="text-[11px] text-[#3A4A63] line-clamp-1">
+                              Alamat: {o.shipping_address || "Alamat Sesuai Profil"}
+                            </p>
                             {hasTracking ? (
-                              <div className="flex items-center justify-between bg-surface rounded-sm p-2.5 border border-line">
-                                <div>
-                                  <p className="text-[10px] text-ink-muted font-bold uppercase tracking-wider">NOMOR RESI PENGIRIMAN</p>
-                                  <p className="font-mono text-xs font-bold text-ink tracking-wider tabular-nums mt-0.5">
-                                    {o.tracking_number}
-                                  </p>
+                              <div className="flex items-center justify-between rounded-xl bg-white/80 border border-white px-3 py-1.5 mt-1">
+                                <span className="text-[11px] text-[#3A4A63]">No. Resi:</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-bold text-[#0F1B2D] text-xs">{o.tracking_number}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => copyText(o.tracking_number, "Nomor Resi")}
+                                    className="text-[#3A4A63] hover:text-[#0F1B2D] p-1 cursor-pointer"
+                                    title="Salin No Resi"
+                                  >
+                                    <Copy size={12} aria-hidden="true" />
+                                  </button>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => copyText(o.tracking_number, "Nomor Resi")}
-                                  className="inline-flex items-center gap-1.5 text-xs text-ink font-semibold hover:bg-surface-muted bg-canvas border border-line px-2.5 py-1.5 rounded-xs transition-colors"
-                                >
-                                  <Copy size={12} aria-hidden="true" /> Salin Resi
-                                </button>
                               </div>
                             ) : (
-                              <p className="text-xs text-ink-secondary flex items-center gap-1.5">
-                                <Clock size={13} className="text-status-warning shrink-0" aria-hidden="true" /> Proses quality check luthier &amp; packing kayu di Gudang Pusat.
-                              </p>
-                            )}
-
-                            {o.shipping_address && (
-                              <p className="text-[11px] text-ink-muted truncate">
-                                Tujuan: {o.shipping_address}
+                              <p className="text-[11px] text-amber-700 italic">
+                                Sedang proses packing kayu &amp; inspeksi sensor di gudang pusat.
                               </p>
                             )}
                           </div>
@@ -293,47 +297,48 @@ export default function MyOrders() {
                       </div>
                     </div>
 
-                    {/* Bottom Actions */}
-                    <div className="pt-3 border-t border-line flex flex-wrap gap-2">
-                      <Link
-                        to={`/orders/${o.invoice_code}`}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-sm border border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-muted transition-colors"
-                      >
-                        <Truck size={13} className="text-accent" aria-hidden="true" /> Lacak Timeline
-                      </Link>
+                    {/* Card Footer: Total Price & Actions */}
+                    <div className="mt-4 pt-3 border-t border-[#0F1B2D]/10 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[11px] text-[#3A4A63] block">Total Transaksi</span>
+                        <span className="font-display font-extrabold text-base text-[#0F1B2D] tabular-nums">
+                          {formatRupiah(o.total_price || o.total_amount)}
+                        </span>
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => printInvoice(o)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-sm border border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-muted transition-colors"
-                        title="Cetak E-Invoice PDF Resmi"
-                      >
-                        <Printer size={13} aria-hidden="true" /> Cetak Invoice
-                      </button>
-
-                      {(["delivered", "completed"].includes(o.order_status) || isHandedOver) && (
-                        <Link
-                          to="/returns"
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-sm border border-line bg-surface-muted text-ink hover:border-line-strong transition-colors"
+                      <div className="flex items-center gap-2">
+                        {/* Tombol Cetak Invoice PDF */}
+                        <button
+                          type="button"
+                          onClick={() => printInvoice(o)}
+                          className="fp-btn-glass-secondary !py-2 !px-3 !text-xs"
+                          title="Cetak E-Invoice Resmi PDF"
                         >
-                          <RotateCcw size={13} className="text-accent" aria-hidden="true" /> Klaim Retur
-                        </Link>
-                      )}
+                          <Printer size={13} aria-hidden="true" />
+                          <span>PDF</span>
+                        </button>
 
-                      {!isPaid && (
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="flex-1"
-                          disabled={payingCode === o.invoice_code}
-                          loading={payingCode === o.invoice_code}
-                          onClick={() => handleSimulatePayment(o.invoice_code)}
-                        >
-                          <CreditCard size={13} aria-hidden="true" /> {payingCode === o.invoice_code ? "Memproses..." : "Bayar Sekarang"}
-                        </Button>
-                      )}
+                        {!isPaid ? (
+                          <button
+                            type="button"
+                            onClick={() => handleSimulatePayment(o.invoice_code)}
+                            disabled={payingCode === o.invoice_code}
+                            className="fp-btn-glass-primary !py-2 !px-3.5 !text-xs"
+                          >
+                            <CreditCard size={13} aria-hidden="true" />
+                            <span>{payingCode === o.invoice_code ? "Memproses..." : "Bayar Sekarang"}</span>
+                          </button>
+                        ) : (
+                          <Link
+                            to={`/orders/${o.invoice_code}`}
+                            className="fp-btn-glass-primary !py-2 !px-3.5 !text-xs"
+                          >
+                            <span>Lacak Timeline</span>
+                            <ArrowRight size={13} aria-hidden="true" />
+                          </Link>
+                        )}
+                      </div>
                     </div>
-
                   </article>
                 );
               })}

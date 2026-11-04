@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, BookOpen, MessageCircleQuestion, ChevronRight } from "lucide-react";
+import { Search, BookOpen, MessageCircleQuestion, ChevronRight, HelpCircle } from "lucide-react";
 import api from "../../api";
 import Button from "../../components/ui/Button";
 
@@ -26,49 +26,50 @@ export default function Knowledge() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-72px)] bg-canvas py-10 text-ink">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+    <div className="min-h-screen fp-home-canvas pb-24 px-4 sm:px-6 lg:px-12 pt-8">
+      <div className="mx-auto max-w-[1440px]">
 
-        {/* Header */}
-        <div className="border-b border-line pb-8 mb-10">
-          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent block">
-            Pusat Bantuan &amp; Basis Pengetahuan (KMS)
-          </span>
-          <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-ink mt-1.5">
-            Pusat Bantuan Overtone Pro Cinema Store
+        {/* Header Frosted Glass Box */}
+        <div className="fp-glass-card !p-8 sm:!p-10 mb-10">
+          <div className="fp-section-pill mb-2">
+            <HelpCircle size={12} className="text-[#E8622C]" aria-hidden="true" />
+            <span>Pusat Bantuan &amp; Basis Pengetahuan (KMS)</span>
+          </div>
+          <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-[#0F1B2D] mt-1.5">
+            Pusat Panduan &amp; FAQ Focalpoint Pro
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed">
-            Temukan panduan lengkap seputar pembelian kamera bioskop, layanan Click &amp; Collect di Pro Cinema Store, kalibrasi sensor di Cleanroom Bench, garansi distributor resmi, hingga prosedur klaim retur 7 hari.
+          <p className="mt-2 text-xs sm:text-sm text-[#3A4A63] max-w-2xl leading-relaxed">
+            Temukan panduan lengkap seputar pembelian kamera bioskop, layanan Click &amp; Collect di Showroom, kalibrasi sensor di Cleanroom Bench, garansi distributor resmi, hingga prosedur klaim retur 7 hari.
           </p>
 
           {/* Search Box */}
-          <form onSubmit={search} className="mt-6 flex max-w-xl gap-2">
+          <form onSubmit={search} className="mt-6 flex max-w-xl gap-2.5">
             <div className="relative flex-1">
               <label htmlFor="kms-public-search" className="sr-only">Cari artikel bantuan atau FAQ</label>
-              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" aria-hidden="true" />
+              <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#3A4A63]" aria-hidden="true" />
               <input
                 id="kms-public-search"
                 type="search"
-                className="ot-input pl-10"
+                className="h-10 w-full rounded-full border border-white/80 bg-white/80 pl-11 pr-4 text-xs font-medium text-[#0F1B2D] placeholder:text-[#3A4A63]/80 focus:border-[#E8622C] focus:bg-white focus:outline-none transition-all shadow-xs"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari artikel bantuan, garansi, atau FAQ..."
               />
             </div>
-            <Button type="submit" variant="primary">
+            <button type="submit" className="fp-btn-glass-primary !py-2 !px-5 !text-xs shrink-0">
               Cari Solusi
-            </Button>
+            </button>
           </form>
         </div>
 
         {/* 2-Column Content: Articles & FAQ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Kolom Kiri: Panduan & Artikel (col 7) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="flex items-center gap-2 border-b border-line pb-3">
-              <BookOpen size={18} className="text-accent" aria-hidden="true" />
-              <h2 className="font-display text-lg font-bold text-ink">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex items-center gap-2 border-b border-[#0F1B2D]/10 pb-3">
+              <BookOpen size={18} className="text-[#E8622C]" aria-hidden="true" />
+              <h2 className="font-display text-lg font-bold text-[#0F1B2D]">
                 Artikel &amp; Panduan Cinema Gear
               </h2>
             </div>
@@ -76,11 +77,11 @@ export default function Knowledge() {
             {loading ? (
               <div className="space-y-3" role="status" aria-busy="true">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-28 rounded-md bg-surface border border-line skeleton" />
+                  <div key={i} className="h-28 rounded-2xl bg-white/60 skeleton" />
                 ))}
               </div>
             ) : articles.length === 0 ? (
-              <div className="rounded-md border border-dashed border-line-strong bg-surface p-8 text-center text-xs text-ink-muted">
+              <div className="fp-glass-card !p-8 text-center text-xs text-[#3A4A63]">
                 Tidak ada artikel yang cocok dengan kata kunci pencarian Anda.
               </div>
             ) : (
@@ -88,20 +89,20 @@ export default function Knowledge() {
                 {articles.map((a) => (
                   <article
                     key={a.id}
-                    className="rounded-md border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+                    className="fp-glass-card !p-5 hover:border-[#E8622C]/40 transition-all cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8622C]">
                           {a.category || "Panduan Resmi"}
                         </span>
-                        <h3 className="font-display font-bold text-ink text-sm mt-0.5">
+                        <h3 className="font-display font-bold text-[#0F1B2D] text-sm mt-0.5">
                           {a.title}
                         </h3>
                       </div>
-                      <ChevronRight size={16} className="text-ink-muted shrink-0 mt-1" aria-hidden="true" />
+                      <ChevronRight size={16} className="text-[#3A4A63] shrink-0 mt-1" aria-hidden="true" />
                     </div>
-                    <p className="mt-2 text-xs text-ink-secondary leading-relaxed max-w-[65ch]">
+                    <p className="mt-2 text-xs text-[#3A4A63] leading-relaxed max-w-[65ch]">
                       {a.content?.slice(0, 220)}{a.content?.length > 220 ? "..." : ""}
                     </p>
                   </article>
@@ -111,10 +112,10 @@ export default function Knowledge() {
           </div>
 
           {/* Kolom Kanan: FAQ (col 5) */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="flex items-center gap-2 border-b border-line pb-3">
-              <MessageCircleQuestion size={18} className="text-accent" aria-hidden="true" />
-              <h2 className="font-display text-lg font-bold text-ink">
+          <div className="lg:col-span-5 space-y-4">
+            <div className="flex items-center gap-2 border-b border-[#0F1B2D]/10 pb-3">
+              <MessageCircleQuestion size={18} className="text-[#E8622C]" aria-hidden="true" />
+              <h2 className="font-display text-lg font-bold text-[#0F1B2D]">
                 Pertanyaan Umum (FAQ)
               </h2>
             </div>
@@ -122,11 +123,11 @@ export default function Knowledge() {
             {loading ? (
               <div className="space-y-3" role="status" aria-busy="true">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 rounded-md bg-surface border border-line skeleton" />
+                  <div key={i} className="h-24 rounded-2xl bg-white/60 skeleton" />
                 ))}
               </div>
             ) : faqs.length === 0 ? (
-              <div className="rounded-md border border-dashed border-line-strong bg-surface p-8 text-center text-xs text-ink-muted">
+              <div className="fp-glass-card !p-8 text-center text-xs text-[#3A4A63]">
                 Belum ada pertanyaan umum yang terdaftar.
               </div>
             ) : (
@@ -134,12 +135,12 @@ export default function Knowledge() {
                 {faqs.map((f) => (
                   <article
                     key={f.id}
-                    className="rounded-md border border-line bg-surface p-4"
+                    className="fp-glass-card !p-5"
                   >
-                    <h3 className="font-display font-bold text-ink text-xs sm:text-sm">
+                    <h3 className="font-display font-bold text-[#0F1B2D] text-xs sm:text-sm">
                       {f.question}
                     </h3>
-                    <p className="mt-2 text-xs text-ink-secondary leading-relaxed border-t border-line pt-2">
+                    <p className="mt-2 text-xs text-[#3A4A63] leading-relaxed border-t border-[#0F1B2D]/10 pt-2">
                       {f.answer}
                     </p>
                   </article>

@@ -41,7 +41,7 @@ export default function InternalLogin() {
         <div className="text-center mb-6">
           <div className="inline-flex flex-col items-center mb-3">
             <span className="font-display text-2xl font-bold tracking-tight text-ink leading-none">
-              OVERTONE
+              FOCALPOINT<span className="text-accent font-extrabold">.PRO</span>
             </span>
             <span className="text-[10px] font-bold tracking-[0.26em] uppercase text-accent mt-1">
               INTERNAL OAS PORTAL
@@ -49,7 +49,7 @@ export default function InternalLogin() {
           </div>
           <h1 className="mt-2 text-lg font-display font-bold text-ink">Portal Staf Operasional Internal</h1>
           <p className="mt-1 text-xs text-ink-secondary">
-            Khusus Super Admin, General Manager, Finance Controller, Warehouse Lead &amp; Operational Staff.
+            Khusus Super Admin, General Manager, Finance Controller, Warehouse Lead &amp; Store Specialist.
           </p>
         </div>
 

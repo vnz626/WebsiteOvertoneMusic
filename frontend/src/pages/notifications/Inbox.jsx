@@ -10,11 +10,10 @@ import {
   RotateCcw,
   ExternalLink,
   CheckCheck,
-  Clock
+  Clock,
+  Sparkles
 } from "lucide-react";
 import api from "../../api";
-import Badge from "../../components/ui/Badge";
-import Button from "../../components/ui/Button";
 import { errorMessage } from "../../utils/format";
 
 function timeAgo(iso) {
@@ -33,42 +32,42 @@ function getIconAndBadge(type, category) {
   const t = (type || category || "").toLowerCase();
   if (t.includes("stock") || t.includes("inventory")) {
     return {
-      icon: <Boxes size={18} className="text-status-warning" aria-hidden="true" />,
-      status: "warning",
+      icon: <Boxes size={18} className="text-amber-500" aria-hidden="true" />,
+      badgeCls: "bg-amber-500/10 text-amber-700 border-amber-500/30",
       label: "Stok Gudang"
     };
   }
   if (t.includes("po") || t.includes("approval")) {
     return {
-      icon: <FileCheck size={18} className="text-status-success" aria-hidden="true" />,
-      status: "completed",
+      icon: <FileCheck size={18} className="text-emerald-500" aria-hidden="true" />,
+      badgeCls: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
       label: "PO & Restock"
     };
   }
   if (t.includes("support") || t.includes("chat") || t.includes("ticket")) {
     return {
-      icon: <Headphones size={18} className="text-status-info" aria-hidden="true" />,
-      status: "info",
+      icon: <Headphones size={18} className="text-sky-500" aria-hidden="true" />,
+      badgeCls: "bg-sky-500/10 text-sky-700 border-sky-500/30",
       label: "Live Concierge"
     };
   }
   if (t.includes("refund") || t.includes("retur")) {
     return {
-      icon: <RotateCcw size={18} className="text-status-danger" aria-hidden="true" />,
-      status: "danger",
+      icon: <RotateCcw size={18} className="text-rose-500" aria-hidden="true" />,
+      badgeCls: "bg-rose-500/10 text-rose-700 border-rose-500/30",
       label: "Refund & Retur"
     };
   }
   if (t.includes("order")) {
     return {
-      icon: <Package size={18} className="text-accent" aria-hidden="true" />,
-      status: "info",
-      label: "Pesanan Musik"
+      icon: <Package size={18} className="text-[#E8622C]" aria-hidden="true" />,
+      badgeCls: "bg-[#E8622C]/10 text-[#E8622C] border-[#E8622C]/30",
+      label: "Pesanan Cinema Gear"
     };
   }
   return {
-    icon: <Bell size={18} className="text-ink-muted" aria-hidden="true" />,
-    status: "neutral",
+    icon: <Bell size={18} className="text-[#64748B]" aria-hidden="true" />,
+    badgeCls: "bg-slate-100 text-[#64748B] border-slate-200",
     label: "Info Sistem"
   };
 }
@@ -116,7 +115,7 @@ export default function NotificationsInbox() {
       await api.post("/notifications/read-all");
       setItems((prev) => prev.map((item) => ({ ...item, is_read: true })));
       toast.success("Semua notifikasi ditandai sudah dibaca");
-    } catch (err) {
+    } catch {
       toast.error("Gagal menandai notifikasi");
     }
   }
@@ -124,43 +123,44 @@ export default function NotificationsInbox() {
   const unreadCount = items.filter((x) => !x.is_read).length;
 
   return (
-    <div className="min-h-screen bg-canvas text-ink pb-16">
+    <div className="min-h-screen fp-home-canvas text-[#0F1B2D] pb-24">
       {/* Header Banner */}
-      <div className="border-b border-line bg-surface">
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div className="border-b border-[#0F1B2D]/10 bg-white/60 backdrop-blur-md sticky top-0 z-30">
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent block mb-1">
-                Notification Center
-              </span>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-ink">
+              <div className="fp-section-pill mb-2">
+                <Sparkles size={11} className="text-[#E8622C]" aria-hidden="true" />
+                <span>Notification Center</span>
+              </div>
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0F1B2D]">
                 Pusat Pemberitahuan Sistem
               </h1>
-              <p className="mt-1 text-xs sm:text-sm text-ink-secondary">
-                Pembaruan instan status pesanan, antrean approval PO, log inventaris kritis, dan live chat.
+              <p className="mt-1 text-xs sm:text-sm text-[#475569]">
+                Pembaruan instan status pesanan gear, konfirmasi pembayaran, dan layanan showroom.
               </p>
             </div>
             {unreadCount > 0 && (
-              <Button
+              <button
                 type="button"
-                variant="secondary"
-                size="sm"
                 onClick={handleMarkAllRead}
+                className="fp-btn-glass-secondary !py-2 !px-4 !text-xs self-start sm:self-auto"
               >
-                <CheckCheck size={15} className="text-accent" aria-hidden="true" /> Tandai Semua Dibaca
-              </Button>
+                <CheckCheck size={14} className="text-[#E8622C]" aria-hidden="true" />
+                <span>Tandai Semua Dibaca</span>
+              </button>
             )}
           </div>
 
           {/* Filter Tabs */}
-          <div className="mt-6 flex flex-wrap gap-1.5 border-t border-line pt-4" role="tablist" aria-label="Filter kategori notifikasi">
+          <div className="mt-5 flex flex-wrap gap-1.5 border-t border-[#0F1B2D]/10 pt-3" role="tablist" aria-label="Filter kategori notifikasi">
             {[
               { id: "all", label: "Semua Pemberitahuan" },
               { id: "unread", label: "Belum Dibaca" },
+              { id: "order_status", label: "Status Pesanan" },
+              { id: "support_ticket", label: "Live Concierge" },
               { id: "stock_alert", label: "Stok Gudang" },
               { id: "po_approval", label: "Approval PO" },
-              { id: "order_status", label: "Status Pesanan" },
-              { id: "support_ticket", label: "Support & Chat" },
               { id: "refund", label: "Refund / Retur" },
             ].map((tab) => (
               <button
@@ -169,10 +169,10 @@ export default function NotificationsInbox() {
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                   activeTab === tab.id
-                    ? "bg-ink text-canvas"
-                    : "bg-surface-muted text-ink-secondary border border-line hover:border-line-strong hover:text-ink"
+                    ? "bg-[#0F1B2D] text-white shadow-sm"
+                    : "bg-white/70 text-[#475569] border border-white/80 hover:border-[#E8622C] hover:text-[#0F1B2D] hover:bg-white"
                 }`}
               >
                 {tab.label}
@@ -187,21 +187,21 @@ export default function NotificationsInbox() {
         {loading ? (
           <div className="space-y-3" role="status" aria-busy="true">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-surface rounded-md border border-line skeleton" />
+              <div key={i} className="h-24 bg-white/60 rounded-3xl border border-white skeleton" />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-line-strong bg-surface p-12 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-sm bg-surface-muted border border-line text-ink-muted mb-3">
-              <Bell size={22} aria-hidden="true" />
+          <div className="fp-glass-card !p-12 text-center max-w-md mx-auto">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/80 border border-white text-[#64748B] mb-3 shadow-xs">
+              <Bell size={24} aria-hidden="true" className="text-[#E8622C]" />
             </div>
-            <h2 className="font-display text-base font-bold text-ink">Tidak Ada Notifikasi</h2>
-            <p className="mt-1 text-xs text-ink-secondary max-w-md mx-auto">
+            <h2 className="font-display text-base font-bold text-[#0F1B2D]">Tidak Ada Notifikasi</h2>
+            <p className="mt-1 text-xs text-[#64748B] max-w-sm mx-auto leading-relaxed">
               Saat ini tidak ada notifikasi dalam filter ini. Seluruh informasi operasional dan pesanan akan tercatat otomatis.
             </p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {items.map((n) => {
               const meta = getIconAndBadge(n.type, n.category);
               return (
@@ -209,46 +209,48 @@ export default function NotificationsInbox() {
                   key={n.id}
                   type="button"
                   onClick={() => handleOpen(n)}
-                  className={`w-full text-left group relative flex items-start gap-4 rounded-md border p-4 transition-colors ${
+                  className={`w-full text-left group relative flex items-start gap-4 rounded-3xl border p-4 sm:p-5 transition-all shadow-xs ${
                     n.is_read
-                      ? "border-line bg-surface hover:border-line-strong"
-                      : "border-line-strong bg-surface-muted hover:border-ink"
+                      ? "border-white/70 bg-white/70 hover:bg-white/90 hover:border-white"
+                      : "border-[#E8622C]/30 bg-white/95 hover:border-[#E8622C] shadow-sm"
                   }`}
                 >
                   {/* Category Icon */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-surface border border-line">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/80 border border-white shadow-xs">
                     {meta.icon}
                   </div>
 
                   {/* Body Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
-                        <Badge status={meta.status}>{meta.label}</Badge>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.badgeCls}`}>
+                          {meta.label}
+                        </span>
                         {!n.is_read && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-accent uppercase tracking-wider">
-                            <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" /> Baru
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#E8622C] uppercase tracking-wider">
+                            <span className="h-2 w-2 rounded-full bg-[#E8622C]" aria-hidden="true" /> Baru
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-[11px] text-ink-muted tabular-nums">
+                      <div className="flex items-center gap-1 text-[11px] text-[#64748B] tabular-nums">
                         <Clock size={12} aria-hidden="true" />
                         <span>{timeAgo(n.created_at)}</span>
                       </div>
                     </div>
 
-                    <h2 className={`text-sm tracking-tight ${n.is_read ? "font-semibold text-ink" : "font-bold text-ink"}`}>
+                    <h2 className={`text-sm tracking-tight ${n.is_read ? "font-semibold text-[#0F1B2D]" : "font-bold text-[#0F1B2D]"}`}>
                       {n.title}
                     </h2>
 
                     {n.body && (
-                      <p className="mt-1 text-xs text-ink-secondary leading-relaxed">
+                      <p className="mt-1 text-xs text-[#475569] leading-relaxed">
                         {n.body}
                       </p>
                     )}
 
                     {n.link && (
-                      <div className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent group-hover:underline">
+                      <div className="mt-2.5 inline-flex items-center gap-1 text-xs font-bold text-[#E8622C] group-hover:underline">
                         Buka Detail Terkait <ExternalLink size={12} aria-hidden="true" />
                       </div>
                     )}
