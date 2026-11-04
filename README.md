@@ -55,14 +55,19 @@ Arsitektur basis data relasional dikelompokkan secara terstruktur ke dalam 5 sub
 ## ⚡ Fitur Utama Berdasarkan Modul
 
 ### 1. Etalase Publik & Pengalaman Belanja Filmmaker (TPS)
-- **Katalog Terstruktur & Pencarian Cepat**: Pencarian perlengkapan sinema dengan filter kategori instan (*Cinema Cameras, Prime Lenses, Gimbals, Studio Lighting, Broadcast Audio, Field Monitors*), sensor format (Full-Frame, Super 35), lens mount (PL, EF, RF, E-Mount), dan rentang harga.
+- **Katalog Terstruktur & Visual Modern**: Tampilan etalase responsif dengan bilah navigasi kaca (*frosted glass bar*), kartu gear transparan dengan stage showcase 1:1, filter accordion, dan pengalih grid/list.
 - **Brand Partner Marquee**: Ticker berjalan logo-logo prinsipal distributor kamera sinema internasional (Sony Cinema Line, RED, Canon Pro, DJI, Aputure, RØDE, Atomos, Sennheiser, ARRI, Blackmagic Design).
 - **Showcase Kamera Flagship & Rig Bundling**: Paket rakitan siap syuting (*Run & Gun Indie Kit, Commercial 6K Narrative Kit, Broadcast Audio Kit*) dengan pengurangan stok multi-komponen otomatis.
 - **Dual Fulfillment Option**:
   - *Click & Collect*: Mengambil pesanan di showroom resmi terdekat dengan verifikasi kode unik *Pickup Pass* dan fasilitas gratis uji di *Studio Camera Test Bay*.
   - *Pengiriman Ekspedisi*: Proteksi packing hardcase kayu anti-statis berasuransi dengan nomor resi kurir real-time.
 - **Cetak Dokumen Resmi E-Invoice PDF**: Dilengkapi kop surat resmi, stempel lunas, rincian nomor seri fisik (*Camera Body S/N & Lens S/N*), serta sertifikasi kelulusan *10-Point Sensor Calibration QC*.
-- **Portal Pelacakan Pesanan Publik (`/track`)**: Akses mandiri pelacakan status pesanan tanpa login dengan Nomor Invoice + Email atau No. WhatsApp.
+- **Portal Pelacakan Pesanan & Status Stepper (`/track`)**: Akses mandiri pelacakan status pesanan dengan visual stepper 5-tahap bernode bercahaya (dapat diakses tamu tanpa login via Invoice + Email / WhatsApp).
+- **Portal Klaim Retur & Garansi RMA Mandiri (`/returns`)**: Pelanggan dapat mengajukan klaim garansi hardware sinema (*sensor defect, optical issue, electronic failure, gimbal drift*) disertai unggah foto bukti kerusakan.
+- **Wishlist Cinema Gear (`/wishlist`)**: Menyimpan gear impian dan memantau ketersediaan stok fisik per cabang secara real-time.
+- **Direktori 5 Showroom Resmi (`/offline-stores`)**: Informasi 5 cabang showroom (Jakarta, Tangerang, Bandung, Surabaya, Bali) dengan jam operasional, navigasi Google Maps, dan tautan direct WhatsApp.
+- **Floating Concierge & Live Support Widget**: Konsultasi langsung spesifikasi peralatan dan status pesanan instan di seluruh halaman melalui widget live concierge.
+- **1-Click Quick Demo Login**: Tombol akses cepat di halaman login untuk menguji berbagai peran (Super Admin, Manager, Finance, Warehouse, Store Staff, Customer) tanpa mengetik manual.
 
 ### 2. Showroom POS & Konsol Toko (`/store/*`)
 - **Showroom POS Kasir (`/store/pos`)**: Kasir kasir cepat untuk pelanggan walk-in maupun member terdaftar, mendukung pembayaran Tunai (dengan hitung kembalian otomatis) atau QRIS, cetak struk resmi, dan auto-deduct inventaris toko.
