@@ -9,12 +9,14 @@ import {
   Search,
   Truck,
   RefreshCw,
+  Cpu,
 } from "lucide-react";
 import api from "../../api";
 import { formatRupiah, formatDate, errorMessage } from "../../utils/format";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
+import EsRmaDiagnosticModal from "../../components/es/EsRmaDiagnosticModal";
 
 export default function StoreReturns() {
   const [items, setItems] = useState([]);
@@ -27,6 +29,7 @@ export default function StoreReturns() {
   const [reviewAction, setReviewAction] = useState("approve"); // 'approve' | 'reject'
   const [reviewNote, setReviewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [esModalOpen, setEsModalOpen] = useState(false);
 
   function fetchQueue() {
     setLoading(true);
@@ -264,6 +267,19 @@ export default function StoreReturns() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Button
                               type="button"
+                              variant="outline"
+                              size="xs"
+                              className="!border-accent/40 !text-accent hover:!bg-accent hover:!text-accent-on"
+                              onClick={() => {
+                                setSelectedItem(item);
+                                setEsModalOpen(true);
+                              }}
+                            >
+                              <Cpu size={12} className="mr-1" />
+                              Diagnosa ES
+                            </Button>
+                            <Button
+                              type="button"
                               variant="primary"
                               size="xs"
                               onClick={() => handleOpenReview(item, "approve")}
@@ -280,9 +296,23 @@ export default function StoreReturns() {
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-ink-muted font-semibold">
-                            Telah diproses
-                          </span>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="xs"
+                              onClick={() => {
+                                setSelectedItem(item);
+                                setEsModalOpen(true);
+                              }}
+                            >
+                              <Cpu size={12} className="mr-1 text-accent" />
+                              Log QC (ES)
+                            </Button>
+                            <span className="text-[11px] text-ink-muted font-semibold">
+                              Telah diproses
+                            </span>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -364,6 +394,14 @@ export default function StoreReturns() {
             </div>
           )}
         </Modal>
+
+        {/* Modal Diagnosa Pakar 10-Point QC (ES) */}
+        <EsRmaDiagnosticModal
+          isOpen={esModalOpen}
+          onClose={() => setEsModalOpen(false)}
+          returnItem={selectedItem}
+          onSuccess={fetchQueue}
+        />
       </div>
     </div>
   );

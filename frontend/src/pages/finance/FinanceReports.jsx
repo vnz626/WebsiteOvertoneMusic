@@ -90,10 +90,10 @@ export default function FinanceReports() {
         <div className="mb-6 hidden items-center justify-between border-b-2 border-ink pb-4 print:flex">
           <div>
             <h2 className="font-display text-2xl font-bold tracking-tight text-ink">
-              OVERTONE MUSIC STORE
+              FOCALPOINT.PRO CINEMA ENTERPRISE
             </h2>
             <p className="mt-0.5 text-[11px] font-bold uppercase tracking-widest text-ink-secondary">
-              PT Overtone Retail Nusantara • Laporan Laba Rugi Komprehensif
+              PT Focalpoint Pro Cinema Nusantara • Laporan Laba Rugi Komprehensif
             </p>
             <p className="mt-1 text-[11px] text-ink-muted">
               Headquarters &amp; Central Distribution Center • Jakarta, Indonesia
@@ -270,12 +270,12 @@ export default function FinanceReports() {
           <div className="text-center">
             <p className="mb-16 text-ink-muted">Disusun &amp; Diperiksa Oleh,</p>
             <p className="font-bold uppercase text-ink">Finance Controller</p>
-            <p className="text-[10px] text-ink-muted">Departemen Keuangan Overtone</p>
+            <p className="text-[10px] text-ink-muted">Departemen Keuangan Focalpoint.pro</p>
           </div>
           <div className="text-center">
             <p className="mb-16 text-ink-muted">Disetujui Oleh,</p>
             <p className="font-bold uppercase text-ink">General Manager Retail</p>
-            <p className="text-[10px] text-ink-muted">PT Overtone Retail Nusantara</p>
+            <p className="text-[10px] text-ink-muted">PT Focalpoint Pro Cinema Nusantara</p>
           </div>
         </div>
       </div>

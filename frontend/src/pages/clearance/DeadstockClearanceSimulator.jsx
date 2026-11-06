@@ -29,6 +29,7 @@ import Button from "../../components/ui/Button";
 export default function DeadstockClearanceSimulator() {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [esAdvisorData, setEsAdvisorData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,8 +50,15 @@ export default function DeadstockClearanceSimulator() {
   async function loadAnalysisData() {
     setLoading(true);
     try {
-      const analysisRes = await api.get("/clearance/aging-analysis");
-      const raw = analysisRes.data || {};
+      const [analysisRes, esRes] = await Promise.allSettled([
+        api.get("/clearance/aging-analysis"),
+        api.get("/es/deadstock-advisor"),
+      ]);
+
+      const raw = (analysisRes.status === "fulfilled" ? analysisRes.value?.data : null) || {};
+      if (esRes.status === "fulfilled" && esRes.value?.data?.recommendations) {
+        setEsAdvisorData(esRes.value.data.recommendations);
+      }
       const mappedItems = (raw.data || []).map((i) => {
         const sellingPrice = Number(i.price || 0);
         const costPrice = Number(i.cost_price || 0);
@@ -167,6 +175,24 @@ export default function DeadstockClearanceSimulator() {
       isWarningZone,
     };
   }, [selectedItem, discountInput]);
+
+  const esAdviceByVariant = useMemo(() => {
+    const map = new Map();
+    for (const r of esAdvisorData) {
+      if (r.variant_id) map.set(r.variant_id, r);
+      if (r.sku_code) map.set(r.sku_code, r);
+    }
+    return map;
+  }, [esAdvisorData]);
+
+  const selectedItemEsAdvice = useMemo(() => {
+    if (!selectedItem) return null;
+    return (
+      esAdviceByVariant.get(selectedItem.variant_id) ||
+      esAdviceByVariant.get(selectedItem.sku_code) ||
+      null
+    );
+  }, [selectedItem, esAdviceByVariant]);
 
   async function handleApplyClearancePromo() {
     if (!selectedItem || !simMetrics) return;
@@ -429,6 +455,32 @@ export default function DeadstockClearanceSimulator() {
                   </p>
                 </div>
               </div>
+
+              {/* ES Deadstock Advisor Insight Card */}
+              {selectedItemEsAdvice && (
+                <div className="rounded-sm border border-accent/40 bg-accent/5 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-accent">
+                      <Sparkles size={14} className="text-accent" />
+                      <span>Saran Taktis ES Deadstock Advisor</span>
+                    </div>
+                    <Badge variant="accent">
+                      CF: {Math.round((selectedItemEsAdvice.certainty_factor || 0.85) * 100)}%
+                    </Badge>
+                  </div>
+                  <div className="text-[11px] leading-relaxed text-ink-secondary">
+                    <p className="font-semibold text-ink">
+                      Rekomendasi Tindakan:{" "}
+                      <span className="font-mono text-accent">
+                        {selectedItemEsAdvice.tactical_action?.replace(/_/g, " ") || "STRATEGY"}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-ink-secondary">
+                      {selectedItemEsAdvice.advice}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Slider Simulasi Diskon */}
               <div className="space-y-3 rounded-sm border border-line bg-canvas p-4">
@@ -749,6 +801,13 @@ export default function DeadstockClearanceSimulator() {
                                 <Badge variant="accent">
                                   PROMO AKTIF -{item.active_discount_percent}%
                                 </Badge>
+                              )}
+
+                              {(esAdviceByVariant.get(item.variant_id) || esAdviceByVariant.get(item.sku_code)) && (
+                                <span className="inline-flex items-center gap-1 rounded-xs bg-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-accent border border-accent/20">
+                                  <Sparkles size={10} aria-hidden="true" />
+                                  ES: {(esAdviceByVariant.get(item.variant_id) || esAdviceByVariant.get(item.sku_code)).tactical_action?.replace(/_/g, " ")}
+                                </span>
                               )}
                             </div>
 

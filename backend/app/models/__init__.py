@@ -32,6 +32,10 @@ from .models import (  # noqa: F401
     DSSAHPMatrix,
     DSSSession,
     DSSTopsisResult,
+    # ES Subsystem (Expert System)
+    ESSymptomFact,
+    ESRule,
+    ESConsultation,
     # Aliases
     User,
     Customer,
@@ -57,4 +61,7 @@ from .models import (  # noqa: F401
     SystemSetting,
     SavedEvent,
     Notification,
+    SymptomFact,
+    ExpertRule,
+    ExpertConsultation,
 )

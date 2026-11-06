@@ -142,7 +142,7 @@ export default function AuditLogs() {
             Audit Trail &amp; Log Aktivitas Sistem
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-ink-secondary max-w-2xl">
-            Catatan kronologis append-only seluruh perubahan harga produk, persetujuan PO, pembayaran, refund, clearance promo, dan autentikasi staf OAS Overtone.
+            Catatan kronologis append-only seluruh perubahan harga produk, persetujuan PO, pembayaran, refund, clearance promo, dan autentikasi staf OAS Focalpoint.pro.
           </p>
         </div>
 

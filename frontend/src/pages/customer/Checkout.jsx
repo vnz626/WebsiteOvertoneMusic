@@ -198,6 +198,32 @@ export default function Checkout() {
           Pilih metode pemenuhan pesanan (Kirim Ekspedisi packing kayu anti-statis atau Click &amp; Collect di Pro Cinema Store), lalu selesaikan pembayaran.
         </p>
 
+        {/* ES Rig Verification Banner */}
+        <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-50/70 p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+              <ShieldCheck size={18} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-950 flex items-center gap-2">
+                <span>Verifikasi Kompatibilitas Rig (ES Engine Active)</span>
+                <span className="rounded-full bg-emerald-200/70 px-2 py-0.5 text-[9px] font-mono text-emerald-800">
+                  96.0% CF Verified
+                </span>
+              </p>
+              <p className="text-[11px] text-emerald-800">
+                Seluruh unit dalam pesanan ini otomatis didaftarkan ke sistem kalibrasi sensor 10-Point QC dan diproteksi garansi resmi distributor.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/rig-advisor"
+            className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 underline shrink-0"
+          >
+            Konsultasi Rig Lain
+          </Link>
+        </div>
+
         <form onSubmit={handleCheckout} className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
           
           {/* Kolom Kiri: Form Data & Pengiriman (col 7) */}

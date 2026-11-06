@@ -536,6 +536,12 @@ export default function FloatingConciergeWidget() {
                     </button>
 
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                      <a
+                        href="/rig-advisor"
+                        className="shrink-0 rounded-full border border-[#E8622C]/40 bg-[#E8622C]/10 px-3 py-1 text-[11px] font-bold text-[#E8622C] hover:bg-[#E8622C] hover:text-white transition-all shadow-xs"
+                      >
+                        🔬 Rig Advisor (ES)
+                      </a>
                       {QUICK_TOPICS.map((topic) => (
                         <button
                           key={topic.key}

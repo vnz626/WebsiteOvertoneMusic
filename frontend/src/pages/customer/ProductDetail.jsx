@@ -17,6 +17,7 @@ import {
   MessageSquare,
   BellRing,
   ArrowRight,
+  Cpu,
 } from "lucide-react";
 import api from "../../api";
 import { useAuth } from "../../auth/AuthContext";
@@ -396,6 +397,50 @@ export default function ProductDetail() {
                       selectedVariant?.sku_code || instrument.sku_prefix || "-"
                     }\nBobot Pengiriman: ${selectedVariant?.weight_kg || 2.5} kg\nInspeksi QC: Kalibrasi Sensor, Uji Back-Focus, & Firmware Terverifikasi`}
                 </pre>
+              </div>
+            </section>
+
+            {/* Widget Analisis Pakar Kompatibilitas Rig (ES Subsystem) */}
+            <section className="fp-glass-card p-6 lg:p-7 border-l-4 border-l-[#E8622C]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8622C] text-white shadow-sm">
+                    <Cpu size={18} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-sm text-[#0F1B2D] uppercase tracking-wider flex items-center gap-2">
+                      <span>Analisis Pakar Kompatibilitas Rig (ES)</span>
+                      <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
+                        Forward Chaining Active
+                      </span>
+                    </h2>
+                    <p className="text-[11px] text-[#64748B]">
+                      Validasi kecocokan flange mount optik, sensor coverage, dan kapasitas torsi gimbal
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/rig-advisor"
+                  className="rounded-full bg-white/90 border border-white hover:border-[#E8622C] px-3.5 py-1.5 text-xs font-bold text-[#E8622C] transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
+                >
+                  <Sparkles size={13} />
+                  <span>Uji di Rig Advisor</span>
+                </Link>
+              </div>
+              <div className="rounded-2xl border border-white/80 bg-white/70 p-4 text-xs text-[#3A4A63] leading-relaxed flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="font-semibold text-[#0F1B2D]">
+                    Rekomendasi Integrasi Rig:
+                  </p>
+                  <p className="text-[11px]">
+                    Kompatibel dengan ekosistem mount resmi Focalpoint Pro. Memerlukan media berkecepatan tinggi VPG-400 untuk perekaman All-Intra dan daya V-Mount untuk operasional di atas 3 jam.
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <span className="rounded-xl bg-emerald-100 text-emerald-800 px-3 py-1.5 font-bold font-mono text-xs">
+                    96.0% CF Verified
+                  </span>
+                </div>
               </div>
             </section>
 

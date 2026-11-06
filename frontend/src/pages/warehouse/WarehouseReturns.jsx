@@ -8,12 +8,14 @@ import {
   Truck,
   Barcode,
   ShieldCheck,
+  Cpu,
 } from "lucide-react";
 import api from "../../api";
 import { formatDate, errorMessage } from "../../utils/format";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
+import EsRmaDiagnosticModal from "../../components/es/EsRmaDiagnosticModal";
 
 export default function WarehouseReturns() {
   const [items, setItems] = useState([]);
@@ -25,6 +27,7 @@ export default function WarehouseReturns() {
   const [serialNumber, setSerialNumber] = useState("");
   const [receivedNote, setReceivedNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [esModalOpen, setEsModalOpen] = useState(false);
 
   function fetchQueue() {
     setLoading(true);
@@ -252,22 +255,35 @@ export default function WarehouseReturns() {
                     </td>
 
                     <td className="px-5 py-4 text-right">
-                      {item.status === "approved" ? (
+                      <div className="flex items-center justify-end gap-1.5">
                         <Button
                           type="button"
-                          variant="primary"
+                          variant="outline"
                           size="xs"
-                          onClick={() => handleOpenReceive(item)}
+                          className="!border-accent/40 !text-accent hover:!bg-accent hover:!text-accent-on"
+                          onClick={() => {
+                            setSelectedItem(item);
+                            setEsModalOpen(true);
+                          }}
                         >
-                          <PackageCheck size={13} aria-hidden="true" /> Terima
-                          &amp; Restock
+                          <Cpu size={12} className="mr-1" /> Diagnosa ES
                         </Button>
-                      ) : (
-                        <span className="flex items-center justify-end gap-1 text-[11px] font-bold text-status-success">
-                          <CheckCircle2 size={12} aria-hidden="true" /> Siap
-                          Dicairkan Finance
-                        </span>
-                      )}
+                        {item.status === "approved" ? (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            size="xs"
+                            onClick={() => handleOpenReceive(item)}
+                          >
+                            <PackageCheck size={13} aria-hidden="true" /> Terima
+                            &amp; Restock
+                          </Button>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-status-success">
+                            <CheckCircle2 size={12} aria-hidden="true" /> Selesai
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -365,6 +381,14 @@ export default function WarehouseReturns() {
           </form>
         )}
       </Modal>
+
+      {/* Modal Diagnosa Pakar 10-Point QC (ES) */}
+      <EsRmaDiagnosticModal
+        isOpen={esModalOpen}
+        onClose={() => setEsModalOpen(false)}
+        returnItem={selectedItem}
+        onSuccess={fetchQueue}
+      />
     </div>
   );
 }

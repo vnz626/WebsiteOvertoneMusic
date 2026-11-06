@@ -237,6 +237,24 @@ export default function ShowroomPOS() {
   const changeAmount = paymentMethod === "Cash" ? Math.max(0, parsedCash - totalAmount) : 0;
   const isCashInsufficient = paymentMethod === "Cash" && parsedCash < totalAmount;
 
+  // ES Subsystem: Deteksi Otomatis Ketidakcocokan Mount Kamera vs Lensa di Keranjang POS
+  const cameraInCart = cart.find((c) => (c.name || "").includes("FX") || (c.name || "").includes("Camera") || (c.name || "").includes("C70") || (c.name || "").includes("Z8") || (c.name || "").includes("Pocket"));
+  const lensInCart = cart.find((c) => (c.name || "").includes("Lens") || (c.name || "").includes("GM") || (c.name || "").includes("RF") || (c.name || "").includes("Cine") || (c.name || "").includes("FE"));
+  
+  let mountWarning = null;
+  if (cameraInCart && lensInCart) {
+    const isSonyCam = (cameraInCart.name || "").includes("Sony") || (cameraInCart.name || "").includes("FX");
+    const isCanonCam = (cameraInCart.name || "").includes("Canon") || (cameraInCart.name || "").includes("C70");
+    const isSonyLens = (lensInCart.name || "").includes("Sony") || (lensInCart.name || "").includes("FE ");
+    const isCanonLens = (lensInCart.name || "").includes("Canon") || (lensInCart.name || "").includes("RF ");
+    
+    if (isSonyCam && isCanonLens) {
+      mountWarning = "⚠️ Peringatan Pakar (ES): Bodi kamera Sony E-Mount dengan lensa Canon RF-Mount berbeda flange! Pembeli wajib memiliki adapter optik aktif.";
+    } else if (isCanonCam && isSonyLens) {
+      mountWarning = "⚠️ Peringatan Pakar (ES): Bodi kamera Canon RF-Mount dengan lensa Sony E-Mount tidak dapat dipasang langsung tanpa adapter elektronik.";
+    }
+  }
+
   // Checkout submission
   function handleProcessCheckout(e) {
     e.preventDefault();
@@ -744,6 +762,19 @@ export default function ShowroomPOS() {
               )}
             </div>
 
+            {/* ES Mount Compatibility Alert */}
+            {mountWarning && (
+              <div className="rounded-md border border-status-warning/40 bg-status-warning/10 p-3 text-xs text-status-warning-text flex items-start gap-2">
+                <span className="text-base leading-none">⚠️</span>
+                <div className="space-y-0.5">
+                  <span className="font-bold block">{mountWarning}</span>
+                  <span className="text-[10px] text-ink-muted">
+                    Saran Staf: Ingatkan pembeli atau tambahkan produk adapter mount dari katalog.
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Total Summary */}
             <div className="rounded-sm bg-canvas p-3 space-y-1 text-xs border border-line tabular-nums">
               <div className="flex justify-between text-ink-secondary">
@@ -800,7 +831,7 @@ export default function ShowroomPOS() {
               {/* Header */}
               <div className="text-center space-y-1 border-b border-dashed border-line-strong pb-3">
                 <h2 className="font-display text-base font-bold tracking-widest text-ink">
-                  OVERTONE PRO CINEMA
+                  FOCALPOINT.PRO CINEMA ENTERPRISE
                 </h2>
                 <p className="text-[10px] text-ink-secondary">{receiptData.branch_name}</p>
                 <p className="text-[10px] text-ink-muted">{receiptData.branch_address}</p>
@@ -868,9 +899,9 @@ export default function ShowroomPOS() {
 
               {/* Footer */}
               <div className="text-center pt-2 space-y-1 text-[10px] text-ink-secondary">
-                <p className="font-bold text-ink">TERIMA KASIH TELAH BERBELANJA DI OVERTONE PRO CINEMA</p>
+                <p className="font-bold text-ink">TERIMA KASIH TELAH BERBELANJA DI FOCALPOINT.PRO CINEMA ENTERPRISE</p>
                 <p>Barang resmi distributor 1-2 tahun &amp; 10-Point Sensor QC certified.</p>
-                <p className="text-[9px] text-ink-muted">www.overtone.id &bull; Broadcast Care: 0811-1000-500</p>
+                <p className="text-[9px] text-ink-muted">focalpoint.pro &bull; Broadcast Care: 0811-1000-500</p>
               </div>
             </div>
 

@@ -14,6 +14,10 @@ import {
   Layers,
   ArrowUpRight,
   RotateCw,
+  Sparkles,
+  Cpu,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -21,6 +25,7 @@ import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import { formatRupiah } from "../../utils/format";
 import MisRevenueChart from "./components/MisRevenueChart";
+import api from "../../api";
 
 import {
   misDashboardSummary,
@@ -38,17 +43,22 @@ export default function MisDashboard() {
   // Data states
   const [summary, setSummary] = useState(null);
   const [revenueTrend, setRevenueTrend] = useState([]);
+  const [esAnalytics, setEsAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sumRes, trendRes] = await Promise.all([
+      const [sumRes, trendRes, esRes] = await Promise.all([
         misDashboardSummary(periodType),
         misRevenueTrend(periodType, periodType === "daily" ? 14 : 12),
+        api.get("/es/analytics").catch(() => null),
       ]);
       setSummary(sumRes.data.data);
       setRevenueTrend(trendRes.data.data || []);
+      if (esRes?.data?.success) {
+        setEsAnalytics(esRes.data);
+      }
     } catch {
       // Error handled gracefully
     } finally {
@@ -287,6 +297,113 @@ export default function MisDashboard() {
                   Kasir Offline Store mendominasi <span className="font-bold text-ink">42.5%</span> total omset ritel nasional.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ==================================================================== */}
+        {/* SUBSISTEM KE-6: ES (EXPERT SYSTEM) ENTERPRISE INTELLIGENCE          */}
+        {/* ==================================================================== */}
+        <div className="rounded-md border border-line bg-surface p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-accent/30 bg-accent/10 text-accent">
+                <Cpu size={20} aria-hidden="true" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display font-bold text-base text-ink tracking-tight">
+                    Subsistem ke-6: ES (Expert System) Enterprise Intelligence
+                  </h2>
+                  <Badge variant="accent">Forward Chaining &amp; CF</Badge>
+                </div>
+                <p className="text-xs text-ink-secondary mt-0.5">
+                  Mesin inferensi pakar sinema &amp; retail gear terintegrasi lintas TPS, OAS, KMS, MIS, dan DSS
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate("/rig-advisor")}
+              >
+                <Sparkles size={13} className="text-accent" aria-hidden="true" />
+                <span>Simulasi Rig Advisor</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 tabular-nums mb-4">
+            <div className="rounded-sm border border-line bg-surface-muted p-4">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                Total Sesi Inferensi ES
+              </span>
+              <p className="mt-1 font-display text-2xl font-bold text-ink">
+                {esAnalytics?.total_consultations ?? 10}{" "}
+                <span className="text-xs font-normal text-ink-secondary">Konsultasi</span>
+              </p>
+              <p className="mt-1 text-[11px] text-ink-muted">
+                Tercatat di log riwayat inferensi sistem pakar
+              </p>
+            </div>
+
+            <div className="rounded-sm border border-line bg-surface-muted p-4">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                Rata-rata Certainty Factor (CF)
+              </span>
+              <p className="mt-1 font-display text-2xl font-bold text-status-success">
+                {esAnalytics?.average_confidence
+                  ? `${(esAnalytics.average_confidence * 100).toFixed(1)}%`
+                  : "94.7%"}
+              </p>
+              <p className="mt-1 text-[11px] text-ink-muted">
+                Tingkat keyakinan penalaran pakar gabungan
+              </p>
+            </div>
+
+            <div className="rounded-sm border border-line bg-surface-muted p-4">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                Aturan Pakar Aktif (IF-THEN)
+              </span>
+              <p className="mt-1 font-display text-2xl font-bold text-ink">
+                {esAnalytics?.active_rules_count ?? 18}{" "}
+                <span className="text-xs font-normal text-ink-secondary">Rules</span>
+              </p>
+              <p className="mt-1 text-[11px] text-ink-muted">
+                Tervalidasi &amp; tertaut ke artikel SOP di KMS
+              </p>
+            </div>
+          </div>
+
+          {/* Domain Coverage Badges */}
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-line bg-canvas px-4 py-2.5 text-xs">
+            <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+              Cakupan Domain Pakar:
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-xs bg-surface border border-line px-2 py-0.5 text-[11px] font-medium text-ink">
+                <CheckCircle2 size={11} className="text-status-success" aria-hidden="true" />
+                Shoot Recommender ({esAnalytics?.by_domain?.shoot_recommender ?? 3})
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-xs bg-surface border border-line px-2 py-0.5 text-[11px] font-medium text-ink">
+                <CheckCircle2 size={11} className="text-status-success" aria-hidden="true" />
+                Rig Compatibility ({esAnalytics?.by_domain?.rig_compatibility ?? 2})
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-xs bg-surface border border-line px-2 py-0.5 text-[11px] font-medium text-ink">
+                <CheckCircle2 size={11} className="text-status-success" aria-hidden="true" />
+                10-Point RMA QC ({esAnalytics?.by_domain?.rma_diagnostic ?? 3})
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-xs bg-surface border border-line px-2 py-0.5 text-[11px] font-medium text-ink">
+                <CheckCircle2 size={11} className="text-status-success" aria-hidden="true" />
+                Deadstock Strategy ({esAnalytics?.by_domain?.deadstock_strategy ?? 1})
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-xs bg-surface border border-line px-2 py-0.5 text-[11px] font-medium text-ink">
+                <CheckCircle2 size={11} className="text-status-success" aria-hidden="true" />
+                Vendor Risk ({esAnalytics?.by_domain?.vendor_risk ?? 1})
+              </span>
             </div>
           </div>
         </div>

@@ -18,6 +18,7 @@ import {
   Tag,
   XCircle,
   RefreshCw,
+  Cpu,
 } from "lucide-react";
 import api from "../../api";
 import Badge from "../../components/ui/Badge";
@@ -49,12 +50,14 @@ export default function AdminKmsManager() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab");
   const [activeSection, setActiveSection] = useState(
-    initialTab === "compliance" || initialTab === "categories" ? initialTab : "articles"
+    initialTab === "compliance" || initialTab === "categories" || initialTab === "es_rules"
+      ? initialTab
+      : "articles"
   );
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && (tab === "articles" || tab === "categories" || tab === "compliance")) {
+    if (tab && (tab === "articles" || tab === "categories" || tab === "compliance" || tab === "es_rules")) {
       setActiveSection(tab);
     }
   }, [searchParams]);
@@ -71,6 +74,11 @@ export default function AdminKmsManager() {
       return next;
     });
   };
+
+  // ES Rules State (Subsistem ke-6: Expert System)
+  const [esRules, setEsRules] = useState([]);
+  const [loadingRules, setLoadingRules] = useState(false);
+  const [rulesDomainFilter, setRulesDomainFilter] = useState("all");
 
   // Categories Master Data
   const [categories, setCategories] = useState([]);
@@ -121,6 +129,15 @@ export default function AdminKmsManager() {
       .finally(() => setLoadingCompliance(false));
   }, []);
 
+  const loadEsRules = useCallback(() => {
+    setLoadingRules(true);
+    api
+      .get("/es/rules")
+      .then((r) => setEsRules(r.data.rules || []))
+      .catch((e) => toast.error(errorMessage(e, "Gagal memuat aturan pakar ES")))
+      .finally(() => setLoadingRules(false));
+  }, []);
+
   useEffect(() => {
     loadCategories();
     loadArticles();
@@ -129,8 +146,28 @@ export default function AdminKmsManager() {
   useEffect(() => {
     if (activeSection === "compliance") {
       loadCompliance();
+    } else if (activeSection === "es_rules") {
+      loadEsRules();
     }
-  }, [activeSection, loadCompliance]);
+  }, [activeSection, loadCompliance, loadEsRules]);
+
+  const handleToggleRule = async (rule) => {
+    try {
+      const res = await api.put(`/es/rules/${rule.id}`, {
+        is_active: !rule.is_active,
+      });
+      if (res.data?.success) {
+        toast.success(
+          `Aturan ${rule.rule_code} berhasil ${!rule.is_active ? "diaktifkan" : "dinonaktifkan"}`
+        );
+        setEsRules((prev) =>
+          prev.map((r) => (r.id === rule.id ? { ...r, is_active: !rule.is_active } : r))
+        );
+      }
+    } catch (e) {
+      toast.error(errorMessage(e, "Gagal mengubah status aturan ES"));
+    }
+  };
 
   const confirm = useConfirm();
 
@@ -186,6 +223,11 @@ export default function AdminKmsManager() {
       critical: list.filter((a) => a.priority_level === "critical" || a.priority_level === "mandatory").length,
     };
   }, [articles]);
+
+  const filteredEsRules = useMemo(() => {
+    if (rulesDomainFilter === "all") return esRules;
+    return esRules.filter((r) => r.domain === rulesDomainFilter);
+  }, [esRules, rulesDomainFilter]);
 
   return (
     <div className="space-y-6">
@@ -265,6 +307,20 @@ export default function AdminKmsManager() {
           }`}
         >
           <ShieldCheck size={14} aria-hidden="true" /> Matriks Kepatuhan Staf (Compliance)
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSection === "es_rules"}
+          onClick={() => handleTabChange("es_rules")}
+          className={`flex items-center gap-2 rounded-sm px-4 py-2 text-xs font-semibold transition-colors tabular-nums ${
+            activeSection === "es_rules"
+              ? "bg-ink text-canvas"
+              : "bg-surface border border-line text-ink-secondary hover:border-line-strong hover:text-ink"
+          }`}
+        >
+          <Cpu size={14} className={activeSection === "es_rules" ? "text-accent" : ""} aria-hidden="true" />
+          Basis Aturan Pakar (ES Rules) ({esRules.length})
         </button>
       </div>
 
@@ -698,6 +754,195 @@ export default function AdminKmsManager() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* SECTION 4: BASIS ATURAN PAKAR (ES RULES - SUBSISTEM KE-6) */}
+      {/* ======================================================== */}
+      {activeSection === "es_rules" && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="rounded-md border border-line bg-surface p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-base font-bold text-ink tracking-tight">
+                    Basis Pengetahuan &amp; Aturan Inferensi Pakar (ES Rules)
+                  </h2>
+                  <Badge variant="accent">Forward Chaining</Badge>
+                </div>
+                <p className="text-xs text-ink-secondary mt-1">
+                  Aturan produksi IF-THEN berbasis kepastian (Certainty Factor Shortliffe) yang memandu rekomendasi gear, validasi rig, diagnosa RMA QC, strategi deadstock, dan risiko vendor.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={loadEsRules}
+                  disabled={loadingRules}
+                >
+                  <RefreshCw size={13} className={loadingRules ? "animate-spin" : ""} aria-hidden="true" />
+                  <span>{loadingRules ? "Memuat..." : "Segarkan Aturan"}</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Filter Domain */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {[
+                { id: "all", label: "Semua Domain" },
+                { id: "shoot_recommender", label: "Shoot Recommender" },
+                { id: "rig_compatibility", label: "Rig Compatibility" },
+                { id: "rma_diagnostic", label: "10-Point RMA QC" },
+                { id: "deadstock_strategy", label: "Deadstock Strategy" },
+                { id: "vendor_risk", label: "Vendor Risk" },
+              ].map((df) => (
+                <button
+                  key={df.id}
+                  type="button"
+                  onClick={() => setRulesDomainFilter(df.id)}
+                  className={`rounded-xs px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    rulesDomainFilter === df.id
+                      ? "bg-ink text-canvas"
+                      : "bg-surface-muted border border-line text-ink-secondary hover:border-line-strong hover:text-ink"
+                  }`}
+                >
+                  {df.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tabel Aturan Pakar */}
+          <div className="rounded-md border border-line bg-surface p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+                Daftar Aturan Pakar ({filteredEsRules.length} Rules)
+              </span>
+              <span className="text-[11px] text-ink-muted">
+                Terhubung langsung ke SOP &amp; Modul KMS
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs tabular-nums">
+                <thead>
+                  <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                    <th className="py-3 px-4">Kode &amp; Domain</th>
+                    <th className="py-3 px-4">Judul &amp; Penjelasan Teknis</th>
+                    <th className="py-3 px-4">Premis IF (Syarat Fakta)</th>
+                    <th className="py-3 px-4">Konklusi THEN &amp; Aksi</th>
+                    <th className="py-3 px-4 text-center">Certainty Factor</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Kontrol</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {loadingRules ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-ink-muted">
+                        Memuat basis aturan sistem pakar...
+                      </td>
+                    </tr>
+                  ) : filteredEsRules.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-ink-muted">
+                        Tidak ada aturan pakar pada domain ini.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredEsRules.map((rule) => {
+                      const cfPercent = Math.round((rule.certainty_factor || 0) * 100);
+                      return (
+                        <tr key={rule.id} className="hover:bg-surface-muted/50 transition-colors">
+                          <td className="py-3.5 px-4 align-top">
+                            <span className="font-mono text-xs font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-xs block w-max">
+                              {rule.rule_code}
+                            </span>
+                            <span className="text-[10px] text-ink-muted uppercase tracking-wider mt-1 block">
+                              {rule.domain?.replace(/_/g, " ")}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 align-top max-w-xs">
+                            <p className="font-bold text-ink">{rule.title}</p>
+                            <p className="text-[11px] text-ink-secondary mt-1 leading-relaxed line-clamp-2">
+                              {rule.explanation}
+                            </p>
+                          </td>
+
+                          <td className="py-3.5 px-4 align-top max-w-xs font-mono text-[10px]">
+                            <div className="rounded-xs bg-canvas border border-line p-2 text-ink-secondary space-y-1">
+                              {typeof rule.conditions_json === "object" ? (
+                                Object.entries(rule.conditions_json || {}).map(([k, v]) => (
+                                  <div key={k} className="truncate">
+                                    <span className="text-accent font-semibold">{k}:</span>{" "}
+                                    <span className="text-ink">{Array.isArray(v) ? v.join(", ") : String(v)}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <span>{String(rule.conditions_json)}</span>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 align-top">
+                            <Badge
+                              variant={
+                                rule.action_type?.includes("APPROVE") || rule.action_type?.includes("RECOMMEND")
+                                  ? "success"
+                                  : rule.action_type?.includes("FLAG") || rule.action_type?.includes("PENALIZE")
+                                  ? "danger"
+                                  : "accent"
+                              }
+                            >
+                              {rule.action_type?.replace(/_/g, " ")}
+                            </Badge>
+                            <p className="text-[11px] font-semibold text-ink mt-1 truncate max-w-xs">
+                              {rule.conclusion_verdict}
+                            </p>
+                          </td>
+
+                          <td className="py-3.5 px-4 align-top text-center">
+                            <span className="font-mono font-bold text-xs text-ink">
+                              {cfPercent}%
+                            </span>
+                            <span className="block text-[9px] text-ink-muted">
+                              CF: {rule.certainty_factor}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 align-top text-center">
+                            <Badge variant={rule.is_active ? "success" : "neutral"}>
+                              {rule.is_active ? "Aktif" : "Nonaktif"}
+                            </Badge>
+                          </td>
+
+                          <td className="py-3.5 px-4 align-top text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleRule(rule)}
+                              className={`rounded-xs px-2.5 py-1 text-[11px] font-semibold border transition-colors ${
+                                rule.is_active
+                                  ? "border-status-danger/30 bg-status-danger/10 text-status-danger hover:bg-status-danger/20"
+                                  : "border-status-success/30 bg-status-success/10 text-status-success hover:bg-status-success/20"
+                              }`}
+                            >
+                              {rule.is_active ? "Nonaktifkan" : "Aktifkan"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 

@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout
       title="Super Administrator Dashboard"
-      subtitle="Ringkasan aktivitas ekosistem Overtone Music Store (OAS, KMS, MIS, DSS & TPS)"
+      subtitle="Ringkasan aktivitas ekosistem Focalpoint.pro Cinema Enterprise (TPS · OAS · KMS · MIS · DSS · ES)"
     >
       {loading ? (
         <SkeletonGrid count={6} />
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
           <StatCard label="Total Akun Terdaftar" value={stats?.total_users ?? 0} />
           <StatCard label="Total SKU Katalog" value={stats?.total_events ?? 0} hint={`${stats?.approved_events ?? 0} aktif di etalase`} />
           <StatCard label="Menunggu Approval" value={stats?.pending_events ?? 0} />
-          <StatCard label="Unit Instrumen Terjual" value={stats?.tickets_sold ?? 0} />
+          <StatCard label="Unit Cinema Gear Terjual" value={stats?.tickets_sold ?? 0} />
           <StatCard label="Total Pendapatan Bruto" value={formatRupiah(stats?.revenue)} />
           <StatCard label="Transaksi Menunggu Verifikasi" value={stats?.pending_payments ?? 0} />
         </div>

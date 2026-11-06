@@ -44,6 +44,8 @@ const ROLE_MENUS = {
     { to: "/admin/users", label: "Manajemen Staf (OAS)", icon: Users },
     { to: "/admin/users?tab=customers", label: "Direktori Pelanggan (TPS)", icon: User },
     { to: "/admin/kms", label: "KMS & Artikel (Dual-Scope)", icon: BookOpen },
+    { to: "/admin/kms?tab=es_rules", label: "Basis Aturan Pakar (ES)", icon: Cpu },
+    { to: "/rig-advisor", label: "Cinema Rig Advisor (ES)", icon: Sparkles },
     { to: "/admin/sop", label: "Portal SOP Staf", icon: Sparkles },
     { to: "/admin/audit-logs", label: "Audit Log & Keamanan", icon: ShieldAlert },
     { to: "/internal/notifications", label: "Pusat Notifikasi & Alert", icon: Bell },
@@ -54,6 +56,8 @@ const ROLE_MENUS = {
     { to: "/admin/users", label: "Manajemen Staf (OAS)", icon: Users },
     { to: "/admin/users?tab=customers", label: "Direktori Pelanggan (TPS)", icon: User },
     { to: "/admin/kms", label: "KMS & Artikel (Dual-Scope)", icon: BookOpen },
+    { to: "/admin/kms?tab=es_rules", label: "Basis Aturan Pakar (ES)", icon: Cpu },
+    { to: "/rig-advisor", label: "Cinema Rig Advisor (ES)", icon: Sparkles },
     { to: "/admin/sop", label: "Portal SOP Staf", icon: Sparkles },
     { to: "/admin/audit-logs", label: "Audit Log & Keamanan", icon: ShieldAlert },
     { to: "/internal/notifications", label: "Pusat Notifikasi & Alert", icon: Bell },
@@ -61,6 +65,7 @@ const ROLE_MENUS = {
   manager: [
     { to: "/admin/mis", label: "Dashboard Eksekutif MIS", icon: TrendingUp },
     { to: "/manager/dss", label: "Smart Restock DSS (AHP-TOPSIS)", icon: Cpu },
+    { to: "/rig-advisor", label: "Cinema Rig Advisor (ES)", icon: Sparkles },
     { to: "/manager/clearance", label: "Simulator Clearance Deadstock", icon: Tag },
     { to: "/manager/catalog", label: "Master Katalog & Varian SKU", icon: Boxes },
     { to: "/manager/suppliers", label: "Merek & Supplier Resmi", icon: Building2 },
@@ -104,6 +109,7 @@ const ROLE_MENUS = {
   store_staff: [
     { to: "/store/pos", label: "Kasir POS Offline Store", icon: CreditCard },
     { to: "/store/stock-lookup", label: "Cek Stok Lintas Cabang & Gudang", icon: Search },
+    { to: "/rig-advisor", label: "Cinema Rig Advisor (ES)", icon: Sparkles },
     { to: "/store/pickups", label: "Serah-Terima Click & Collect", icon: Store },
     { to: "/store/support", label: "Konsol Live Chat & Helpdesk", icon: Headphones },
     { to: "/store/returns", label: "Verifikasi Klaim Retur", icon: RotateCcw },
@@ -113,6 +119,7 @@ const ROLE_MENUS = {
   promoter: [
     { to: "/store/pos", label: "Kasir POS Offline Store", icon: CreditCard },
     { to: "/store/stock-lookup", label: "Cek Stok Lintas Cabang & Gudang", icon: Search },
+    { to: "/rig-advisor", label: "Cinema Rig Advisor (ES)", icon: Sparkles },
     { to: "/store/pickups", label: "Serah-Terima Click & Collect", icon: Store },
     { to: "/store/support", label: "Konsol Live Chat & Helpdesk", icon: Headphones },
     { to: "/store/returns", label: "Verifikasi Klaim Retur", icon: RotateCcw },
@@ -122,6 +129,7 @@ const ROLE_MENUS = {
   staff: [
     { to: "/store/pos", label: "Kasir POS Offline Store", icon: CreditCard },
     { to: "/store/stock-lookup", label: "Cek Stok Lintas Cabang & Gudang", icon: Search },
+    { to: "/rig-advisor", label: "Cinema Rig Advisor (ES)", icon: Sparkles },
     { to: "/store/pickups", label: "Serah-Terima Click & Collect", icon: Store },
     { to: "/store/support", label: "Konsol Live Chat & Helpdesk", icon: Headphones },
     { to: "/store/returns", label: "Verifikasi Klaim Retur", icon: RotateCcw },
@@ -320,21 +328,24 @@ export default function InternalLayout({ children }) {
   }
 
   const pageName = getPageName(location.pathname);
-  const displayName = user?.name || user?.username || "Staf Overtone";
+  const displayName = user?.name || user?.username || "Staf Focalpoint.pro";
 
   return (
     <div className="min-h-screen bg-canvas text-ink font-sans antialiased flex flex-col">
-      {/* 1. Minimal Top Bar */}
-      <header className="sticky top-0 z-40 h-14 w-full border-b border-line bg-surface">
+      {/* 1. Frosted Glass Top Bar */}
+      <header className="sticky top-0 z-40 h-14 w-full border-b border-line/80 bg-surface/90 backdrop-blur-md shadow-xs">
         <div className="flex h-full w-full items-center justify-between px-4 sm:px-6">
           {isAttendanceGateRequired ? (
             <>
               <div className="flex items-center gap-2.5">
-                <span className="font-display font-extrabold text-sm tracking-tight text-ink">
-                  OVERTONE WORKSPACE
-                </span>
+                <Link to="/" className="font-display font-extrabold text-sm tracking-tight text-ink hover:text-accent transition-colors">
+                  FOCALPOINT<span className="text-accent">.PRO</span>
+                </Link>
                 <span className="text-line-strong" aria-hidden="true">|</span>
-                <span className="text-xs font-bold text-accent">Gerbang Presensi Staf</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/25 px-2.5 py-0.5 text-[10px] font-bold text-accent uppercase tracking-wider">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
+                  Gerbang Presensi Staf
+                </span>
               </div>
 
               <div className="flex items-center gap-4">
@@ -347,7 +358,7 @@ export default function InternalLayout({ children }) {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-line-strong bg-surface text-xs font-bold text-ink hover:bg-surface-muted transition-colors duration-fast"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-line-strong bg-surface text-xs font-bold text-ink hover:bg-surface-muted transition-colors duration-fast"
                 >
                   <LogOut size={13} aria-hidden="true" />
                   <span>Keluar</span>
@@ -356,23 +367,29 @@ export default function InternalLayout({ children }) {
             </>
           ) : (
             <>
-              {/* Kiri: Tombol Hamburger (☰) & Judul Halaman */}
+              {/* Kiri: Tombol Hamburger (☰) & Brand Breadcrumb */}
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(true)}
                   aria-expanded={isDrawerOpen}
-                  className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-muted transition-colors duration-fast"
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-surface text-ink hover:border-accent hover:text-accent hover:bg-surface-muted transition-colors duration-fast"
                   aria-label="Buka menu navigasi internal"
                 >
                   <Menu size={18} aria-hidden="true" />
                 </button>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="font-display font-bold uppercase tracking-wider text-ink hidden sm:inline">
-                    Overtone Desk
-                  </span>
-                  <span className="text-line-strong hidden sm:inline" aria-hidden="true">/</span>
-                  <span className="text-ink font-bold truncate max-w-[180px] sm:max-w-md">
+                  <Link to="/" className="flex items-center gap-1.5 group">
+                    <span className="font-display text-sm font-extrabold tracking-tight text-ink group-hover:text-accent transition-colors">
+                      FOCALPOINT<span className="text-accent">.PRO</span>
+                    </span>
+                    <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/25 px-2 py-0.5 text-[9px] font-bold text-accent uppercase tracking-widest">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
+                      Console
+                    </span>
+                  </Link>
+                  <span className="text-line-strong hidden md:inline" aria-hidden="true">/</span>
+                  <span className="text-ink font-semibold text-xs truncate max-w-[150px] sm:max-w-xs md:max-w-md hidden sm:inline">
                     {pageName}
                   </span>
                 </div>
@@ -385,7 +402,7 @@ export default function InternalLayout({ children }) {
                     <button
                       type="button"
                       onClick={() => setIsShiftModalOpen(true)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xs text-xs font-bold transition-colors duration-fast border ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors duration-fast border shadow-2xs ${
                         activeShift.shift_mode === "offline_store"
                           ? "text-status-success-text bg-status-success-bg border-status-success-border"
                           : "text-status-info-text bg-status-info-bg border-status-info-border"
@@ -393,10 +410,10 @@ export default function InternalLayout({ children }) {
                       title="Klik untuk beralih mode penugasan"
                     >
                       <span
-                        className="h-2 w-2 rounded-full bg-current shrink-0"
+                        className="h-1.5 w-1.5 rounded-full bg-current shrink-0 animate-pulse"
                         aria-hidden="true"
                       />
-                      <span className="tabular-nums">
+                      <span className="tabular-nums text-[11px]">
                         Shift:{" "}
                         {activeShift.shift_mode === "offline_store"
                           ? activeShift.branch_name || "Offline Store"
@@ -413,7 +430,7 @@ export default function InternalLayout({ children }) {
                       type="button"
                       onClick={handleClockOut}
                       disabled={savingShift}
-                      className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-status-danger-text bg-status-danger-bg hover:opacity-90 border border-status-danger-border rounded-xs transition-opacity duration-fast"
+                      className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-status-danger-text bg-status-danger-bg hover:opacity-90 border border-status-danger-border rounded-full transition-opacity duration-fast"
                       title="Akhiri Shift Kerja (Clock-Out)"
                     >
                       Akhiri Shift
@@ -429,7 +446,7 @@ export default function InternalLayout({ children }) {
                       {staffRole.replace(/_/g, " ")}
                     </p>
                   </div>
-                  <span className="inline-flex items-center rounded-xs bg-surface-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink border border-line">
+                  <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent border border-accent/25">
                     {staffRole.replace(/_/g, " ")}
                   </span>
                 </div>
@@ -442,33 +459,33 @@ export default function InternalLayout({ children }) {
       {/* 2. Slide-Over Hamburger Drawer */}
       {isDrawerOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#181614]/60 transition-opacity duration-normal"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-normal"
           onClick={() => setIsDrawerOpen(false)}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[310px] flex-col justify-between bg-surface border-r border-line-strong shadow-lg transition-transform duration-normal ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[310px] flex-col justify-between bg-surface border-r border-line-strong shadow-xl transition-transform duration-normal ${
           isDrawerOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
         }`}
         aria-label="Navigasi ruang kerja internal"
       >
-        <div className="flex h-14 items-center justify-between border-b border-line bg-surface-muted px-5">
+        <div className="flex h-14 items-center justify-between border-b border-line bg-surface-muted/60 px-5">
           <button
             type="button"
             onClick={() => setIsDrawerOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-sm text-ink-secondary hover:bg-surface-subtle hover:text-ink transition-colors duration-fast"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-line text-ink-secondary hover:bg-surface hover:text-ink transition-colors duration-fast"
             aria-label="Tutup menu navigasi"
           >
-            <X size={18} aria-hidden="true" />
+            <X size={17} aria-hidden="true" />
           </button>
           <div className="flex flex-col text-right">
             <span className="font-display text-[13px] font-extrabold tracking-tight text-ink">
-              OVERTONE
+              FOCALPOINT<span className="text-accent">.PRO</span>
             </span>
-            <span className="text-[8px] font-bold tracking-[0.2em] uppercase text-ink-muted">
-              INTERNAL DESK
+            <span className="text-[8px] font-bold tracking-[0.2em] uppercase text-accent">
+              CINEMA ENTERPRISE CONSOLE
             </span>
           </div>
         </div>
@@ -495,7 +512,7 @@ export default function InternalLayout({ children }) {
               {activeShift ? (
                 <div className="flex items-center gap-2">
                   <span
-                    className="h-2.5 w-2.5 rounded-full bg-status-success-text shrink-0"
+                    className="h-2 w-2 rounded-full bg-status-success-text shrink-0 animate-pulse"
                     aria-hidden="true"
                   />
                   <div className="min-w-0">
@@ -520,7 +537,7 @@ export default function InternalLayout({ children }) {
                       setIsDrawerOpen(false);
                       setIsShiftModalOpen(true);
                     }}
-                    className="rounded-sm bg-accent px-2.5 py-1 text-[10px] font-bold text-accent-on hover:bg-accent-hover transition-colors duration-fast"
+                    className="rounded-full bg-accent px-3 py-1 text-[10px] font-bold text-accent-on hover:bg-accent-hover transition-colors duration-fast"
                   >
                     Check In Sekarang
                   </button>
@@ -530,8 +547,9 @@ export default function InternalLayout({ children }) {
           )}
 
           <div>
-            <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-ink-muted mb-2">
-              Modul Operasional ({staffRole.replace(/_/g, " ")})
+            <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-ink-muted mb-2 flex items-center justify-between">
+              <span>Modul Operasional</span>
+              <span className="font-mono text-[9px] text-accent">6 SUBSYSTEMS</span>
             </p>
             <nav className="space-y-1">
               {menuItems.map((item) => {
@@ -544,9 +562,9 @@ export default function InternalLayout({ children }) {
                     key={item.to}
                     to={item.to}
                     onClick={() => setIsDrawerOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-xs transition-colors duration-fast ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs transition-colors duration-fast ${
                       isActive
-                        ? "bg-accent-subtle font-bold text-accent border-l-2 border-accent"
+                        ? "bg-accent/10 font-bold text-accent border-l-2 border-accent"
                         : "text-ink-secondary font-medium hover:text-ink hover:bg-surface-muted"
                     }`}
                   >
@@ -563,25 +581,25 @@ export default function InternalLayout({ children }) {
           </div>
         </div>
 
-        <div className="border-t border-line bg-surface-muted p-4 space-y-3">
+        <div className="border-t border-line bg-surface-muted/60 p-4 space-y-3">
           <Link
             to="/"
             onClick={() => setIsDrawerOpen(false)}
-            className="flex items-center gap-2.5 rounded-sm border border-line bg-surface px-3 py-2 text-xs font-bold text-ink hover:border-line-strong transition-colors duration-fast"
+            className="flex items-center gap-2.5 rounded-md border border-line bg-surface px-3 py-2 text-xs font-bold text-ink hover:border-accent hover:text-accent transition-colors duration-fast"
           >
             <Store size={15} className="text-accent" aria-hidden="true" />
-            <span>Buka Etalase Toko Publik</span>
+            <span>Buka Etalase Focalpoint.pro</span>
           </Link>
 
-          <div className="rounded-sm border border-line bg-surface p-3">
+          <div className="rounded-md border border-line bg-surface p-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xs bg-ink text-xs font-bold text-surface uppercase">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15 border border-accent/25 text-xs font-bold text-accent uppercase">
                 {displayName.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-ink truncate">{displayName}</p>
                 <p className="text-[10px] text-ink-muted truncate">
-                  {user?.email || `${user?.username || "staff"}@overtone.id`}
+                  {user?.email || `${user?.username || "staff"}@focalpoint.pro`}
                 </p>
               </div>
             </div>

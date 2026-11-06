@@ -66,7 +66,7 @@ export default function ManagerShifts() {
           Pantauan Absensi &amp; Shift Mode Staf
         </h1>
         <p className="text-xs sm:text-sm text-ink-secondary mt-1">
-          Monitoring kehadiran real-time staf toko (Offline Showroom Staff vs Online CS Staff) di seluruh cabang Overtone.
+          Monitoring kehadiran real-time staf toko (Offline Showroom Staff vs Online CS Staff) di seluruh cabang Focalpoint.pro.
         </p>
       </div>
 

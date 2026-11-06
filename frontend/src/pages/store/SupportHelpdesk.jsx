@@ -227,7 +227,7 @@ export default function StoreSupportHelpdesk() {
               </h1>
             </div>
             <p className="mt-1 text-xs text-ink-secondary">
-              Workspace interaksi 2-arah staf showroom dengan pelanggan Overtone (Handover Bot &rarr; Waiting Queue &rarr; Private Live Chat).
+              Workspace interaksi 2-arah staf showroom dengan pelanggan Focalpoint.pro (Handover Bot &rarr; Waiting Queue &rarr; Private Live Chat).
             </p>
           </div>
 

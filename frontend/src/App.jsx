@@ -18,6 +18,7 @@ import Knowledge from "./pages/customer/Knowledge";
 import Wishlist from "./pages/customer/Wishlist";
 import Showrooms from "./pages/customer/Showrooms";
 import CustomerReturns from "./pages/customer/CustomerReturns";
+import CinemaRigAdvisor from "./pages/customer/CinemaRigAdvisor";
 
 // Warehouse Pages
 import WarehouseDashboard from "./pages/warehouse/WarehouseDashboard";
@@ -103,6 +104,8 @@ export default function App() {
           <Route path="/offline-store" element={<Showrooms />} />
           <Route path="/showrooms" element={<Navigate to="/offline-stores" replace />} />
           <Route path="/showroom" element={<Navigate to="/offline-stores" replace />} />
+          <Route path="/rig-advisor" element={<CinemaRigAdvisor />} />
+          <Route path="/advisor" element={<Navigate to="/rig-advisor" replace />} />
           <Route path="/help" element={<Knowledge />} />
           <Route path="/track" element={<OrderTracking isGuest={true} />} />
           <Route path="/login" element={<Login />} />

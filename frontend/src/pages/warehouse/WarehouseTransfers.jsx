@@ -109,7 +109,7 @@ export default function WarehouseTransfers() {
           <strong className="font-semibold text-ink">
             Gudang Pusat Cikarang
           </strong>{" "}
-          ke 5 Cabang Offline Store resmi Overtone.
+          ke 5 Cabang Offline Store resmi Focalpoint.pro.
         </p>
       </div>
 

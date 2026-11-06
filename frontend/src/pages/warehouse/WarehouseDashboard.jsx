@@ -92,7 +92,7 @@ export default function WarehouseDashboard() {
   return (
     <DashboardLayout
       title="Warehouse & Inventory Center"
-      subtitle="Pusat monitoring stok fisik cinema & broadcast gear, pengajuan restock PO, dan pemrosesan packing ekspedisi Overtone Pro Cinema."
+      subtitle="Pusat monitoring stok fisik cinema & broadcast gear, pengajuan restock PO, dan pemrosesan packing ekspedisi Focalpoint.pro Cinema Enterprise."
       actions={refreshAction}
     >
       <div className="space-y-6">

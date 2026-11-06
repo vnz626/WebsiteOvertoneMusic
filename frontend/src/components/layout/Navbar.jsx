@@ -136,6 +136,9 @@ export default function Navbar() {
             <NavLink to="/products" className={navLinkClass}>
               Katalog
             </NavLink>
+            <NavLink to="/rig-advisor" className={navLinkClass}>
+              Rig Advisor (ES)
+            </NavLink>
             <NavLink to="/offline-stores" className={navLinkClass}>
               Showroom
             </NavLink>
@@ -302,6 +305,14 @@ export default function Navbar() {
                 className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#0F1B2D] hover:bg-[#0F1B2D]/[0.05] rounded-xl"
               >
                 Katalog Cinema Gear
+              </NavLink>
+              <NavLink
+                to="/rig-advisor"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#E8622C] hover:bg-[#E8622C]/[0.08] rounded-xl flex items-center justify-between"
+              >
+                <span>Rig Advisor (ES)</span>
+                <span className="rounded-full bg-[#E8622C]/20 px-2 py-0.5 text-[9px] font-bold">Pakar</span>
               </NavLink>
               <NavLink
                 to="/offline-stores"

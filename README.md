@@ -7,7 +7,7 @@
 
 <!-- Realtime Animated Typing Headline -->
 <a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Plus+Jakarta+Sans&weight=700&size=19&duration=3200&pause=1100&color=E8622C&center=true&vCenter=true&width=780&lines=Focalpoint.pro+%E2%80%94+Omnichannel+Retail+ERP+Cinema+%26+Broadcast+Gear;5+Enterprise+Subsystems%3A+TPS+%C2%B7+OAS+%C2%B7+KMS+%C2%B7+MIS+%C2%B7+DSS;Dual-Scope+KMS+%26+Internal+Staff+SOP+Compliance+Matrix;Hybrid+AHP-TOPSIS+Smart+Restock+Decision+Support+System;Showroom+POS+Kasir%2C+Click+%26+Collect+%26+Serial+Number+Tracking;End-to-End+RMA+Warranty+Claims+%26+Deadstock+Clearance+Simulator" alt="Focalpoint.pro Typing Animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Plus+Jakarta+Sans&weight=700&size=19&duration=3200&pause=1100&color=E8622C&center=true&vCenter=true&width=780&lines=Focalpoint.pro+%E2%80%94+Omnichannel+Retail+ERP+Cinema+%26+Broadcast+Gear;6+Enterprise+Subsystems%3A+TPS+%C2%B7+OAS+%C2%B7+KMS+%C2%B7+MIS+%C2%B7+DSS+%C2%B7+ES;Forward+Chaining+%26+Certainty+Factor+Cinema+Rig+Expert+System;Dual-Scope+KMS+%26+Internal+Staff+SOP+Compliance+Matrix;Hybrid+AHP-TOPSIS+Smart+Restock+Decision+Support+System;Showroom+POS+Kasir%2C+Click+%26+Collect+%26+Serial+Number+Tracking;End-to-End+RMA+Warranty+Claims+%26+Deadstock+Clearance+Simulator" alt="Focalpoint.pro Typing Animation" />
 </a>
 
 <p align="center">
@@ -17,6 +17,7 @@
   <img src="https://img.shields.io/badge/Backend-Python_Flask_REST_API-4B8BBE?style=for-the-badge&logo=python&logoColor=white" alt="Python Flask" />
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
   <img src="https://img.shields.io/badge/Decision_Engine-Hybrid_AHP--TOPSIS-A855F7?style=for-the-badge&logo=graphql&logoColor=white" alt="AHP-TOPSIS" />
+  <img src="https://img.shields.io/badge/Expert_Engine-Forward_Chaining_%26_CF-10B981?style=for-the-badge&logo=probot&logoColor=white" alt="Forward Chaining & CF" />
 </p>
 
 </div>
@@ -35,12 +36,13 @@ Sistem ini mengintegrasikan seluruh mata rantai operasional ritel kamera:
 5. **Simulasi Likuidasi Deadstock**: Analisis *aging inventory* berkawal batas margin aman (*Margin Guardrail*).
 6. **Notifikasi Terpadu (WhatsApp & In-App Bell)** dengan antrean *Outbox Asinkron* yang tahan gangguan koneksi.
 7. **Sistem Pendukung Keputusan Pengadaan (Smart Restock DSS)** berbasis algoritma ilmiah *Hybrid AHP-TOPSIS*.
+8. **Sistem Pakar Sinema & Diagnosa QC (Expert System - ES)** berbasis mesin inferensi *Forward Chaining* dan penalaran *Certainty Factor (CF)*.
 
 ---
 
-## 🏛️ Arsitektur 5 Subsistem Enterprise
+## 🏛️ Arsitektur 6 Subsistem Enterprise
 
-Arsitektur basis data relasional dikelompokkan secara terstruktur ke dalam 5 subsistem enterprise:
+Arsitektur basis data relasional dikelompokkan secara terstruktur ke dalam 6 subsistem enterprise:
 
 | Subsistem | Tabel Database Fisik | Ruang Lingkup & Tanggung Jawab Operasional |
 |:---|:---|:---|
@@ -49,6 +51,7 @@ Arsitektur basis data relasional dikelompokkan secara terstruktur ke dalam 5 sub
 | **KMS (Knowledge Management System)** | `kms__brands_suppliers`, `kms__categories`, `kms__articles`, `kms__article_feedback`, `kms__faqs`, `kms__sop_acknowledgements` | **Dual-Scope KMS**: Memisahkan panduan teknis publik (*Filmmaker Knowledge Base*) dengan *Standard Operating Procedures* rahasia internal staf (*SOP Divisi*), persistensi konfirmasi pemahaman, dan **Matriks Kepatuhan Staf (Compliance Matrix)**. |
 | **MIS (Management Information System)** | `mis__daily_metrics`, `mis__executive_reports`, `mis__product_performance`, `mis__sales_summary` | Analitik omset, perbandingan Harga Pokok Penjualan (HPP/COGS), margin laba kotor, serta modul **Deadstock Aging & Clearance Promo Simulator** berkawal batas margin aman (*Margin Guardrail*). |
 | **DSS (Decision Support System)** | `dss__criteria`, `dss__subcriteria_ranges`, `dss__ahp_matrices`, `dss__sessions`, `dss__topsis_results` | Sistem pendukung keputusan prioritas restock cinema hardware menggunakan algoritma **Hybrid AHP (Analytic Hierarchy Process)** untuk pembobotan 5 kriteria multi-dimensi dan **TOPSIS** untuk perangkingan preferensi varian dengan optimasi kuota pagu anggaran PO. |
+| **ES (Expert System / Sistem Pakar)** | `es__symptoms_facts`, `es__rules`, `es__consultations` | Mesin inferensi pakar sinema berbasis **Forward Chaining** dan **Certainty Factor (Shortliffe & Buchanan)** yang mengintegrasikan kapabilitas kepakaran teknis ke 5 subsistem lainnya: rekomendasi paket gear syuting instan, validasi kecocokan fisik/mount/daya rig kamera, diagnosa klaim garansi 10-point RMA & sensor QC, advis strategi taktis deadstock, dan evaluasi risiko mutu vendor pada AHP-TOPSIS restock. |
 
 ---
 
@@ -107,7 +110,17 @@ Arsitektur basis data relasional dikelompokkan secara terstruktur ke dalam 5 sub
 - **Perangkingan Preferensi TOPSIS**: Perhitungan solusi ideal positif ($A^+$) dan negatif ($A^-$), jarak Euclidean ($D^+$ & $D^-$), serta koefisien kedekatan ($V_i$).
 - **Optimasi Kuota Pagu Anggaran**: Menyaring rekomendasi produk dalam batas anggaran (*Within Budget* vs *Budget Exceeded*) dan tombol konversi otomatis menjadi Purchase Order resmi.
 
-### 7. Pusat Notifikasi Terpadu & Outbox Multi-Channel (WhatsApp + Email)
+### 7. Sistem Pakar Sinema & Diagnosa RMA QC (Expert System - ES)
+- **Mesin Inferensi Dual-Metode**: Menggunakan penalaran **Forward Chaining** untuk mencocokkan fakta teknis dengan aturan pakar IF-THEN, dan **Certainty Factor (Shortliffe & Buchanan)** ($CF_{combine} = CF_1 + CF_2 \cdot (1 - CF_1)$) untuk menghitung tingkat keyakinan diagnosis dan rekomendasi.
+- **Cinema Rig Advisor Interaktif (`/rig-advisor`)**:
+  - *Mode 1: Smart Shoot-to-Gear Recommender*: Memberikan rekomendasi paket kamera sinema, lensa prime/zoom, lighting COB, audio 32-bit float, dan media simpan berdasarkan skenario syuting, kondisi cahaya, resolusi rekaman, dan plafon anggaran.
+  - *Mode 2: Rig Compatibility Checker*: Memvalidasi kecocokan fisik *Lens Mount* (E/RF/PL/EF), format sensor (Full-Frame vs Super35 crop & vignette), margin torsi gimbal payload, dan kebutuhan daya V-Mount / USB-C PD.
+- **Diagnosa 10-Point RMA & Sensor QC (`/store/returns` & `/warehouse/returns`)**: Evaluasi sistematis terhadap gejala kerusakan fisik (Dead Pixel, Laser Burn, Liquid Corrosion, Fungus, Gimbal Drift) untuk membedakan cacat produksi prinsipal (*Approved Warranty*) dengan kelalaian pengguna (*Rejected User Fault*).
+- **Advis Taktis Likuidasi Deadstock (`/manager/clearance`)**: Memberikan arahan taktis per SKU mengendap (pembuatan paket bundling rig, mutasi antar cabang, atau likuidasi clearance).
+- **Evaluasi Risiko Mutu Vendor pada Restock DSS (`/manager/dss`)**: Memberikan penalti bobot pada algoritma AHP-TOPSIS untuk prinsipal supplier dengan rasio cacat pabrik tinggi.
+- **Manajemen Basis Aturan Pakar (`/admin/kms?tab=es_rules`)**: Fasilitas kelola aturan produksi IF-THEN, bobot CF, dan penautan ke artikel SOP KMS.
+
+### 8. Pusat Notifikasi Terpadu & Outbox Multi-Channel (WhatsApp + Email)
 - **Asynchronous Decoupled Outbox (`oas__notification_outbox`)**: Operasional checkout dan perubahan status pesanan tidak pernah terhambat oleh koneksi eksternal.
 - **Worker Mandiri**: Dilengkapi logika retry otomatis hingga 3 kali dan logging error lengkap.
 - **Lencana Lonceng Interaktif (`NotificationBell.jsx`)**: Polling otomatis notifikasi internal staf dan filmmaker dengan pemilahan kategori visual.

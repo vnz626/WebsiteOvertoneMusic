@@ -133,7 +133,7 @@ export default function StoreStockLookup() {
               </Badge>
             </div>
             <p className="text-xs text-ink-secondary mt-0.5">
-              Matriks ketersediaan stok fisik real-time di Gudang Pusat dan 5 Cabang Showroom Overtone
+              Matriks ketersediaan stok fisik real-time di Gudang Pusat dan 5 Cabang Showroom Focalpoint.pro
             </p>
           </div>
         </div>

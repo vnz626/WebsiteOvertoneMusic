@@ -130,6 +130,16 @@ export default function HeroNavbar() {
           >
             Produk
           </Link>
+          <Link
+            to="/rig-advisor"
+            className={`hero__nav-link ${
+              location.pathname.startsWith("/rig-advisor")
+                ? "hero__nav-link--active"
+                : ""
+            }`}
+          >
+            Rig Advisor (ES)
+          </Link>
           <a
             href="#categories-section"
             onClick={handleCategoryClick}
@@ -308,6 +318,13 @@ export default function HeroNavbar() {
             className="hero__mobile-link"
           >
             Produk &amp; Katalog
+          </Link>
+          <Link
+            to="/rig-advisor"
+            onClick={() => setMobileOpen(false)}
+            className="hero__mobile-link text-[#E8622C] font-bold"
+          >
+            Rig Advisor (Sistem Pakar ES)
           </Link>
           <a
             href="#categories-section"

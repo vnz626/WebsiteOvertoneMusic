@@ -61,6 +61,8 @@ def create_app():
     from .api.returns import returns_bp
     # Manager blueprint (Katalog, Vendor, Bundles & Shifts)
     from .api.manager import manager_bp
+    # ES blueprint (Subsistem ke-6: Expert System / Sistem Pakar)
+    from .api.es import es_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(products_bp, url_prefix="/api/products")
@@ -86,6 +88,8 @@ def create_app():
     app.register_blueprint(mis_tickets_bp,   url_prefix="/api/mis/tickets")
     # DSS module – prefix /api/dss
     app.register_blueprint(dss_bp, url_prefix="/api/dss")
+    # ES module (Subsistem ke-6: Expert System) – prefix /api/es
+    app.register_blueprint(es_bp, url_prefix="/api/es")
 
     _init_mis_scheduler(app)
 

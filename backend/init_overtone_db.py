@@ -456,6 +456,9 @@ def init_database():
         DSSAHPMatrix,
         DSSSession,
         DSSTopsisResult,
+        ESSymptomFact,
+        ESRule,
+        ESConsultation,
     )
     from app.models.mis_models import (
         MisDashboardSummary,
@@ -667,6 +670,66 @@ def init_database():
                 INDEX idx_prod_review (product_id),
                 INDEX idx_cust_review (customer_id),
                 INDEX idx_order_review (order_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """))
+
+        # ====================================================================
+        # SUBSISTEM 6: ES (EXPERT SYSTEM / SISTEM PAKAR ENTERPRISE) TABLES
+        # ====================================================================
+        c.execute(text("""
+            CREATE TABLE IF NOT EXISTS es__symptoms_facts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                fact_code VARCHAR(50) NOT NULL UNIQUE,
+                domain VARCHAR(50) NOT NULL,
+                category VARCHAR(100) NOT NULL,
+                label VARCHAR(255) NOT NULL,
+                weight FLOAT NOT NULL DEFAULT 0.85,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_es_fact_code (fact_code),
+                INDEX idx_es_fact_domain (domain)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """))
+
+        c.execute(text("""
+            CREATE TABLE IF NOT EXISTS es__rules (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                rule_code VARCHAR(50) NOT NULL UNIQUE,
+                domain VARCHAR(50) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                conditions_json JSON NOT NULL,
+                conclusion_verdict VARCHAR(255) NOT NULL,
+                action_type VARCHAR(50) NOT NULL,
+                explanation TEXT NOT NULL,
+                certainty_factor FLOAT NOT NULL DEFAULT 0.90,
+                kms_article_id INT NULL,
+                is_active TINYINT(1) DEFAULT 1 NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_es_rule_code (rule_code),
+                INDEX idx_es_rule_domain (domain),
+                INDEX idx_es_rule_active (is_active)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """))
+
+        c.execute(text("""
+            CREATE TABLE IF NOT EXISTS es__consultations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                session_code VARCHAR(60) NOT NULL UNIQUE,
+                domain VARCHAR(50) NOT NULL,
+                actor_role VARCHAR(50) NOT NULL,
+                actor_id INT NULL,
+                reference_type VARCHAR(50) NULL,
+                reference_id INT NULL,
+                input_facts_json JSON NOT NULL,
+                matched_rules_json JSON NOT NULL,
+                final_verdict VARCHAR(255) NOT NULL,
+                confidence_score FLOAT NOT NULL,
+                expert_advice TEXT NOT NULL,
+                recommended_payload_json JSON NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_es_cons_session (session_code),
+                INDEX idx_es_cons_domain (domain),
+                INDEX idx_es_cons_role (actor_role),
+                INDEX idx_es_cons_ref (reference_type, reference_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """))
 
@@ -1631,10 +1694,250 @@ def init_database():
                 last_synced_at=now_dt,
             ))
 
+        # M. Subsistem ke-6: ES (Expert System / Sistem Pakar Enterprise) Seeding
+        print("  -> Menambahkan Data Master Subsistem ke-6: ES (Fakta, Aturan Pakar & Log Konsultasi)...")
+
+        # 1. es__symptoms_facts (24 Fakta & Gejala Teknis Sinema)
+        es_facts_spec = [
+            # Domain: shoot_recommender
+            ("FACT_SHOOT_WEDDING", "shoot_recommender", "shooting_type", "Skenario Syuting: Wedding & Event Run-and-Gun Cepat", 0.90),
+            ("FACT_SHOOT_COMMERCIAL", "shoot_recommender", "shooting_type", "Skenario Syuting: Iklan Komersial / Film Naratif 6K/8K Presisi Tinggi", 0.95),
+            ("FACT_SHOOT_DOCUMENTARY", "shoot_recommender", "shooting_type", "Skenario Syuting: Dokumenter Alam / Low-Light Guerrilla", 0.90),
+            ("FACT_SHOOT_BROADCAST", "shoot_recommender", "shooting_type", "Skenario Syuting: Multi-Cam Live Podcast / Siaran TV Broadcast", 0.90),
+            ("FACT_SHOOT_STUDIO", "shoot_recommender", "shooting_type", "Skenario Syuting: Studio Controlled 3-Point Lighting & Product Showcase", 0.85),
+            ("FACT_LIGHT_LOW", "shoot_recommender", "lighting", "Kondisi Pencahayaan: Ekstrem Low-Light / Malam Hari Tanpa Lighting Tambahan", 0.90),
+            ("FACT_LIGHT_CONTROL", "shoot_recommender", "lighting", "Kondisi Pencahayaan: Full Controlled Studio Key/Fill/Hair Light", 0.85),
+            ("FACT_RES_6K_RAW", "shoot_recommender", "resolution", "Target Format Rekaman: 6K / 8K RAW Cinema Uncompressed", 0.95),
+            ("FACT_RES_4K_120", "shoot_recommender", "resolution", "Target Format Rekaman: 4K 120 FPS High-Frame Rate Slow Motion", 0.90),
+            ("FACT_MOB_GIMBAL", "shoot_recommender", "mobility", "Kebutuhan Mobilitas: Stabilisasi Gimbal 3-Axis / Handheld Bergerak Aktif", 0.90),
+            # Domain: rig_compatibility
+            ("FACT_MOUNT_MISMATCH", "rig_compatibility", "optical_mount", "Perbedaan Flange Mount Lensa vs Kamera (e.g. Sony E vs Canon RF vs PL)", 0.95),
+            ("FACT_S35_FF_VIGNETTE", "rig_compatibility", "sensor_coverage", "Penggunaan Lensa Super 35 pada Sensor Full-Frame Tanpa Mode Crop", 0.90),
+            ("FACT_GIMBAL_OVERLOAD", "rig_compatibility", "payload_balance", "Beban Rig Kamera Melebihi 85% Kapasitas Torsi Maksimum Gimbal", 0.95),
+            ("FACT_HIGH_BITRATE_MEDIA", "rig_compatibility", "media_bandwidth", "Codec All-Intra 600Mbps+ Memerlukan Media Kartu CFexpress Type A/B", 0.90),
+            ("FACT_HIGH_DRAW_POWER", "rig_compatibility", "power_delivery", "Konsumsi Daya Rig > 45W Memerlukan Eksternal Baterai V-Mount D-Tap", 0.85),
+            # Domain: rma_diagnostic
+            ("FACT_DEAD_PIXEL_LINE", "rma_diagnostic", "sensor_defect", "Garis Dead Pixel Vertikal / Horizontal Permanen pada Sensor CMOS", 0.95),
+            ("FACT_LASER_BURN", "rma_diagnostic", "sensor_damage", "Kerusakan Sensor Berupa Titik/Luka Bakar Akibat Paparan Sinar Laser Stage", 0.95),
+            ("FACT_LDI_RED_CORROSION", "rma_diagnostic", "liquid_intrusion", "LDI (Liquid Damage Indicator) Berwarna Merah / Oksidasi Korosi PCB", 0.95),
+            ("FACT_OPTICAL_FUNGUS", "rma_diagnostic", "environmental_damage", "Pertumbuhan Jamur Optik (Fungus Filamen) pada Elemen Dalam Lensa", 0.90),
+            ("FACT_GIMBAL_MOTOR_DRIFT", "rma_diagnostic", "hardware_defect", "Axis Motor Gimbal Mengalami Drift Spontan Tanpa Ada Kerusakan Fisik Luar", 0.90),
+            ("FACT_MAINBOARD_PORT_FAIL", "rma_diagnostic", "electronic_defect", "Port SDI / HDMI Tidak Mengeluarkan Sinyal Video (Chip Controller Rusak)", 0.90),
+            # Domain: deadstock_strategy & vendor_risk
+            ("FACT_DEADSTOCK_HIGH_AGING", "deadstock_strategy", "inventory_velocity", "Umur Simpan Produk di Gudang Melebihi 90 Hari (Aging Bucket Merah)", 0.90),
+            ("FACT_BRANCH_STOCK_IMBALANCE", "deadstock_strategy", "regional_demand", "Ketimpangan Stok Cabang: Kosong di Showroom Utama Namun Menumpuk di Gudang Luar", 0.85),
+            ("FACT_VENDOR_HIGH_DEFECT_RATE", "vendor_risk", "supplier_risk", "Tingkat Retur Garansi Cacat Produksi dari Prinsipal > 5% Batch", 0.90),
+        ]
+
+        for f_code, f_domain, f_cat, f_label, f_w in es_facts_spec:
+            db.session.add(ESSymptomFact(
+                fact_code=f_code,
+                domain=f_domain,
+                category=f_cat,
+                label=f_label,
+                weight=f_w,
+                created_at=now_dt,
+            ))
+
+        # Query SOP Articles for Rule FK
+        sop_wh_art = KMSArticle.query.filter(KMSArticle.sop_code == "SOP-WH-001").first()
+        sop_store_art = KMSArticle.query.filter(KMSArticle.sop_code == "SOP-STORE-002").first()
+        sop_mgt_art = KMSArticle.query.filter(KMSArticle.sop_code == "SOP-MGT-001").first()
+        sop_gen_art = KMSArticle.query.filter(KMSArticle.sop_code == "SOP-GEN-001").first()
+
+        wh_art_id = sop_wh_art.id if sop_wh_art else None
+        store_art_id = sop_store_art.id if sop_store_art else None
+        mgt_art_id = sop_mgt_art.id if sop_mgt_art else None
+        gen_art_id = sop_gen_art.id if sop_gen_art else None
+
+        # 2. es__rules (18 Aturan Pakar IF-THEN & Certainty Factor)
+        es_rules_spec = [
+            # Skenario Syuting (shoot_recommender)
+            ("RULE-SHOOT-001", "shoot_recommender", "Paket Rekomendasi Wedding & Event Cinema 4K Run-and-Gun",
+             {"all": ["FACT_SHOOT_WEDDING", "FACT_MOB_GIMBAL"]},
+             "RECOMMEND_WEDDING_CINEMA_KIT", "RECOMMEND_GEAR",
+             "Skenario wedding dinamis memerlukan dual native ISO 12800 untuk ruangan temaram, AF real-time eye tracking, active cooling anti-overheat, dan gimbal payload 4.5kg dengan locking axis otomatis.",
+             0.95, gen_art_id),
+            ("RULE-SHOOT-002", "shoot_recommender", "Paket Rekomendasi Film Komersial & Naratif 6K/8K RAW",
+             {"all": ["FACT_SHOOT_COMMERCIAL", "FACT_RES_6K_RAW"]},
+             "RECOMMEND_COMMERCIAL_NARRATIVE_KIT", "RECOMMEND_GEAR",
+             "Produksi film bioskop dan TVC menuntut global shutter sensor, 16+ stop dynamic range, color science 16-bit REDCODE RAW, dan kontrol pencahayaan high-output 600W daylight.",
+             0.94, gen_art_id),
+            ("RULE-SHOOT-003", "shoot_recommender", "Paket Rekomendasi Low-Light Guerrilla Documentary",
+             {"all": ["FACT_SHOOT_DOCUMENTARY", "FACT_LIGHT_LOW"]},
+             "RECOMMEND_LOWLIGHT_DOC_KIT", "RECOMMEND_GEAR",
+             "Dokumenter lapangan tanpa kru pencahayaan besar membutuhkan sensor BSI Full-Frame low-noise ekstrem dan perekaman audio 32-bit float yang tidak akan clipping saat suara keras mendadak.",
+             0.92, gen_art_id),
+            ("RULE-SHOOT-004", "shoot_recommender", "Paket Rekomendasi Multi-Cam Podcast & Broadcast Live Streaming",
+             {"all": ["FACT_SHOOT_BROADCAST"]},
+             "RECOMMEND_BROADCAST_STUDIO_KIT", "RECOMMEND_GEAR",
+             "Siaran langsung multi-kamera membutuhkan output HDMI/SDI clean feed tanpa batas rekam 30 menit, timecode sync, mikrofon broadcast dinamis cardioid, dan softbox studio diffusor.",
+             0.91, gen_art_id),
+            ("RULE-SHOOT-005", "shoot_recommender", "Paket Rekomendasi 3-Point Studio Lighting & Commercial Rig",
+             {"all": ["FACT_SHOOT_STUDIO", "FACT_LIGHT_CONTROL"]},
+             "RECOMMEND_STUDIO_LIGHTING_KIT", "RECOMMEND_GEAR",
+             "Sistem pencahayaan 3-titik standar bioskop menghasilkan pemisahan subjek dari latar belakang dengan indeks warna CRI/TLCI 96+ agar akurasi tone kulit akurat di color grading.",
+             0.93, gen_art_id),
+            # Kompatibilitas Rig (rig_compatibility)
+            ("RULE-COMPAT-001", "rig_compatibility", "Validasi Mount Lensa vs Flange Kamera: Ketidakcocokan Fisik",
+             {"all": ["FACT_MOUNT_MISMATCH"]},
+             "MOUNT_INCOMPATIBILITY_DETECTED", "FLAG_INCOMPATIBLE",
+             "Lensa dengan bayonet mount berbeda tidak dapat dipasang langsung pada bodi kamera tanpa adapter optik/elektronik (misal: lensa Canon EF ke body Sony E membutuhkan adapter Sigma MC-11 atau Metabones).",
+             0.98, store_art_id),
+            ("RULE-COMPAT-002", "rig_compatibility", "Validasi Sensor Format: Lensa Super 35 pada Sensor Full-Frame",
+             {"all": ["FACT_S35_FF_VIGNETTE"]},
+             "SENSOR_CROP_VIGNETTE_WARNING", "FLAG_INCOMPATIBLE",
+             "Lingkaran gambar lensa Super 35 (diameter ~28mm) tidak mencakup sensor Full-Frame (diameter 43.3mm), menimbulkan vinyet hitam tebal di sudut layar kecuali kamera diset ke mode APS-C/Super35 Crop.",
+             0.92, store_art_id),
+            ("RULE-COMPAT-003", "rig_compatibility", "Validasi Beban Rig vs Kapasitas Torsi Gimbal Stabilizer",
+             {"all": ["FACT_GIMBAL_OVERLOAD"]},
+             "GIMBAL_PAYLOAD_TORQUE_EXCEEDED", "FLAG_INCOMPATIBLE",
+             "Total bobot kamera + lensa cine + motor focus + monitor lapangan melebihi 85% kapasitas aman gimbal, menyebabkan motor brushless overheating dan jitter mikro pada rekaman.",
+             0.96, store_art_id),
+            ("RULE-COMPAT-004", "rig_compatibility", "Validasi Media Kecepatan Tinggi untuk Codec 4K 120p / 6K RAW",
+             {"all": ["FACT_HIGH_BITRATE_MEDIA"]},
+             "REQUIRE_CFEXPRESS_MEDIA", "RECOMMEND_GEAR",
+             "Perekaman video bitrate tinggi (All-Intra / RAW) membutuhkan sustained write speed minimal 400MB/s yang hanya dapat dipenuhi oleh media kartu CFexpress.",
+             0.94, wh_art_id),
+            ("RULE-COMPAT-005", "rig_compatibility", "Validasi Kebutuhan Daya Tambahan Rig Sinema (V-Mount Power)",
+             {"all": ["FACT_HIGH_DRAW_POWER"]},
+             "REQUIRE_VMOUNT_BATTERY_SYSTEM", "RECOMMEND_GEAR",
+             "Rig terpadu (Kamera + Monitor High-Bright 2000 nits + Wireless Video Transmitter) menguras baterai internal dalam < 20 menit, membutuhkan baterai V-Mount 99Wh-150Wh untuk durabilitas syuting 3-4 jam.",
+             0.88, wh_art_id),
+            # Diagnosa RMA & Sensor QC (rma_diagnostic)
+            ("RULE-RMA-001", "rma_diagnostic", "Diagnosa Garansi QC: Garis Dead Pixel Sensor CMOS",
+             {"all": ["FACT_DEAD_PIXEL_LINE"]},
+             "APPROVED_WARRANTY_DEFECT", "APPROVE_RMA_REPLACEMENT",
+             "Dead pixel line vertikal/horizontal terjadi akibat kegagalan interkoneksi baris/kolom pembacaan sensor silicon fabrikasi prinsipal dan bukan disebabkan kelalaian penggunaan.",
+             0.97, store_art_id),
+            ("RULE-RMA-002", "rma_diagnostic", "Diagnosa Garansi QC: Luka Bakar Sensor Akibat Paparan Sinar Laser",
+             {"all": ["FACT_LASER_BURN"]},
+             "REJECTED_USER_FAULT", "REJECT_RMA_USER_FAULT",
+             "Luka bakar mikro titik hitam/pelangi pada fotodioda sensor diakibatkan radiasi sinar laser panggung/konser, melanggar syarat garansi distributor resmi Sony/Canon/RED.",
+             0.98, store_art_id),
+            ("RULE-RMA-003", "rma_diagnostic", "Diagnosa Garansi QC: Indikator Korosi Cairan (LDI Red)",
+             {"all": ["FACT_LDI_RED_CORROSION"]},
+             "REJECTED_USER_FAULT", "REJECT_RMA_USER_FAULT",
+             "Liquid Damage Indicator (LDI) di dalam slot baterai atau chamber sensor berubah merah menandakan cairan telah masuk ke sirkuit internal. Garansi resmi distributor gugur otomatis.",
+             0.99, store_art_id),
+            ("RULE-RMA-004", "rma_diagnostic", "Diagnosa Garansi QC: Jamur Optik Lensa Akibat Penyimpanan Lembap",
+             {"all": ["FACT_OPTICAL_FUNGUS"]},
+             "REJECTED_USER_FAULT", "REJECT_RMA_USER_FAULT",
+             "Jamur optik (fungus) tumbuh karena penyimpanan di lingkungan RH > 60% tanpa silica gel/dry cabinet. Garansi pabrik tidak menanggung kelalaian perawatan lingkungan.",
+             0.91, wh_art_id),
+            ("RULE-RMA-005", "rma_diagnostic", "Diagnosa Garansi QC: Motor Gimbal Drift Spontan Tanpa Kerusakan Fisik",
+             {"all": ["FACT_GIMBAL_MOTOR_DRIFT"]},
+             "APPROVED_WARRANTY_DEFECT", "APPROVE_RMA_REPLACEMENT",
+             "Drift motor roll/pan tanpa bekas benturan fisik luar mengindikasikan kegagalan sensor gyro IMU internal bawaan pabrik.",
+             0.92, store_art_id),
+            ("RULE-RMA-006", "rma_diagnostic", "Diagnosa Garansi QC: Port HDMI/SDI Mainboard Tidak Mengeluarkan Sinyal",
+             {"all": ["FACT_MAINBOARD_PORT_FAIL"]},
+             "APPROVED_WARRANTY_DEFECT", "APPROVE_RMA_REPLACEMENT",
+             "IC transmitter HDMI/SDI mati mendadak pada penggunaan tegangan standar mengindikasikan komponen solder micro BGA defect saat assembly.",
+             0.89, store_art_id),
+            # Deadstock & Evaluasi Risiko Vendor
+            ("RULE-DEADSTOCK-001", "deadstock_strategy", "Strategi Deadstock: Bundling Produk Lambat dengan Kamera Best Seller",
+             {"all": ["FACT_DEADSTOCK_HIGH_AGING"]},
+             "SUGGEST_RIG_BUNDLE_CREATION", "SUGGEST_BUNDLE_TRANSFER",
+             "Menggabungkan unit slow-moving (>90 hari) dengan body kamera populer (seperti Sony FX3 atau Canon C70) dengan diskon paket 8-12% mempercepat perputaran kas tanpa merusak margin produk utama.",
+             0.88, mgt_art_id),
+            ("RULE-VENDOR-001", "vendor_risk", "Evaluasi Risiko Supplier: Penalti Skor Keandalan pada Rekomendasi Restock DSS",
+             {"all": ["FACT_VENDOR_HIGH_DEFECT_RATE"]},
+             "PENALIZE_SUPPLIER_RESTOCK", "PENALIZE_DSS_SCORE",
+             "Supplier atau lini produk dengan rasio RMA klaim cacat pabrik > 5% diberikan penalti risiko kualitas agar Manager PO tidak melakukan over-restock sebelum revisi QC batch baru.",
+             0.93, mgt_art_id),
+        ]
+
+        for r_code, r_domain, r_title, r_conds, r_verdict, r_action, r_expl, r_cf, r_kms in es_rules_spec:
+            db.session.add(ESRule(
+                rule_code=r_code,
+                domain=r_domain,
+                title=r_title,
+                conditions_json=r_conds,
+                conclusion_verdict=r_verdict,
+                action_type=r_action,
+                explanation=r_expl,
+                certainty_factor=r_cf,
+                kms_article_id=r_kms,
+                is_active=True,
+                created_at=now_dt,
+            ))
+
+        # 3. es__consultations (10 Riwayat Konsultasi Lintas Subsistem)
+        es_consultations_spec = [
+            ("ES-SES-001", "shoot_recommender", "filmmaker", 1, "product_kit", 1,
+             ["FACT_SHOOT_WEDDING", "FACT_MOB_GIMBAL"], [{"rule_code": "RULE-SHOOT-001", "cf": 0.95}],
+             "RECOMMEND_WEDDING_CINEMA_KIT", 0.95,
+             "Paket Sony FX3 + FE 24-70mm GM II + DJI RS 4 Pro direkomendasikan dengan CF 95%.",
+             {"camera": "Sony FX3", "lens": "Sony FE 24-70mm GM II", "gimbal": "DJI RS 4 Pro"}),
+            ("ES-SES-002", "shoot_recommender", "filmmaker", 2, "product_kit", 11,
+             ["FACT_SHOOT_COMMERCIAL", "FACT_RES_6K_RAW"], [{"rule_code": "RULE-SHOOT-002", "cf": 0.94}],
+             "RECOMMEND_COMMERCIAL_NARRATIVE_KIT", 0.94,
+             "Paket Canon C70 + Sigma Cine FF 50mm + Aputure LS 600d Pro direkomendasikan dengan CF 94%.",
+             {"camera": "Canon EOS C70", "lens": "Sigma Cine 50mm", "lighting": "Aputure LS 600d Pro"}),
+            ("ES-SES-003", "rig_compatibility", "filmmaker", 3, "rig_combination", 1,
+             ["FACT_MOUNT_MISMATCH"], [{"rule_code": "RULE-COMPAT-001", "cf": 0.98}],
+             "NEEDS_ADAPTER_OR_CAGE", 0.98,
+             "Bodi Sony E-Mount dengan Lensa Canon EF memerlukan adapter Sigma MC-11.",
+             {"cam_mount": "Sony E-Mount", "lens_mount": "Canon EF-Mount"}),
+            ("ES-SES-004", "rig_compatibility", "filmmaker", 4, "rig_combination", 20,
+             [], [],
+             "OPTIMAL_COMPATIBLE", 0.96,
+             "Blackmagic 6K Pro dengan Lensa EF dan Zhiyun Crane 3S 100% kompatibel dan seimbang.",
+             {"payload_utilization_pct": 68.5}),
+            ("ES-SES-005", "rma_diagnostic", "store_staff", 6, "return_request", 1,
+             ["FACT_DEAD_PIXEL_LINE"], [{"rule_code": "RULE-RMA-001", "cf": 0.97}],
+             "APPROVED_WARRANTY_DEFECT", 0.97,
+             "Sensor dead pixel line vertikal terbukti cacat fabrikasi. Disetujui penggantian unit baru.",
+             {"action": "APPROVE_REPLACEMENT"}),
+            ("ES-SES-006", "rma_diagnostic", "store_staff", 6, "return_request", 2,
+             ["FACT_LASER_BURN"], [{"rule_code": "RULE-RMA-002", "cf": 0.98}],
+             "REJECTED_USER_FAULT", 0.98,
+             "Kerusakan sensor akibat paparan laser stage konser. Klaim garansi resmi ditolak.",
+             {"action": "REJECT_USER_FAULT"}),
+            ("ES-SES-007", "deadstock_strategy", "manager", 2, "product", 39,
+             ["FACT_DEADSTOCK_HIGH_AGING"], [{"rule_code": "RULE-DEADSTOCK-001", "cf": 0.88}],
+             "SUGGEST_RIG_BUNDLE_CREATION", 0.88,
+             "Lensa Zeiss CP.3 50mm disarankan dibundel bersama bodi Sony FX3 dengan diskon 10%.",
+             {"target_bundle_partner": "Sony FX3", "suggested_discount": 10.0}),
+            ("ES-SES-008", "vendor_risk", "manager", 2, "dss_session", 1,
+             ["FACT_VENDOR_HIGH_DEFECT_RATE"], [{"rule_code": "RULE-VENDOR-001", "cf": 0.93}],
+             "PENALIZE_SUPPLIER_RESTOCK", 0.93,
+             "Supplier dengan tingkat cacat batch > 5% diberi penalti -15% bobot pada TOPSIS DSS.",
+             {"penalty_rate": -0.15}),
+            ("ES-SES-009", "concierge_triage", "customer", 5, "support_ticket", 1,
+             ["FACT_LIGHT_LOW"], [{"rule_code": "RULE-SHOOT-003", "cf": 0.92}],
+             "RECOMMEND_LOWLIGHT_GEAR", 0.92,
+             "Triage otomatis merekomendasikan sensor Full-Frame dual ISO dan mikrofon 32-bit float.",
+             {"suggested_category": "Cinema Cameras"}),
+            ("ES-SES-010", "rma_diagnostic", "warehouse_staff", 5, "return_request", 3,
+             ["FACT_GIMBAL_MOTOR_DRIFT"], [{"rule_code": "RULE-RMA-005", "cf": 0.92}],
+             "APPROVED_WARRANTY_DEFECT", 0.92,
+             "Motor axis drift spontan tanpa ada benturan fisik. Disetujui servis garansi resmi DJI.",
+             {"action": "APPROVE_REPAIR"}),
+        ]
+
+        for s_code, s_dom, s_role, s_act, s_ref_type, s_ref_id, s_facts, s_rules, s_verd, s_conf, s_adv, s_payload in es_consultations_spec:
+            db.session.add(ESConsultation(
+                session_code=s_code,
+                domain=s_dom,
+                actor_role=s_role,
+                actor_id=s_act,
+                reference_type=s_ref_type,
+                reference_id=s_ref_id,
+                input_facts_json=s_facts,
+                matched_rules_json=s_rules,
+                final_verdict=s_verd,
+                confidence_score=s_conf,
+                expert_advice=s_adv,
+                recommended_payload_json=s_payload,
+                created_at=now_dt - timedelta(days=random.randint(1, 15)),
+            ))
+
         db.session.commit()
         print("✓ Seluruh data master berhasil di-commit ke database.")
 
-        print("\n[5/5] Rekapitulasi Data Master Database Overtone:")
+        print("\n[5/5] Rekapitulasi Data Master Database Overtone (6 Subsistem Enterprise):")
         print(f"  • Staf Internal OAS        : {OASStaff.query.count()} user")
         print(f"  • Cabang Showroom/Gudang   : {TPSStoreBranch.query.count()} cabang")
         print(f"  • Brand & Principal KMS    : {KMSBrandSupplier.query.count()} brand")
@@ -1649,8 +1952,11 @@ def init_database():
         print(f"  • Dokumen SOP & FAQ KMS    : {KMSArticle.query.count()} artikel")
         print(f"  • Sesi Rekomendasi TOPSIS  : {DSSSession.query.count()} sesi")
         print(f"  • Matriks AHP Pairwise     : {DSSAHPMatrix.query.count()} sel")
+        print(f"  • Fakta & Gejala QC ES     : {ESSymptomFact.query.count()} fakta")
+        print(f"  • Aturan Pakar (Rules) ES  : {ESRule.query.count()} aturan IF-THEN")
+        print(f"  • Log Konsultasi Pakar ES  : {ESConsultation.query.count()} sesi")
         print("=======================================================")
-        print("✓ INISIALISASI MASTER DATABASE OVERTONE SELESAI DENGAN SEMPURNA!")
+        print("✓ INISIALISASI 6 SUBSISTEM ENTERPRISE (TPS · OAS · KMS · MIS · DSS · ES) SELESAI DENGAN SEMPURNA!")
         print("=======================================================\n")
 
 

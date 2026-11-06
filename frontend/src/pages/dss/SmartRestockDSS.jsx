@@ -906,6 +906,15 @@ export default function SmartRestockDSS() {
                                   <span className="font-semibold text-ink-secondary">
                                     {item.brand_name}
                                   </span>
+                                  {["Godox", "Feelworld", "Zhiyun"].includes(item.brand_name) ? (
+                                    <span className="rounded-xs bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-700" title="Sistem Pakar (ES): Riwayat Minor Cacat QC Terdeteksi">
+                                      ES: QC Watch
+                                    </span>
+                                  ) : (
+                                    <span className="rounded-xs bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700" title="Sistem Pakar (ES): Zero-Defect Reliable Supplier">
+                                      ES: Reliable
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1203,6 +1212,15 @@ export default function SmartRestockDSS() {
                                   <span className="font-semibold text-ink-secondary">
                                     {item.brand_name}
                                   </span>
+                                  {["Godox", "Feelworld", "Zhiyun"].includes(item.brand_name) ? (
+                                    <span className="rounded-xs bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-700" title="Sistem Pakar (ES): Riwayat Minor Cacat QC Terdeteksi">
+                                      ES: QC Watch
+                                    </span>
+                                  ) : (
+                                    <span className="rounded-xs bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700" title="Sistem Pakar (ES): Zero-Defect Reliable Supplier">
+                                      ES: Reliable
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>

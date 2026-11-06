@@ -44,7 +44,7 @@ export default function StaffAttendanceGate({ user, onShiftStarted, branches = [
     year: "numeric",
   });
 
-  const staffName = user?.name || user?.username || "Staf Overtone";
+  const staffName = user?.name || user?.username || "Staf Focalpoint.pro";
 
   const handleClockIn = async (e) => {
     e.preventDefault();
@@ -95,7 +95,7 @@ export default function StaffAttendanceGate({ user, onShiftStarted, branches = [
               Selamat Bertugas, {staffName}
             </h1>
             <p className="text-xs text-ink-secondary mt-1">
-              Pilih penugasan kerja hari ini untuk membuka konsol operasional Overtone.
+              Pilih penugasan kerja hari ini untuk membuka konsol operasional Focalpoint.pro.
             </p>
           </div>
 

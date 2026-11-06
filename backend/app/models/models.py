@@ -1225,6 +1225,111 @@ class DSSTopsisResult(db.Model):
 
 
 # ============================================================================
+# SUBSISTEM 6: ES (EXPERT SYSTEM / SISTEM PAKAR ENTERPRISE)
+# ============================================================================
+
+class ESSymptomFact(db.Model):
+    """Katalog fakta teknis, gejala kerusakan QC, dan parameter sinema."""
+    __tablename__ = "es__symptoms_facts"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fact_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    domain = db.Column(db.String(50), nullable=False, index=True)  # shoot_recommender, rig_compatibility, rma_diagnostic, deadstock_strategy, vendor_risk, concierge_triage
+    category = db.Column(db.String(100), nullable=False)
+    label = db.Column(db.String(255), nullable=False)
+    weight = db.Column(db.Float, default=0.85, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "fact_code": self.fact_code,
+            "domain": self.domain,
+            "category": self.category,
+            "label": self.label,
+            "weight": float(self.weight),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ESRule(db.Model):
+    """Basis Aturan Pakar Forward Chaining (IF-THEN) & Certainty Factor."""
+    __tablename__ = "es__rules"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    rule_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    domain = db.Column(db.String(50), nullable=False, index=True)
+    title = db.Column(db.String(255), nullable=False)
+    conditions_json = db.Column(db.JSON, nullable=False)
+    conclusion_verdict = db.Column(db.String(255), nullable=False)
+    action_type = db.Column(db.String(50), nullable=False)  # RECOMMEND_GEAR, FLAG_INCOMPATIBLE, APPROVE_RMA_REPLACEMENT, REJECT_RMA_USER_FAULT, SUGGEST_BUNDLE_TRANSFER, PENALIZE_DSS_SCORE
+    explanation = db.Column(db.Text, nullable=False)
+    certainty_factor = db.Column(db.Float, default=0.90, nullable=False)
+    kms_article_id = db.Column(db.Integer, db.ForeignKey("kms__articles.id", ondelete="SET NULL"), nullable=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relasi ke artikel/SOP KMS
+    kms_article = db.relationship("KMSArticle", backref="es_rules", lazy="joined")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "rule_code": self.rule_code,
+            "domain": self.domain,
+            "title": self.title,
+            "conditions_json": self.conditions_json,
+            "conclusion_verdict": self.conclusion_verdict,
+            "action_type": self.action_type,
+            "explanation": self.explanation,
+            "certainty_factor": float(self.certainty_factor),
+            "kms_article_id": self.kms_article_id,
+            "kms_article_title": self.kms_article.title if self.kms_article else None,
+            "kms_sop_code": getattr(self.kms_article, "sop_code", None) if self.kms_article else None,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ESConsultation(db.Model):
+    """Log riwayat inferensi kepakaran & konsultasi lintas subsistem."""
+    __tablename__ = "es__consultations"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    session_code = db.Column(db.String(60), unique=True, nullable=False, index=True)
+    domain = db.Column(db.String(50), nullable=False, index=True)
+    actor_role = db.Column(db.String(50), nullable=False)
+    actor_id = db.Column(db.Integer, nullable=True)
+    reference_type = db.Column(db.String(50), nullable=True)  # order, return_request, product, dss_session, support_ticket
+    reference_id = db.Column(db.Integer, nullable=True)
+    input_facts_json = db.Column(db.JSON, nullable=False)
+    matched_rules_json = db.Column(db.JSON, nullable=False)
+    final_verdict = db.Column(db.String(255), nullable=False)
+    confidence_score = db.Column(db.Float, nullable=False)
+    expert_advice = db.Column(db.Text, nullable=False)
+    recommended_payload_json = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "session_code": self.session_code,
+            "domain": self.domain,
+            "actor_role": self.actor_role,
+            "actor_id": self.actor_id,
+            "reference_type": self.reference_type,
+            "reference_id": self.reference_id,
+            "input_facts_json": self.input_facts_json,
+            "matched_rules_json": self.matched_rules_json,
+            "final_verdict": self.final_verdict,
+            "confidence_score": float(self.confidence_score),
+            "expert_advice": self.expert_advice,
+            "recommended_payload_json": self.recommended_payload_json,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# ============================================================================
 # ALIAS KOMPATIBILITAS (Mencegah runtime break pada kode backend yang ada)
 # ============================================================================
 User = OASStaff
@@ -1259,4 +1364,8 @@ StockTransfer = TPSStockTransfer
 Bundle = TPSBundle
 BundleItem = TPSBundleItem
 ProductReview = TPSProductReview
+ESSymptom = ESSymptomFact
+SymptomFact = ESSymptomFact
+ExpertRule = ESRule
+ExpertConsultation = ESConsultation
 
